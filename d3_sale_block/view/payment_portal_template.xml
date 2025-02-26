@@ -1,0 +1,53 @@
+<odoo>
+    <template id="sale_credit_limit_alert_template">
+        <div id="credit_warning_section">
+            <div class="alert alert-warning" role="alert">
+                <span t-out="credit_limit_alert"></span>
+                <br/>
+                <span>Please remove items from cart prior to checkout to meet credit limit requirements</span>
+            </div>
+        </div>
+    </template>
+
+    <template id="sale_credit_limit_alert_cart">
+        <div id="credit_warning_section">
+            <div class="alert alert-warning" role="alert" t-if="website_sale_order.partner_credit_warning">
+                <span t-field="website_sale_order.partner_credit_warning"></span>
+                <br/>
+                <span>Please remove items from cart prior to checkout to meet credit limit requirements</span>
+            </div>
+        </div>
+    </template>
+
+    <template id="sale_credit_limit_alert">
+        <div class="alert alert-warning" role="alert" t-if="website_sale_order.partner_credit_warning">
+            <span t-field="website_sale_order.partner_credit_warning"></span>
+            <br/>
+            <span>Please remove items from cart prior to checkout to meet credit limit requirements</span>
+        </div>
+    </template>
+
+    <template id="payment_inherit_sale_credit_limit_extended" inherit_id="website_sale.payment">
+        <xpath expr="//div[@id='address_on_payment']" position="before">
+            <t t-call="d3_sale_block.sale_credit_limit_alert" />
+        </xpath>
+    </template>
+
+    <template id="cart_inherit_sale_credit_limit_extended" inherit_id="website_sale.cart">
+        <xpath expr="//div[@t-if='abandoned_proceed or access_token']" position="before">
+            <t t-call="d3_sale_block.sale_credit_limit_alert_cart" />
+        </xpath>
+    </template>
+
+    <template id="checkout_inherit_sale_credit_limit_extended" inherit_id="website_sale.checkout">
+        <xpath expr="//h3[contains(@class, 'mb-4') and text()='Address']" position="after">
+            <t t-call="d3_sale_block.sale_credit_limit_alert" />
+        </xpath>
+    </template>
+
+    <template id="extra_info_inherit_sale_credit_limit_extended" inherit_id="website_sale.extra_info">
+        <xpath expr="//h3[contains(@class, 'mb-4') and text()='Extra info']" position="after">
+            <t t-call="d3_sale_block.sale_credit_limit_alert" />
+        </xpath>
+    </template>
+</odoo>
