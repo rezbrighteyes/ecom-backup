@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="sh_product_multi_website_view" model="ir.ui.view">
+        <field name="name">sh.product.multi.website</field>
+        <field name="model">sh.product.multi.website</field>
+        <field name="arch" type="xml">
+            <form string="Mass Update Product Website">
+                <group>
+                    <group>
+                        <field name="website_ids" groups="website.group_multi_website" widget="many2many_tags" />
+                    </group>
+                </group>
+                <footer>
+                    <button string="Update" type="object" name="action_update" class="btn-primary" />or
+                    <button name="cancel" string="Cancel" special="cancel" class="oe_link" />
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="sh_product_multi_website_action" model="ir.actions.act_window">
+        <field name="name">Mass Update Product Website</field>
+        <field name="res_model">sh.product.multi.website</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    <record id="sh_mass_multi_website_multi_action" model="ir.actions.act_window">
+        <field name="name">Mass Update Product Website</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">sh.product.multi.website</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="product.model_product_template" />
+    </record>
+</odoo>

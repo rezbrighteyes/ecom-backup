@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sh_product_multi_website,access.sh.product.multi.website,model_sh_product_multi_website,,1,1,1,1
