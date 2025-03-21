@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="products_extended" inherit_id="website_sale.products">
+        <xpath expr="//t[@t-if='td_product']" position="replace">
+            <t t-if="td_product">
+                <t t-foreach="td_product['product_variants']" t-as="td_product_variant">
+                    <t t-set="col_height" t-value="td_product['y']"/>
+                    <t t-set="col_width"
+                       t-value="12 // ppr * td_product['x']"/>
+                    <t t-set="col_class_lg"
+                       t-value="'g-col-lg-' + str(col_width)"/>
+                    <t t-set="col_class_md"
+                       t-value="grid_md_allow_custom_cols and ('g-col-md-' + str(col_width)) or grid_md_use_3col and 'g-col-md-4' or 'g-col-md-6'"/>
+                    <t t-set="col_is_stretched"
+                       t-value="(td_product['x'] &gt;= td_product['y'] * 2)"/>
+                    <t t-set="col_is_custom_portrait"
+                       t-value="not col_is_stretched and (col_height &gt; td_product['x'])"/>
+                    <div
+                            t-attf-class="oe_product {{col_is_custom_portrait and 'oe_product_custom_portrait'}} g-col-6 {{col_class_md}} {{col_class_lg}} {{col_is_stretched and 'oe_product_size_stretch'}}"
+                            t-attf-style="--o-wsale-products-grid-product-col-height: {{col_height}};"
+                            t-att-data-ribbon-id="td_product['ribbon'].id"
+                            t-att-data-colspan="td_product['x'] != 1 and td_product['x']"
+                            t-att-data-rowspan="td_product['y'] != 1 and td_product['y']"
+                            t-att-data-name="product_block_name"
+                    >
+                        <div t-attf-class="o_wsale_product_grid_wrapper position-relative h-100 o_wsale_product_grid_wrapper_#{td_product['x']}_#{td_product['y']}">
+                            <t t-call="website_sale.products_item">
+                                <t t-set="product"
+                                   t-value="td_product['product']"/>
+                                <t t-set="product_variant"
+                                   t-value="td_product_variant"/>
+                            </t>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </xpath>
+    </template>
+    <template id="products_item_extended" inherit_id="website_sale.products_item">
+        <xpath expr="." position="replace">
+            <form action="/shop/cart/update" method="post" class="oe_product_cart h-100 d-flex"
+            t-att-data-publish="product_variant.website_published and 'on' or 'off'"
+            itemscope="itemscope" itemtype="http://schema.org/Product">
+            <t t-set="product_href" t-value="keep(product_variant.website_url, page=(pager['page']['num'] if pager['page']['num']&gt;1 else None)) + selected_attributes_hash" />
+            <t t-set="image_type" t-value="product._get_suitable_image_size(ppr, td_product['x'], td_product['y'])"/>
+
+            <div class="oe_product_image position-relative flex-grow-0 overflow-hidden">
+                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()" t-nocache="The csrf token must always be up to date."/>
+                <a
+                    t-att-href="product_href"
+                    class="oe_product_image_link d-block position-relative"
+                    itemprop="url"
+                    contenteditable="false"
+                >
+                    <t t-set="image_holder" t-value="product_variant"/>
+                    <span t-field="image_holder.image_1920"
+                        t-options="{'widget': 'image', 'preview_image': image_type, 'itemprop': 'image', 'class': 'h-100 w-100 position-absolute'}"
+                        class="oe_product_image_img_wrapper d-flex h-100 justify-content-center align-items-center position-absolute"/>
+
+                    <t t-set="bg_color" t-value="td_product['ribbon'].bg_color"/>
+                    <t t-set="text_color" t-value="td_product['ribbon'].text_color"/>
+                    <t t-set="bg_class" t-value="td_product['ribbon']._get_position_class()"/>
+                    <span
+                        t-attf-class="o_ribbon o_not_editable #{bg_class}"
+                        t-attf-style="#{text_color and ('color: %s;' % text_color)} #{bg_color and 'background-color:' + bg_color}"
+                        t-out="td_product['ribbon'].name or ''"
+                    />
+                </a>
+            </div>
+            <div class="o_wsale_product_information position-relative d-flex flex-column flex-grow-1 flex-shrink-1">
+                <div class="o_wsale_product_information_text">
+                    <h6 class="o_wsale_products_item_title mb-2 text-break">
+                        <a class="text-primary text-decoration-none text-primary-emphasis" itemprop="name" t-att-href="product_href" t-att-content="product_variant.with_context(display_default_code=False).display_name" t-field="product_variant.with_context(display_default_code=False).display_name" />
+                        <a t-if="not product_variant.website_published" role="button" t-att-href="product_href" class="btn btn-sm btn-danger" title="This product is unpublished.">
+                            Unpublished
+                        </a>
+                    </h6>
+                </div>
+                <div class="o_wsale_product_sub d-flex justify-content-between align-items-end gap-2 flex-wrap">
+                    <t t-set="template_price_vals" t-value="get_product_variants_prices(product_variant)"/>
+                    <div class="o_wsale_product_btn d-flex gap-2"/>
+                    <div class="product_price" itemprop="offers" itemscope="itemscope" itemtype="http://schema.org/Offer">
+                        <span class="h6 mb-0"
+                              t-if="template_price_vals['price_reduce'] or not website.prevent_zero_price_sale"
+                              t-out="template_price_vals['price_reduce']"
+                              t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
+                        <span class="h6 mb-0" t-elif="any(ptav.price_extra for ptav in product_variant.attribute_line_ids.product_template_value_ids)">&amp;nbsp;</span>
+                        <span class="h6 mb-0" t-else="" t-field="website.prevent_zero_price_sale_text"/>
+                        <t t-if="'base_price' in template_price_vals and (template_price_vals['base_price'] &gt; template_price_vals['price_reduce']) and (template_price_vals['price_reduce'] or not website.prevent_zero_price_sale)">
+                            <del t-attf-class="text-muted me-1 h6 mb-0" style="white-space: nowrap;">
+                                <em class="small" t-esc="template_price_vals['base_price']" t-options="{'widget': 'monetary', 'display_currency': website.currency_id}" />
+                            </del>
+                        </t>
+                        <span itemprop="price" style="display:none;" t-esc="template_price_vals['price_reduce']" />
+                        <span itemprop="priceCurrency" style="display:none;" t-esc="website.currency_id.name" />
+                    </div>
+                </div>
+            </div>
+        </form>
+        </xpath>
+    </template>
+</odoo>
