@@ -1,0 +1,40 @@
+.variant-div input[type="radio"] {
+    display: none;
+}
+.variant-div input[type="radio"]:checked ~ label {
+  color: blue;
+  border: 2px solid #{$o-brand-primary};
+}
+.variant-div{
+    flex-wrap: wrap;
+}
+.variant-radio{
+    padding-inline: 5px;
+}
+.hide-variant{
+    display: none;
+}
+.variant-label{
+    border: 1px solid #CED4DA;
+}
+.variant-button{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 65px;
+    border: 1px solid #CED4DA;
+    cursor: pointer;
+}
+@media (max-width: 768px) {
+    .variant-div{
+        flex-wrap: unset !important;
+        overflow: scroll;
+        scrollbar-width: none !important;
+    }
+    .variant-button{
+        display: none;
+    }
+    .hide-variant{
+        display: unset;
+    }
+}

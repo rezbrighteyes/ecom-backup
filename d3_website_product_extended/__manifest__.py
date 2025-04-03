@@ -13,6 +13,12 @@
         'views/templates.xml',
         'views/product_views.xml'
     ],
+    'assets': {
+        'web.assets_frontend': [
+            'd3_website_product_extended/static/src/scss/website_variants_grid.scss',
+            'd3_website_product_extended/static/src/js/website_sale.js',
+        ],
+    },
     'installable': True,
     'license': 'LGPL-3',
 }
