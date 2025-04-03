@@ -19,12 +19,13 @@
     # Check https://github.com/odoo/odoo/blob/15.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Website/Website',
-    'version': '17.0.2.0.1',
+    'version': '18.0.2.0.1',
 
     # any module necessary for this one to work correctly
     'depends': [
         'mail',
         # 'mrp_account',
+        # 'sale_management',
         'web',
         'website',
         'website_sale'
