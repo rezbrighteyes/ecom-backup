@@ -99,4 +99,23 @@
         </form>
         </xpath>
     </template>
+    <template id="product_variants_extended" inherit_id="website_sale.product_variants">
+        <xpath expr="//t[@t-if='len(filtered_sorted_variants) &gt; 1']//div[@class='mb-4']" position="attributes">
+            <attribute name="class" add="d-flex variant-div flex-wrap" separator=" "/>
+        </xpath>
+        <xpath expr="//t[@t-if='len(filtered_sorted_variants) &gt; 1']//div[hasclass('variant-div')]//div[@t-foreach='filtered_sorted_variants']" position="attributes">
+            <attribute name="class" add="variant-radio" separator=" " />
+        </xpath>
+        <xpath expr="//t[@t-if='len(filtered_sorted_variants) &gt; 1']//div[hasclass('variant-div')]//label" position="replace">
+             <label t-attf-for="radio_variant_#{variant_id.id}" label-default="label-default" class="form-check-label fw-normal variant-label">
+                <div>
+                    <img
+                        t-attf-src="/web/image/product.product/{{ variant_id.id }}/image_128"
+                        class="o_image_64_max img o_image_64_cover"
+                        t-att-alt="variant_id.name"
+                    />
+                </div>
+            </label>
+        </xpath>
+    </template>
 </odoo>
