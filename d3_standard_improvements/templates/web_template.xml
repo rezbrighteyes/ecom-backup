@@ -3,9 +3,9 @@
     <template id="d3_standard_improvements.brand_promotion_message" inherit_id="web.brand_promotion_message">
         <xpath expr="//t[@t-set='odoo_logo']" position="replace">
             <t t-set="odoo_logo">
-                <a target="_blank" t-attf-href="https://d-3system.com.au" class="badge text-bg-light" rel="nofollow">
-                    <img alt="Dimension3" src="/d3_standard_improvements/static/img/dimension3_logo_tiny.png" width="62" height="20" style="width: auto; height: 1em; vertical-align: baseline;"/>
-                    Dimension3
+                <a target="_blank" t-attf-href="http://www.ecomsuperstore.com.au" class="badge text-bg-light" rel="nofollow">
+                    <img alt="E-com Superstore" src="/d3_standard_improvements/static/img/ecom_logo_tiny.png" width="62" height="20" style="width: auto; height: 1em; vertical-align: baseline;"/>
+                    E-com Superstore
                 </a>
             </t>
         </xpath>
