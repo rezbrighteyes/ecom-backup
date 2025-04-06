@@ -106,6 +106,9 @@
         <xpath expr="//t[@t-if='len(filtered_sorted_variants) &gt; 1']//div[hasclass('variant-div')]//div[@t-foreach='filtered_sorted_variants']" position="attributes">
             <attribute name="class" add="variant-radio" separator=" " />
         </xpath>
+        <xpath expr="//t[@t-if='len(filtered_sorted_variants) &gt; 1']//div[hasclass('variant-div')]//input" position="attributes">
+            <attribute name="t-att-data-variant-attributes">combination_info['variant_attributes']</attribute>
+        </xpath>
         <xpath expr="//t[@t-if='len(filtered_sorted_variants) &gt; 1']//div[hasclass('variant-div')]//label" position="replace">
              <label t-attf-for="radio_variant_#{variant_id.id}" label-default="label-default" class="form-check-label fw-normal variant-label">
                 <div>

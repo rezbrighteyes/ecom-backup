@@ -81,6 +81,15 @@ class Product(models.Model):
 
         return res
 
+    def _get_combination_info_variant(self, **kwargs):
+        res = super()._get_combination_info_variant(**kwargs)
+        combination = self.product_template_variant_value_ids
+        variant_attributes = []
+        for cmb in combination:
+            variant_attributes.append([cmb.attribute_id.name, cmb.name])
+        res['variant_attributes'] = variant_attributes
+        return res
+
 
 class ProductTemplateAttributeLine(models.Model):
     _inherit = 'product.template.attribute.line'
