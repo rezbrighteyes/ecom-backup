@@ -7,7 +7,7 @@
     'author': "Dimension3 Technology",
     'website': "https://d-3system.com.au",
     'category': 'Website/Website',
-    'version': '18.1',
+    'version': '18.2',
     'depends': ['base', 'product', 'website_sale'],
     'data': [
         'views/templates.xml',
@@ -17,6 +17,7 @@
         'web.assets_frontend': [
             'd3_website_product_extended/static/src/scss/website_variants_grid.scss',
             'd3_website_product_extended/static/src/js/website_sale.js',
+            'd3_website_product_extended/static/src/xml/website_sale.xml'
         ],
     },
     'installable': True,

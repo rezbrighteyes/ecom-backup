@@ -1,5 +1,6 @@
 /** @odoo-module **/
 import { WebsiteSale } from "@website_sale/js/website_sale";
+import { renderToString } from "@web/core/utils/render";
 
 WebsiteSale.include({
      start: async function(){
@@ -25,8 +26,31 @@ WebsiteSale.include({
 
                 parentDiv.insertBefore($button[0], items[4]);
             }
-            
+
         }
         return def;
      },
+     _onChangeCombination: function (ev, $parent, combination) {
+		this._super.apply(this, arguments);
+		var product_variant_input = $parent.find(".variant-div").find("input.js_product_change:checked");
+		var product_attribute_variants_data = product_variant_input.data('variant-attributes')
+        var product_attribute_variants = new Array()
+        if (product_attribute_variants_data){
+            product_attribute_variants = JSON.parse(product_attribute_variants_data.replace(/'/g, '"'))
+        }
+        const xml = renderToString("d3_website_product_extended.ProductVariantAttributes", {
+            variant_attributes: product_attribute_variants,
+        });
+        const div = new DOMParser().parseFromString(xml, "text/html").querySelector("div");
+        div.classList.add("variant-content");
+
+        const variantContent = document.querySelector(".variant-content");
+        if (variantContent) {
+            variantContent.remove();
+        }
+        const variantDiv = document.querySelector(".variant-div");
+        if (variantDiv){
+            variantDiv.parentNode.insertBefore(div, variantDiv);
+        }
+	},
 });
