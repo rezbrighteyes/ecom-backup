@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<templates xml:space="preserve">
+    <t t-name="d3_website_product_extended.ProductVariantAttributes">
+        <div class="mb-3">
+            <t t-foreach="variant_attributes" t-as="attribute" t-key="attribute[0]">
+                <div class="d-flex">
+                    <div class="text-muted attribute-key pe-3" t-out="attribute[0]"></div>
+                    <div class="attribute-value" t-out="attribute[1]"></div>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>
