@@ -5,7 +5,7 @@
     'summary': "Purchase E-com",
 
     'description': """
-Modify Purchase report, add Total Lines, Total QTY
+Modify Purchase report, add Total Lines, Total Qty
     """,
 
     'author': 'Dimension3',
