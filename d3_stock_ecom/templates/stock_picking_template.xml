@@ -4,7 +4,7 @@
         inherit_id="stock.report_delivery_document">
         <xpath expr="//div[@name='customer_address']" position="replace">
             <div name="customer_address"
-                t-if="o.picking_type_id.code != 'incoming' and partner and partner != partner.commercial_partner_id">
+                t-if="o.picking_type_id.code != 'incoming' and partner">
                 <t t-if="o.sale_id and o.sale_id.partner_invoice_id">
                     <strong>Invoice Address:</strong>
                 </t>
