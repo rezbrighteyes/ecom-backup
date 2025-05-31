@@ -7,8 +7,8 @@
     'author': "Dimension3 Technology",
     'website': "https://d-3system.com.au",
     'category': 'Website/Website',
-    'version': '18.2',
-    'depends': ['base', 'product', 'website_sale'],
+    'version': '18.3',
+    'depends': ['base', 'product', 'website_sale', 'website_sale_stock'],
     'data': [
         'views/templates.xml',
         'views/product_views.xml'
