@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="product_normal_form_view" model="ir.ui.view">
+        <field name="name">product.product.form.inherit.product_data_feed_number</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='feed_codes']" position="inside">
+                <field name="feed_gtin"/>
+                <field name="feed_mpn"/>
+                <field name="feed_isbn"/>
+            </xpath>
+        </field>
+    </record>
+    
+    <record id="product_variant_easy_edit_view" model="ir.ui.view">
+        <field name="name">product.product.view.form.easy.inherit.product_data_feed_number</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_variant_easy_edit_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='barcode']" position="after">
+                <field name="feed_gtin"/>
+                <field name="feed_mpn"/>
+                <field name="feed_isbn"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_product_tree_view" model="ir.ui.view">
+        <field name="name">product.product.list.inherit.product_data_feed_number</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_product_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="feed_gtin" optional="hide"/>
+                <field name="feed_mpn" optional="hide"/>
+                <field name="feed_isbn" optional="hide"/>
+            </xpath>
+        </field>
+    </record>    
+
+</odoo>

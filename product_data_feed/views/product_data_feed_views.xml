@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <menuitem
+        id="menu_data_feed_config"
+        name="Product Data Feeds"
+        parent="website.menu_website_global_configuration"
+        groups="sales_team.group_sale_manager"
+        sequence="90"
+    />
+
+    <record id="action_column_list" model="ir.actions.act_window">
+        <field name="name">Columns</field>
+        <field name="res_model">product.data.feed.column</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'default_feed_id': active_id, 'active_test': False}</field>
+        <field name="domain">[('feed_id', '=', active_id)]</field>
+    </record>
+
+    <record id="product_data_feed_view_form" model="ir.ui.view">
+        <field name="name">product.data.feed.form</field>
+        <field name="model">product.data.feed</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button
+                        name="action_download"
+                        string="Download"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="not column_ids"
+                    />
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button
+                            name="action_record_list"
+                            string="Items"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-cubes"
+                        />
+                        <button
+                            name="%(action_column_list)d"
+                            string=""
+                            type="action"
+                            class="oe_stat_button"
+                            icon="fa-list"
+                        >
+                            <field name="column_count" string="Columns" widget="statinfo"/>
+                        </button>
+                    </div>
+
+                    <!-- Invisible fields -->
+                    <field name="active" invisible="1"/>
+                    <field name="model_name" invisible="1"/>
+                    <field name="is_template" invisible="1"/>
+                    <field name="parent_feed_id" invisible="1"/>
+
+                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="active" />
+                    <div class="oe_title">
+                        <h1 class="d-flex flex-row">
+                            <field name="name" class="text-truncate" placeholder="Feed Name..." default_focus="1" required="1"/>
+                        </h1>
+                    </div>
+                    <field name="url" widget="CopyClipboardChar" options="{'string': 'Copy URL'}" class="w-100 pb-2"/>
+                    <group>
+                        <group name="general">
+                            <field name="recipient_id"/>
+                            <field name="type_id" invisible="not type_id" readonly="1"/>
+                            <field name="model_id" string="Use model" widget="radio" options="{'horizontal': true}" readonly="column_ids" />
+                        </group>
+                        <group name="records">
+                            <field name="model_domain" widget="domain" options="{'model': 'model_name', 'in_dialog': True}" invisible="not model_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Columns" name="columns">
+                            <field name="column_ids" mode="list">
+                                <list edit="false" create="false" limit="75">
+                                    <field name="sequence" widget="handle" />
+                                    <field name="display_name" string="Name" />
+                                    <field name="format" optional="show" width="0.3" />
+                                    <field name="limit" optional="show" width="0.3" />
+                                    <field name="is_required" optional="show" width="0.3" />
+                                    <field name="language_id" optional="hide"/>
+                                    <field name="feed_warning" optional="show" decoration-warning="feed_warning"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Settings" name="settings">
+                            <group class="o_label_nowrap">
+                                <group string="General" name="general_settings">
+                                    <label for="use_token"/>
+                                    <div class="o_row flex">
+                                        <field name="use_token" widget="boolean_toggle" class="oe_inline" style="flex:0.25"/>
+                                        <field name="access_token" invisible="not use_token" class="oe_inline"/>
+                                        <button
+                                            name="action_generate_token"
+                                            title="Refresh token"
+                                            type="object"
+                                            class="btn-secondary oe_inline"
+                                            icon="fa-refresh"
+                                            confirm="Do you want to change the access token?"
+                                            invisible="not use_token"
+                                        />
+                                    </div>
+                                    <field name="website_ids" groups="website.group_multi_website" options="{'no_open': True, 'no_create': True}" widget="many2many_tags"/>
+                                    <label for="file_type"/>
+                                    <div class="o_row" name="file_type">
+                                        <field name="file_type" widget="selection" style="flex:2"/>
+                                        <div invisible="file_type not in ['csv', 'tsv']" class="text-900 mr-3">Separator</div>
+                                        <field name="text_separator" invisible="file_type not in ['csv', 'tsv']"/>
+                                        <span class="oe_read_only" invisible="file_type != 'xml' or not xml_specification">: </span>
+                                        <field name="xml_specification" invisible="file_type != 'xml'"/>
+                                    </div>
+                                    <label for="filename"/>
+                                    <div class="o_row">
+                                        <field name="use_filename" widget="boolean_toggle"/>
+                                        <field name="filename" required="use_filename" invisible="not use_filename"/>
+                                    </div>
+                                </group>
+                                <group string="Advanced" name="advanced_settings">
+                                    <field name="is_template" help="Mark the feed as a feed template (for cloning feature)."/>
+                                    <field name="image_resolution" required="1"/>
+                                    <field name="lang" widget="selection"/>
+                                    <field name="product_root_category" string="Root Category"/>
+                                </group>
+                                <group string="Prices" name="prices">
+                                    <field name="currency_id" options="{'no_open': True, 'no_create': True}" invisible="pricelist_id"/>
+                                    <field name="currency_position" widget="selection"/>
+                                    <field name="pricelist_id" options="{'no_create': True}"/>
+                                    <field name="sale_pricelist_id" options="{'no_create': True}"/>
+                                    <field name="price_include_taxes" widget="boolean_toggle"/>
+                                </group>
+                                <group string="Stock" name="stock">
+                                    <field name="availability_type"/>
+                                    <field name="stock_location_ids" widget="many2many_tags" options="{'no_open': True, 'no_create': True}"/>
+                                    <field name="out_of_stock_mode"/>
+                                </group>
+                            </group>
+                            <group string="Technical" name="technical_settings">
+                                <group>
+                                    <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                                    <field name="tz" widget="selection"/>
+                                </group>
+                                <group>
+                                    <field name="content_disposition"/>
+                                    <field name="debug_mode" widget="boolean_toggle" groups="base.group_no_one"/>
+                                    <field name="with_traceback" string="Full Error Traceback" groups="base.group_no_one"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="product_data_feed_view_tree" model="ir.ui.view">
+        <field name="name">product.data.feed.list</field>
+        <field name="model">product.data.feed</field>
+        <field name="arch" type="xml">
+            <list string="Data Feeds" decoration-success="is_template">
+                <field name="is_template" column_invisible="1"/>
+                <field name="name"/>
+                <field name="type_id" optional="hide"/>
+                <field name="model_name" string="Model" groups="base.group_no_one" optional="hide"/>
+                <field name="use_token" string="Token" optional="show"/>
+                <field name="file_type" optional="show"/>
+                <field name="xml_specification" optional="show"/>
+                <field name="column_count" string="Columns" sum="Total" optional="hide"/>
+                <field name="lang" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="product_data_feed_view_search" model="ir.ui.view">
+        <field name="name">product.data.feed.search</field>
+        <field name="model">product.data.feed</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Feed Name" filter_domain="['|', ('name', 'ilike', self)]"/>
+                <filter name="filter_not_template" string="Feeds" domain="[('is_template', '=', False)]"/>
+                <filter name="filter_is_template" string="Templates" domain="[('is_template', '=', True)]"/>
+                <separator/>
+                <filter string="Archived" name="filter_archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_recipient" string="Recipient" domain="[]" context="{'group_by': 'recipient_id'}"/>
+                    <filter name="group_template" string="Is Template" domain="[]" context="{'group_by': 'is_template'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_data_feeds" model="ir.actions.act_window">
+        <field name="name">Data Feeds</field>
+        <field name="res_model">product.data.feed</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem
+        id="menu_data_feeds"
+        name="Product Data Feeds"
+        parent="website_sale.menu_catalog"
+        groups="sales_team.group_sale_manager"
+        sequence="10"
+        action="action_data_feeds"
+    />
+
+</odoo>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="product_template_form_view" model="ir.ui.view">
+        <field name="name">product.template.common.form.inherit.product_data_feed_number</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='inventory']" position="after">
+                <page string="Extra" name="feed_extra">
+                    <group name="feed_extra">
+                        <group string="Codes" name="feed_codes"/>
+                        <group string="Additional" name="feed_additional"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_only_form_view" model="ir.ui.view">
+        <field name="name">product.template.product.form.inherit.product_data_feed_number</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='feed_codes']" position="inside">
+                <field name="feed_gtin" invisible="product_variant_count &gt; 1"/>
+                <field name="feed_mpn" invisible="product_variant_count &gt; 1"/>
+                <field name="feed_isbn" invisible="product_variant_count &gt; 1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_tree_view" model="ir.ui.view">
+        <field name="name">product.template.product.list.inherit.product_data_feed_number</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='categ_id']" position="after">
+                <field name="feed_gtin" optional="hide"/>
+                <field name="feed_mpn" optional="hide"/>
+                <field name="feed_isbn" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

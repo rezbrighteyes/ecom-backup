@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+
+    <!-- Since we are adding pricelists, we activate the feature -->
+    <record id="base.group_user" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('product.group_product_pricelist'))]"/>
+    </record>
+
+    <record id="pricelist_uah_regular" model="product.pricelist">
+        <field name="name">Роздрібний, UAH</field>
+        <field name="currency_id" ref="base.UAH"/>
+        <field name="selectable" eval="False"/>
+        <field name="sequence">101</field>
+    </record>
+    <record id="price_item_uah_regular_global" model="product.pricelist.item">
+        <field name="pricelist_id" ref="pricelist_uah_regular"/>
+        <field name="compute_price">formula</field>
+        <field name="base">list_price</field>
+        <field name="applied_on">3_global</field>
+    </record>
+
+    <record id="pricelist_uah_sales" model="product.pricelist">
+        <field name="name">Акційний, UAH</field>
+        <field name="currency_id" ref="base.UAH"/>
+        <field name="selectable" eval="False"/>
+        <field name="sequence">102</field>
+    </record>
+    <record id="price_item_uah_sales_global" model="product.pricelist.item">
+        <field name="pricelist_id" ref="pricelist_uah_sales"/>
+        <field name="compute_price">formula</field>
+        <field name="base">pricelist</field>
+        <field name="base_pricelist_id" ref="pricelist_uah_regular"/>
+        <field name="price_discount">10</field>
+        <field name="applied_on">3_global</field>
+    </record>
+
+    <record id="pricelist_uah_promo" model="product.pricelist">
+        <field name="name">Промо, UAH</field>
+        <field name="currency_id" ref="base.UAH"/>
+        <field name="selectable" eval="False"/>
+        <field name="sequence">103</field>
+    </record>
+    <record id="price_item_uah_promo_3" model="product.pricelist.item">
+        <field name="pricelist_id" ref="pricelist_uah_promo"/>
+        <field name="compute_price">fixed</field>
+        <field name="fixed_price">130</field>
+        <field name="applied_on">1_product</field>
+        <field name="product_tmpl_id" ref="product.product_product_3_product_template"/>
+    </record>
+    <record id="price_item_uah_promo_5" model="product.pricelist.item">
+        <field name="pricelist_id" ref="pricelist_uah_promo"/>
+        <field name="compute_price">fixed</field>
+        <field name="fixed_price">755.33</field>
+        <field name="applied_on">1_product</field>
+        <field name="product_tmpl_id" ref="product.product_product_5_product_template"/>
+    </record>
+    <record id="price_item_uah_promo_13" model="product.pricelist.item">
+        <field name="pricelist_id" ref="pricelist_uah_promo"/>
+        <field name="compute_price">fixed</field>
+        <field name="fixed_price">99.9</field>
+        <field name="applied_on">1_product</field>
+        <field name="product_tmpl_id" ref="product.product_product_13_product_template"/>
+    </record>
+
+</odoo>

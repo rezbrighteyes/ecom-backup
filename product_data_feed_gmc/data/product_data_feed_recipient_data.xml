@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+
+    <!-- Data Feed Recipients -->
+    <record id="recipient_google_merchant_center" model="product.data.feed.recipient">
+        <field name="name">Google Merchant Center</field>
+        <field name="special_avail_in">in_stock</field>
+        <field name="special_avail_out">out_of_stock</field>
+        <field name="special_avail_order">backorder</field>
+    </record>
+
+</odoo>

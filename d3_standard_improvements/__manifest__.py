@@ -43,5 +43,5 @@
     ],
     
     # license
-    'license': 'LGPL-3',
+    'license': 'OPL-1',
 }

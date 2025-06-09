@@ -27,6 +27,6 @@ Modify Purchase report, add Total Lines, Total Qty
     ],
 
     # License
-    'license': 'LGPL-3'
+    'license': 'OPL-1'
 }
 
