@@ -5,11 +5,13 @@
     'summary': "Standard Improvements",
 
     'description': """
-        Hide Price in Portal
-        Website Branding
-        Operation Costs
-            Create an journal entry
-    """,
+This module includes:
+
+- Hide Price in Portal
+- Website Branding
+- Operation Costs
+  - Create a journal entry
+""",
 
     'author': "Dimension3 Technology",
     'contributors': ['Juan Arcos juanparmer@gmail.com'],

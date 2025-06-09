@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form_inheritd_website_product_extended" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.website_product_extended</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="website_sale_stock.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//setting[@id='product_availability_setting']//div[@id='show_availability_setting']/.." position="after">
+                <div class="row"
+                    id="consider_all_related_warehouses_setting">
+                    <div class="col-12">
+                        <label for="consider_all_related_warehouses" string="Consider All Related Warehouses" class="p-0 col-4 o_light_label mb-3 mt-2"/>
+                        <field name="consider_all_related_warehouses" class="w-auto"/>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
+
