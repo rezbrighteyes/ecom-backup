@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="product_data_feed_column_view_form" model="ir.ui.view">
+        <field name="name">product.data.feed.column.form</field>
+        <field name="model">product.data.feed.column</field>
+        <field name="arch" type="xml">
+            <form string="Feed Column">
+                <sheet>
+                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="active"/>
+                    <field name="active" invisible="1" />
+                    <field name="recipient_id" invisible="1" />
+                    <field name="model_name" invisible="1" />
+                    <field name="file_type" invisible="1" />
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" placeholder="Name" default_focus="1"/></h1>
+                    </div>
+                    <group>
+                        <group name="source">
+                            <field name="feed_id" options="{'no_create': True}" />
+                            <field name="type" />
+                            <label for="value" string="Value" invisible="type == 'special'"/>
+                            <div class="o_row" invisible="type == 'special'">
+                                <field name="field_ids" invisible="1" />
+                                <field name="field_ttype" invisible="1" />
+                                <field name="relation_model_id" invisible="1" />
+                                <field name="value" invisible="type != 'text'" required="type == 'text'"/>
+                                <field name="field_id"
+                                       domain="[('id', 'in', field_ids)]"
+                                       options="{'no_open': True, 'no_create': True}"
+                                       invisible="type != 'field'" required="type == 'field'"/>
+                                <field name="relation_field_id"
+                                       domain="[('model_id', '=', relation_model_id)]"
+                                       options="{'no_open': True, 'no_create': True}"
+                                       invisible="type != 'field' or type == 'field' and field_ttype not in ['many2one', 'many2many', 'one2many']"
+                                       required="type == 'field' and  field_ttype in ['many2one', 'many2many', 'one2many']"/>
+                                <field name="value_id"
+                                       domain="[('recipient_id', '=', recipient_id), ('column_name', '=', name)]"
+                                       context="{'default_recipient_id': recipient_id, 'default_column_name': name}"
+                                       invisible="type != 'value'"
+                                       required="type == 'value'"/>
+                            </div>
+                            <field name="special_type" invisible="type != 'special'" required="type == 'special'"/>
+                        </group>
+                        <group name="options">
+                            <field name="is_required"/>
+                            <field name="language_id" options="{'no_open': True, 'no_create': True}"/>
+                        </group>
+                    </group>
+                    <!-- Product Attributes -->
+                    <group name="product_attribute" colspan="4" invisible="special_type not in ['product_attribute', 'product_attribute_multi']" class="o_label_nowrap">
+                        <field name="product_attribute_id"
+                               invisible="special_type != 'product_attribute'"
+                               options="{'no_open': True, 'no_create': True}"/>
+                        <field name="product_attribute_ids"
+                               widget="many2many_tags"
+                               invisible="special_type != 'product_attribute_multi'"
+                               options="{'no_open': True, 'no_create': True}"/>
+                        <field name="with_product_attribute_name"
+                               string="Include Attribute Name"
+                               invisible="special_type != 'product_attribute_multi'"/>
+                    </group>
+                    <div invisible="special_type not in ['product_attribute']" colspan="4" class="mt16">
+                        <span class="alert alert-info" role="alert">If the specified attribute has several values, only the first attribute value will be used.</span>
+                    </div>
+                    <!-- Product Images -->
+                    <group name="product_image" colspan="4" invisible="special_type not in ['image_link', 'additional_image_link', 'all_image_link']">
+                        <label for="image_url_is_unique"/>
+                        <div class="o_row">
+                            <field name="image_url_is_unique" widget="boolean_toggle"/>
+                            <span class="text-muted">Use the image checksum in the image URL for uniqueness.</span>
+                        </div>
+                        <field name="include_template_images" widget="boolean_toggle" invisible="not (model_name == 'product.product' and special_type in ['additional_image_link', 'all_image_link'])"/>
+                    </group>
+                    <!-- Image Fields -->
+                    <group name="image_options" colspan="4" invisible="field_ttype != 'binary'">
+                        <field name="is_image_url" widget="boolean_toggle"/>
+                    </group>
+                    <!-- Multi Fields -->
+                    <group string="Multi Field Specifications" colspan="4" name="multi_field_specs"
+                           invisible="field_ttype not in ['many2many', 'one2many'] and special_type not in ['all_image_link', 'additional_image_link', 'product_attribute_multi']"
+                    >
+                        <label for="multi_value_type" invisible="field_ttype not in ['many2many', 'one2many'] and special_type not in ['all_image_link', 'additional_image_link', 'product_attribute_multi']"/>
+                        <div class="o_row" invisible="field_ttype not in ['many2many', 'one2many'] and special_type not in ['all_image_link', 'additional_image_link', 'product_attribute_multi']">
+                            <field name="multi_value_type"/>
+                            <label for="multi_value_separator" string="Separator:" class="text-muted" invisible="multi_value_type != 'string'"/>
+                            <field name="multi_value_separator" invisible="multi_value_type != 'string'"/>
+                            <label for="multi_limit" string="Limit:" class="text-muted"/>
+                            <field name="multi_limit"/>
+                            <label for="multi_index" string="Index:" class="text-muted"/>
+                            <field name="multi_index"/>
+                        </div>
+                        <field name="multi_field_name" invisible="field_ttype not in ['many2many', 'one2many']"/>
+                        <field name="multi_dict_keys" invisible="multi_value_type != 'list_of_dict'" placeholder="country,rate,amount"/>
+                        <label for="multi_dict_key" string="Attribute Keys" invisible="multi_value_type != 'list_of_dict'"/>
+                        <div class="o_row" invisible="multi_value_type != 'list_of_dict'">
+                            <field name="multi_dict_key" required="multi_value_type == 'list_of_dict' and not multi_dict_keys"/>
+                            <field name="multi_dict_value" required="multi_value_type == 'list_of_dict' and not multi_dict_keys"/>
+                        </div>
+                        <field name="multi_domain" string="Domain" invisible="field_ttype not in ['many2many', 'one2many']"/>
+                        <field name="multi_suffix" string="Suffix" invisible="field_ttype not in ['many2many', 'one2many']"/>
+                    </group>
+                    <group name="multi_field" colspan="4" invisible="special_type != 'multi_field'">
+                        <field name="multi_field_names" />
+                        <field name="multi_field_format"/>
+                        <field name="multi_field_values_are_required" widget="boolean_toggle"/>
+                    </group>
+                    <notebook>
+                        <page string="Value Formatting" name="value_format">
+                            <group class="o_label_nowrap">
+                                <group string="General" name="general">
+                                    <field name="limit"/>
+                                    <field name="format" invisible="type not in ['field', 'special']"/>
+                                    <field name="format_numbers" widget="boolean_toggle" invisible="type not in ['field', 'special']"/>
+                                    <field name="is_cdata" invisible="file_type != 'xml'"/>
+                                </group>
+                                <group string="HTML" invisible="field_ttype != 'html'" name="html">
+                                    <field name="html_make_links_absolute" widget="boolean_toggle"/>
+                                    <field name="html_encoding" widget="radio" options="{'horizontal': true}"/>
+                                    <field name="escape_html" widget="boolean_toggle"/>
+                                    <field name="html_full_clean" widget="boolean_toggle"/>
+                                    <field name="clean_html" string="Remove Unwanted Tags" widget="boolean_toggle" invisible="html_full_clean"/>
+                                </group>
+                                <group string="Post-processing" name="post_processing">
+                                    <field name="prefix"/>
+                                    <field name="suffix"/>
+                                    <field name="with_currency_code" widget="boolean_toggle" invisible="type != 'field' or type == 'field' and field_ttype not in ['monetary', 'float']"/>
+                                </group>
+                                <group string="Technical" name="technical" groups="base.group_no_one">
+                                    <field name="sequence"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="product_data_feed_column_view_tree" model="ir.ui.view">
+        <field name="name">product.data.feed.column.view.list</field>
+        <field name="model">product.data.feed.column</field>
+        <field name="arch" type="xml">
+            <list decoration-info="type=='special' and active" decoration-muted="active==False">
+                <field name="sequence" widget="handle"/>
+                <field name="feed_id" optional="hide"/>
+                <field name="name"/>
+                <field name="type" optional="show"/>
+                <field name="special_type" optional="hide"/>
+                <field name="value_id" invisible="type != 'value'" optional="show"/>
+                <field name="field_id" invisible="type != 'field'" optional="show"/>
+                <field name="value" invisible="type != 'text'" optional="hide"/>
+                <field name="format" invisible="type not in ['field', 'special']" optional="hide"/>
+                <field name="limit" invisible="type == 'value'" optional="hide" width="0.3"/>
+                <field name="description" optional="hide"/>
+                <field name="is_required" optional="show" width="0.3"/>
+                <field name="file_type" invisible="1" />
+                <field name="is_cdata" optional="hide" invisible="file_type != 'xml'"/>
+                <field name="language_id" optional="hide"/>
+                <field name="active" widget="boolean_toggle" width="0.2"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="product_data_feed_column_view_search" model="ir.ui.view">
+        <field name="name">product.data.feed.column.view.search</field>
+        <field name="model">product.data.feed.column</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Name" filter_domain="['|', ('name', 'ilike', self), ('value', 'ilike', self)]"/>
+                <separator/>
+                <filter name="filter_is_required" string="Required" domain="[('is_required', '=', True)]"/>
+                <separator/>
+                <filter name="filter_active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="filter_archived" string="Archived" domain="[('active', '=', False)]"/>
+                <separator/>
+                <group expand="0">
+                    <filter name="group_type" string="Type" context="{'group_by': 'type'}"/>
+                    <filter name="group_special_type" string="Special Type" context="{'group_by': 'special_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_data_feed_columns" model="ir.actions.act_window">
+        <field name="name">Columns</field>
+        <field name="res_model">product.data.feed.column</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem
+        id="menu_data_feed_column_list"
+        name="Columns"
+        parent="menu_data_feed_config"
+        action="action_data_feed_columns"
+        sequence="10"
+    />
+
+</odoo>

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "D3 Sale Block",
+    'name': "D3 Purchase E-com",
 
-    'summary': "Sale Block",
+    'summary': "Purchase E-com",
 
     'description': """
-        9.2 Block sale if over the credit limit
+Modify Purchase report, add Total Lines, Total Qty
     """,
 
     'author': 'Dimension3',
@@ -15,25 +15,18 @@
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/15.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'Sales/Sales',
-    'version': '17.1',
+    'category': 'Inventory/Purchase',
+    'version': '18.0.1.1.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['sale'],
+    'depends': ['purchase'],
 
     # always loaded
     'data': [
-        'view/sale_order_view.xml',
-        'view/payment_portal_template.xml',
-        'view/payment_provider_views.xml',
+        'templates/purchase_order_template.xml'
     ],
-
-    'assets': {
-        'web.assets_frontend': [
-            'd3_sale_block/static/src/**/*',
-        ]
-    },
 
     # License
     'license': 'OPL-1'
 }
+

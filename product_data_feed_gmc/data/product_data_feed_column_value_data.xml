@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- pylint:disable=redundant-modulename-xml -->
+<odoo noupdate="1">
+
+    <!-- Column Values -->
+    <record id="value_google_condition_new" model="product.data.feed.column.value">
+        <field name="recipient_id" ref="recipient_google_merchant_center"/>
+        <field name="column_name">condition</field>
+        <field name="name">new</field>
+    </record>
+    <record id="value_google_condition_refurbished" model="product.data.feed.column.value">
+        <field name="recipient_id" ref="recipient_google_merchant_center"/>
+        <field name="column_name">condition</field>
+        <field name="name">refurbished</field>
+    </record>
+    <record id="value_google_condition_used" model="product.data.feed.column.value">
+        <field name="recipient_id" ref="recipient_google_merchant_center"/>
+        <field name="column_name">condition</field>
+        <field name="name">used</field>
+    </record>
+
+</odoo>

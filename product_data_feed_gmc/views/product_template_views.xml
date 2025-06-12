@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="product_template_form_view" model="ir.ui.view">
+        <field name="name">product.template.common.form.inherit.product_data_feed_gmc</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product_data_feed.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='data_feed']/group" position="after">
+                <group string="Google Merchant Center" name="feed_gmc" colspan="4">
+                    <group string="Availability" name="gmc_availability">
+                        <field name="feed_gmc_availability" string="Order Type"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

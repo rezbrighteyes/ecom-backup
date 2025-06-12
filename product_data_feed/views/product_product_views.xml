@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="product_normal_form_view" model="ir.ui.view">
+        <field name="name">product.product.form.inherit.product_data_feed</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='feed_common']" position="before">
+                <button name="action_feed_open_template" string="Open Template" type="object" class="btn-sm btn-secondary"/>
+            </xpath>
+            <xpath expr="//group[@name='feed_common']/group" position="inside">
+                <field name="feed_force_availability"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

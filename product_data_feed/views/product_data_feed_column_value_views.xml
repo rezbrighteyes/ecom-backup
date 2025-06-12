@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="product_data_feed_column_value_view_form" model="ir.ui.view">
+        <field name="name">product.data.feed.column.value.form</field>
+        <field name="model">product.data.feed.column.value</field>
+        <field name="arch" type="xml">
+            <form string="Column Value">
+                <group>
+                    <field name="recipient_id"/>
+                    <field name="column_name"/>
+                    <field name="name" />
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="product_data_feed_column_value_view_tree" model="ir.ui.view">
+        <field name="name">product.data.feed.column.value.list</field>
+        <field name="model">product.data.feed.column.value</field>
+        <field name="arch" type="xml">
+            <list string="Column Values" editable="top">
+                <field name="recipient_id" options="{'no_open': True, 'no_create': True}" />
+                <field name="column_name"/>
+                <field name="name" />
+            </list>
+        </field>
+    </record>
+
+    <record id="action_data_feed_column_values" model="ir.actions.act_window">
+        <field name="name">Column Values</field>
+        <field name="res_model">product.data.feed.column.value</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem
+        id="menu_data_feed_column_values"
+        name="Column Values"
+        parent="menu_data_feed_config"
+        action="action_data_feed_column_values"
+        sequence="11"
+    />
+
+</odoo>

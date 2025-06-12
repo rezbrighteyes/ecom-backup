@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+
+    <!-- Data Feed Columns: product.product  -->
+    <record id="column_gmc_id" model="product.data.feed.column">
+        <field name="sequence">1</field>
+        <field name="name">id</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product.field_product_product__id"/>
+        <field name="limit">50</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_title" model="product.data.feed.column">
+        <field name="sequence">2</field>
+        <field name="name">title</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product.field_product_product__name"/>
+        <field name="limit">150</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_description" model="product.data.feed.column">
+        <field name="sequence">3</field>
+        <field name="name">description</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product.field_product_product__description_sale"/>
+        <field name="is_cdata" eval="True"/>
+        <field name="limit">5000</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_link" model="product.data.feed.column">
+        <field name="sequence">4</field>
+        <field name="name">link</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">special</field>
+        <field name="special_type">link</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_image_link" model="product.data.feed.column">
+        <field name="sequence">5</field>
+        <field name="name">image_link</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">special</field>
+        <field name="special_type">image_link</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_additional_image_link" model="product.data.feed.column">
+        <field name="sequence">6</field>
+        <field name="name">additional_image_link</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">special</field>
+        <field name="special_type">additional_image_link</field>
+        <field name="multi_value_type">list</field>
+        <field name="is_required" eval="False"/>
+    </record>
+    <record id="column_gmc_availability" model="product.data.feed.column">
+        <field name="sequence">8</field>
+        <field name="name">availability</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">special</field>
+        <field name="special_type">availability</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_availability_date" model="product.data.feed.column">
+        <field name="sequence">9</field>
+        <field name="name">availability_date</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">special</field>
+        <field name="special_type">availability_date</field>
+        <field name="format">%Y-%m-%dT%H:%M%z</field>
+        <field name="limit">25</field>
+        <field name="is_required" eval="False"/>
+        <field name="active" eval="False"/>
+    </record>
+    <record id="column_gmc_quantity" model="product.data.feed.column">
+        <field name="sequence">10</field>
+        <field name="name">quantity</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">special</field>
+        <field name="special_type">stock</field>
+        <field name="format">%d</field>
+        <field name="active" eval="False"/>
+    </record>
+    <record id="column_gmc_price" model="product.data.feed.column">
+        <field name="sequence">11</field>
+        <field name="name">price</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">special</field>
+        <field name="special_type">price</field>
+        <field name="format">%.2f</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_sale_price" model="product.data.feed.column">
+        <field name="sequence">12</field>
+        <field name="name">sale_price</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">special</field>
+        <field name="special_type">sale_price</field>
+        <field name="format">%.2f</field>
+        <field name="is_required" eval="False"/>
+    </record>
+    <record id="column_gmc_sale_price_effective_date" model="product.data.feed.column">
+        <field name="sequence">13</field>
+        <field name="name">sale_price_effective_date</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">special</field>
+        <field name="special_type">sale_price_effective_date</field>
+        <field name="format">%Y-%m-%dT%H:%M%z</field>
+        <field name="limit">51</field>
+        <field name="is_required" eval="False"/>
+        <field name="active" eval="True"/>
+    </record>
+    <record id="column_gmc_cost_of_goods_sold" model="product.data.feed.column">
+        <field name="sequence">14</field>
+        <field name="name">cost_of_goods_sold</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">special</field>
+        <field name="special_type">price</field>
+        <field name="format">%.2f</field>
+        <field name="is_required" eval="False"/>
+        <field name="active" eval="False"/>
+    </record>
+    <record id="column_gmc_google_category" model="product.data.feed.column">
+        <field name="sequence">20</field>
+        <field name="name">google_product_category</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product_google_category.field_product_product__google_category_id"/>
+        <field name="relation_field_id" ref="product_google_category.field_product_google_category__code"/>
+        <field name="is_required" eval="False"/>
+    </record>
+    <record id="column_gmc_product_type" model="product.data.feed.column">
+        <field name="sequence">21</field>
+        <field name="name">product_type</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">special</field>
+        <field name="special_type">product_type</field>
+        <field name="limit">750</field>
+        <field name="is_required" eval="False"/>
+        <field name="active" eval="False"/>
+    </record>
+    <record id="column_gmc_brand" model="product.data.feed.column">
+        <field name="sequence">22</field>
+        <field name="name">brand</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product_data_feed_brand.field_product_product__feed_brand_id"/>
+        <field name="limit">70</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_gtin" model="product.data.feed.column">
+        <field name="sequence">23</field>
+        <field name="name">gtin</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product_data_feed_number.field_product_product__feed_gtin"/>
+        <field name="limit">50</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_mpn" model="product.data.feed.column">
+        <field name="sequence">24</field>
+        <field name="name">mpn</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product_data_feed_number.field_product_product__feed_mpn"/>
+        <field name="limit">70</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_condition" model="product.data.feed.column">
+        <field name="sequence">26</field>
+        <field name="name">condition</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">value</field>
+        <field name="value_id" ref="value_google_condition_new"/>
+        <field name="is_required" eval="False"/>
+    </record>
+    <record id="column_gmc_item_group_id" model="product.data.feed.column">
+        <field name="sequence">41</field>
+        <field name="name">item_group_id</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product.field_product_product__product_tmpl_id"/>
+        <field name="relation_field_id" ref="product.field_product_template__id"/>
+        <field name="is_required" eval="True"/>
+        <field name="active" eval="True"/>
+    </record>
+    <record id="column_gmc_product_detail" model="product.data.feed.column">
+        <field name="sequence">46</field>
+        <field name="name">product_detail</field>
+        <field name="feed_id" ref="feed_gmc_product"/>
+        <field name="type">special</field>
+        <field name="special_type">product_attribute_multi</field>
+        <field name="multi_value_type">list_of_dict</field>
+        <field name="multi_dict_key">attribute_name</field>
+        <field name="multi_dict_value">attribute_value</field>
+        <field name="is_required" eval="False"/>
+        <field name="active" eval="False"/>
+    </record>
+
+    <!-- Data Feed Columns: product.template  -->
+    <record id="column_gmc_tmpl_id" model="product.data.feed.column">
+        <field name="sequence">1</field>
+        <field name="name">id</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product.field_product_template__id"/>
+        <field name="limit">50</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_tmpl_title" model="product.data.feed.column">
+        <field name="sequence">2</field>
+        <field name="name">title</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product.field_product_template__name"/>
+        <field name="limit">150</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_tmpl_description" model="product.data.feed.column">
+        <field name="sequence">3</field>
+        <field name="name">description</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product.field_product_template__description_sale"/>
+        <field name="limit">5000</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_tmpl_link" model="product.data.feed.column">
+        <field name="sequence">4</field>
+        <field name="name">link</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">special</field>
+        <field name="special_type">link</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_tmpl_image_link" model="product.data.feed.column">
+        <field name="sequence">5</field>
+        <field name="name">image_link</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">special</field>
+        <field name="special_type">image_link</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_tmpl_additional_image_link" model="product.data.feed.column">
+        <field name="sequence">6</field>
+        <field name="name">additional_image_link</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">special</field>
+        <field name="special_type">additional_image_link</field>
+        <field name="multi_value_type">list</field>
+        <field name="is_required" eval="False"/>
+    </record>
+    <record id="column_gmc_tmpl_availability" model="product.data.feed.column">
+        <field name="sequence">8</field>
+        <field name="name">availability</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">special</field>
+        <field name="special_type">availability</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_tmpl_availability_date" model="product.data.feed.column">
+        <field name="sequence">9</field>
+        <field name="name">availability_date</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">special</field>
+        <field name="special_type">availability_date</field>
+        <field name="format">%Y-%m-%dT%H:%M%z</field>
+        <field name="limit">25</field>
+        <field name="is_required" eval="False"/>
+        <field name="active" eval="False"/>
+    </record>
+    <record id="column_gmc_tmpl_quantity" model="product.data.feed.column">
+        <field name="sequence">10</field>
+        <field name="name">quantity</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">special</field>
+        <field name="special_type">stock</field>
+        <field name="format">%d</field>
+        <field name="active" eval="False"/>
+    </record>
+    <record id="column_gmc_tmpl_price" model="product.data.feed.column">
+        <field name="sequence">11</field>
+        <field name="name">price</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">special</field>
+        <field name="special_type">price</field>
+        <field name="format">%.2f</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_tmpl_sale_price" model="product.data.feed.column">
+        <field name="sequence">12</field>
+        <field name="name">sale_price</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">special</field>
+        <field name="special_type">sale_price</field>
+        <field name="format">%.2f</field>
+        <field name="is_required" eval="False"/>
+    </record>
+    <record id="column_gmc_tmpl_sale_price_effective_date" model="product.data.feed.column">
+        <field name="sequence">13</field>
+        <field name="name">sale_price_effective_date</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">special</field>
+        <field name="special_type">sale_price_effective_date</field>
+        <field name="format">%Y-%m-%dT%H:%M%z</field>
+        <field name="limit">51</field>
+        <field name="is_required" eval="False"/>
+        <field name="active" eval="True"/>
+    </record>
+    <record id="column_gmc_tmpl_cost_of_goods_sold" model="product.data.feed.column">
+        <field name="sequence">14</field>
+        <field name="name">cost_of_goods_sold</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">special</field>
+        <field name="special_type">price</field>
+        <field name="format">%.2f</field>
+        <field name="is_required" eval="False"/>
+        <field name="active" eval="False"/>
+    </record>
+    <record id="column_gmc_tmpl_google_category" model="product.data.feed.column">
+        <field name="sequence">20</field>
+        <field name="name">google_product_category</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product_google_category.field_product_template__google_category_id"/>
+        <field name="relation_field_id" ref="product_google_category.field_product_google_category__code"/>
+        <field name="is_required" eval="False"/>
+    </record>
+    <record id="column_gmc_tmpl_product_type" model="product.data.feed.column">
+        <field name="sequence">21</field>
+        <field name="name">product_type</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">special</field>
+        <field name="special_type">product_type</field>
+        <field name="limit">750</field>
+        <field name="is_required" eval="False"/>
+        <field name="active" eval="False"/>
+    </record>
+    <record id="column_gmc_tmpl_brand" model="product.data.feed.column">
+        <field name="sequence">22</field>
+        <field name="name">brand</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product_data_feed_brand.field_product_template__feed_brand_id"/>
+        <field name="limit">70</field>
+        <field name="is_required" eval="False"/>
+    </record>
+    <record id="column_gmc_tmpl_gtin" model="product.data.feed.column">
+        <field name="sequence">23</field>
+        <field name="name">gtin</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product_data_feed_number.field_product_template__feed_gtin"/>
+        <field name="limit">50</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_tmpl_mpn" model="product.data.feed.column">
+        <field name="sequence">24</field>
+        <field name="name">mpn</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">field</field>
+        <field name="field_id" ref="product_data_feed_number.field_product_template__feed_mpn"/>
+        <field name="limit">70</field>
+        <field name="is_required" eval="True"/>
+    </record>
+    <record id="column_gmc_tmpl_condition" model="product.data.feed.column">
+        <field name="sequence">26</field>
+        <field name="name">condition</field>
+        <field name="feed_id" ref="feed_gmc_product_template"/>
+        <field name="type">value</field>
+        <field name="value_id" ref="value_google_condition_new"/>
+        <field name="is_required" eval="False"/>
+    </record>
+
+</odoo>

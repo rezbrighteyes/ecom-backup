@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="d3_purchase_ecom.report_purchaseorder_document" inherit_id="purchase.report_purchaseorder_document">
+        <xpath expr="//table[hasclass('table')]" position="inside">
+            <tr>
+                <td>
+                    <span>
+                        Total: 
+                        <span t-esc="len(o.order_line.filtered(lambda l: not l.display_type))"/> 
+                        Lines
+                    </span>
+                </td>
+                <td>
+                    <span>
+                        <span t-esc="sum(o.order_line.mapped('product_qty'))"/>
+                        Units 
+                    </span>
+                </td>
+            </tr>
+        </xpath>
+    </template>
+</odoo>

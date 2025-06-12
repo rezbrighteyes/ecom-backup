@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="d3_stock_ecom.report_delivery_document"
+        inherit_id="stock.report_delivery_document">
+        <xpath expr="//div[@name='customer_address']" position="replace">
+            <div name="customer_address"
+                t-if="o.picking_type_id.code != 'incoming' and partner">
+                <t t-if="o.sale_id and o.sale_id.partner_invoice_id">
+                    <strong>Invoice Address:</strong>
+                </t>
+                <t t-else="">
+                    <strong>Customer Address:</strong>
+                </t>
+                <t t-set="show_partner" t-value="True" />
+            </div>
+        </xpath>
+        <xpath expr="//div[@name='partner_header']/div" position="replace">
+            <t t-if="o.sale_id and o.sale_id.partner_invoice_id">
+                <div t-field="o.sale_id.partner_invoice_id"
+                    t-options='{"widget": "contact", "fields": ["address", "name", "phone", "vat"], "no_marker": True, "phone_icons": True}' />
+            </t>
+            <t t-else="">
+                <div t-field="partner.commercial_partner_id"
+                    t-options='{"widget": "contact", "fields": ["address", "name", "phone", "vat"], "no_marker": True, "phone_icons": True}' />
+            </t>
+        </xpath>
+    </template>
+</odoo>
