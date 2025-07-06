@@ -28,6 +28,8 @@ class ProductTemplate(models.Model):
 class Product(models.Model):
     _inherit = 'product.product'
 
+    variant_display_name = fields.Char(compute="_compute_variant_display_name")
+
     def _get_sales_prices(self, website):
         if not self:
             return {}
@@ -89,6 +91,18 @@ class Product(models.Model):
             variant_attributes.append([cmb.attribute_id.name, cmb.name])
         res['variant_attributes'] = variant_attributes
         return res
+
+    def _compute_variant_display_name(self):
+        for product in self:
+            variant_display_name = product.display_name
+            variant_names = []
+            selected_attributes = product.product_tmpl_id.attribute_line_ids.filtered(lambda x: x.show_in_website)
+            for vv in product.product_template_variant_value_ids:
+                if vv.attribute_id.id in selected_attributes.mapped('attribute_id.id'):
+                    variant_names.append(vv.name)
+            if variant_names:
+                variant_display_name = f"{product.name} ({', '.join(variant_names)})"
+            product.variant_display_name = variant_display_name
 
 
 class ProductTemplateAttributeLine(models.Model):
