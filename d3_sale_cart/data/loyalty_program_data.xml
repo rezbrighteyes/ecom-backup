@@ -1,29 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- 10 percent coupons -->
-    <record id="10_percent_coupon" model="loyalty.program">
-        <field name="name">10% Discount Coupons</field>
-        <field name="program_type">coupons</field>
-        <field name="applies_on">current</field>
-        <field name="trigger">with_code</field>
-        <field name="portal_point_name">Coupon points</field>
-    </record>
+    <data noupdate="True">
+        <!-- 10 percent coupons -->
+        <record id="10_percent_coupon" model="loyalty.program">
+            <field name="name">10% Discount Coupons</field>
+            <field name="program_type">coupons</field>
+            <field name="applies_on">current</field>
+            <field name="trigger">with_code</field>
+            <field name="portal_point_name">Coupon points</field>
+        </record>
 
-    <record id="10_percent_coupon_rule" model="loyalty.rule">
-        <field name="program_id" ref="10_percent_coupon" />
-    </record>
+        <record id="10_percent_coupon_rule" model="loyalty.rule">
+            <field name="program_id" ref="10_percent_coupon" />
+        </record>
 
-    <record id="10_percent_coupon_reward" model="loyalty.reward">
-        <field name="reward_type">discount</field>
-        <field name="discount">10</field>
-        <field name="discount_mode">percent</field>
-        <field name="discount_applicability">order</field>
-        <field name="program_id" ref="10_percent_coupon" />
-    </record>
+        <record id="10_percent_coupon_reward" model="loyalty.reward">
+            <field name="reward_type">discount</field>
+            <field name="discount">10</field>
+            <field name="discount_mode">percent</field>
+            <field name="discount_applicability">order</field>
+            <field name="program_id" ref="10_percent_coupon" />
+        </record>
 
-    <record id="10_percent_coupon_communication" model="loyalty.mail">
-        <field name="trigger">create</field>
-        <field name="mail_template_id" ref="loyalty.mail_template_loyalty_card" />
-        <field name="program_id" ref="10_percent_coupon" />
-    </record>
+        <record id="10_percent_coupon_communication" model="loyalty.mail">
+            <field name="trigger">create</field>
+            <field name="mail_template_id" ref="loyalty.mail_template_loyalty_card" />
+            <field name="program_id" ref="10_percent_coupon" />
+        </record>
+    </data>
 </odoo>

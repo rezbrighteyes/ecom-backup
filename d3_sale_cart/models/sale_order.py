@@ -20,8 +20,11 @@ class SaleOrder(models.Model):
         Card = self.env["loyalty.card"]
         History = self.env["loyalty.history"]
 
-        program = self.env.ref("d3_sale_cart.10_percent_coupon")
+        # program = self.env.ref("d3_sale_cart.10_percent_coupon")
+        program = self.company_id.program_coupon_abandoned_cart_email
         partner = self.partner_id
+
+        days = self.company_id.days_coupon_abandoned_cart_email or 2
 
         wizard_vals = {
             "mode": "selected",
@@ -29,7 +32,7 @@ class SaleOrder(models.Model):
             "program_id": program.id,
             "coupon_qty": 1,
             "description": _("Gift for Customer"),
-            "valid_until": fields.Date.add(fields.Date.context_today(self), days=2),
+            "valid_until": fields.Date.add(fields.Date.context_today(self), days=days),
         }
         wizard = Wizard.create(wizard_vals)
 

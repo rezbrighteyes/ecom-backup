@@ -26,7 +26,7 @@
 
     # always loaded
     'data': [
-        'data/loyalty_program_data.xml',
+        # 'data/loyalty_program_data.xml',
         'views/res_config_view.xml',
     ],
 

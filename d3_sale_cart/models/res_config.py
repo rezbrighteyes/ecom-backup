@@ -11,3 +11,11 @@ class ResConfigSettings(models.TransientModel):
         related="company_id.create_coupon_abandoned_cart_email",
         readonly=False
     )
+    days_coupon_abandoned_cart_email = fields.Integer(
+        related="company_id.days_coupon_abandoned_cart_email",
+        readonly=False
+    )
+    program_coupon_abandoned_cart_email = fields.Many2one(
+        related="company_id.program_coupon_abandoned_cart_email",
+        readonly=False
+    )
