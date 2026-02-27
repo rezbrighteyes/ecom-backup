@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Copyright (c) 2018-Present Webkul Software Pvt. Ltd. (<https://webkul.com/>) -->
+    <!-- See LICENSE URL <https://store.webkul.com/license.html/> for full copyright and licensing details. -->
+    <data>
+        <record id="shipping_starshipit_credential__inherit_form" model="ir.ui.view">
+            <field name="name">carrer.credential.starshipit.form</field>
+            <field name="model">delivery.carrier</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="delivery.view_delivery_carrier_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page string="Starshipit Credentials" invisible="delivery_type != 'starshipit'">
+                        <group>
+                            <group>
+                                <field name="starshipit_api_key"
+                                    required="delivery_type == 'starshipit'" password="True" />
+                            </group>
+                            <group>
+                                <field name="starshipit_subscription_key"
+                                    required="delivery_type == 'starshipit'" password="True" />
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="sale_order_starshipit" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='sale_shipping']" position="after">
+                    <group name="Starshipit" string="Starshipit">
+                        <field name="starshipit_service_code" readonly="1"/>
+                        <field name="starshipit_service_name" readonly="1"/>
+                        <field name="starshipit_service_price" readonly="1"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="stock_picking_starshipit" model="ir.ui.view">
+            <field name="name">stock.picking.form.inherit</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.view_picking_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='other_infos']" position="after">
+                    <group name="Starshipit" string="Starshipit">
+                        <field name="starshipit_service_code" readonly="1"/>
+                        <field name="starshipit_service_name" readonly="1"/>
+                        <field name="starshipit_service_price" readonly="1"/>
+                    </group>
+                </xpath>
+                <xpath expr="//header[last()]" position='inside'>
+                    <button type='object' string='Get Starshipit Rates' name='get_starshipit_rates'
+                        class="oe_highlight"
+                        invisible="delivery_type != 'starshipit' or state in ['done', 'cancel']" />
+                </xpath>
+            </field>
+        </record>
+
+        <record id="delivery_carrier_starshipit_manifest_cron_form" model="ir.ui.view">
+            <field name="name">starshipit.manifest.cron.form</field>
+            <field name="model">delivery.carrier.starshipit.manifest.cron</field>
+            <field name="arch" type="xml">
+                <form string="Starshipit Manifest Cron" create="false">
+                    <sheet>
+                        <group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                        </group>
+                        </group>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+        
+        <record id="delivery_carrier_starshipit_manifest_cron_tree" model="ir.ui.view">
+            <field name="name">delivery.carrier.starshipit.manifest.cron.tree</field>
+            <field name="model">delivery.carrier.starshipit.manifest.cron</field>
+            <field name="arch" type="xml">
+                <list string="Starshipit Manifest" create="false">
+                    <field name="name"/>
+                    <field name="date"/>
+                </list>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_delivery_carrier_starshipit_orders">
+            <field name="name">Starshipit Orders</field>
+            <field name="res_model">delivery.carrier.starshipit.manifest.cron</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <menuitem id="starshipit_shipping_menu" name="Starshipit Services" parent="stock.menu_stock_config_settings"/>
+        <menuitem id="starshipit_shipping_order_menu" parent="starshipit_shipping_menu" name="Daily Order" action="action_delivery_carrier_starshipit_orders"/>
+    </data>
+</odoo>

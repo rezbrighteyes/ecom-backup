@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Copyright (c) 2017-Present Webkul Software Pvt. Ltd. (<https://webkul.com/>) -->
+    <!-- See LICENSE URL <https://store.webkul.com/license.html/> for full copyright and licensing details. -->
+    <record id="wizard_starshipit_services_list" model="ir.ui.view">
+        <field name="name">starshipit.available.services.list</field>
+        <field name="model">starshipit.available.services</field>
+        <field name="arch" type="xml">
+            <list string="Starshipit Rates" create="0">
+                <field name="service_code" />
+                <field name="service_name" />
+                <field name="service_price" />
+                <button name="add_selected_starshipit_rate" string="Select" type='object'
+                    class='btn btn-primary' />
+            </list>
+        </field>
+    </record>
+</odoo>
