@@ -4,14 +4,38 @@
     <template id="product_pixel" inherit_id="website_sale.product">
         <xpath expr="//section[@id='product_detail']" position="before">
             <script type="text/javascript">
-                fbq('track', 'ViewContent', {
-                    content_ids: ['<t t-esc="product.id"/>'],
-                    content_name: '<t t-esc="product.name"/>',
-                    content_type: 'product',
-                    value: <t t-esc="product.list_price"/>,
-                    currency: '<t t-esc="website.currency_id.name"/>'
+                window.addEventListener('load', function() {
+                    if (typeof fbq !== 'undefined') {
+                        fbq('track', 'ViewContent', {
+                            content_ids: ['<t t-esc="product.id"/>'],
+                            content_name: '<t t-esc="product.name"/>',
+                            content_type: 'product',
+                            value: <t t-esc="product.list_price"/>,
+                            currency: '<t t-esc="website.currency_id.name"/>'
+                        });
+                    }
                 });
             </script>
+        </xpath>
+    </template>
+
+    <!-- Inject customer data for Advanced Matching -->
+    <template id="advanced_matching_data" inherit_id="website.layout">
+        <xpath expr="//head" position="inside">
+            <t t-if="request.env.user and not request.env.user._is_public()">
+                <script type="text/javascript">
+                    window._fbAdvancedMatch = {
+                        em: '<t t-esc="request.env.user.email or &quot;&quot;"/>',
+                        fn: '<t t-esc="request.env.user.partner_id.name.split()[0] if request.env.user.partner_id.name else &quot;&quot;"/>',
+                        ln: '<t t-esc="&quot; &quot;.join(request.env.user.partner_id.name.split()[1:]) if request.env.user.partner_id.name else &quot;&quot;"/>',
+                        ph: '<t t-esc="request.env.user.partner_id.phone or &quot;&quot;"/>',
+                        ct: '<t t-esc="request.env.user.partner_id.city or &quot;&quot;"/>',
+                        st: '<t t-esc="request.env.user.partner_id.state_id.name or &quot;&quot;"/>',
+                        zp: '<t t-esc="request.env.user.partner_id.zip or &quot;&quot;"/>',
+                        country: '<t t-esc="request.env.user.partner_id.country_id.code or &quot;&quot;"/>'
+                    };
+                </script>
+            </t>
         </xpath>
     </template>
 </odoo>
