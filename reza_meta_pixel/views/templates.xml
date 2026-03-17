@@ -14,20 +14,4 @@
             </script>
         </xpath>
     </template>
-
-    <!-- Purchase on confirmation page -->
-    <template id="confirmation_pixel" inherit_id="website_sale.confirmation">
-        <xpath expr="//div[hasclass('oe_website_sale')]" position="inside">
-            <t t-if="order">
-                <script type="text/javascript">
-                    fbq('track', 'Purchase', {
-                        value: <t t-esc="order.amount_total"/>,
-                        currency: '<t t-esc="order.currency_id.name"/>',
-                        content_ids: [<t t-foreach="order.order_line" t-as="line">'<t t-esc="line.product_id.id"/>',</t>],
-                        content_type: 'product'
-                    });
-                </script>
-            </t>
-        </xpath>
-    </template>
 </odoo>
