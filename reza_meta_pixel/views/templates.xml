@@ -2,7 +2,7 @@
 <odoo>
     <!-- ViewContent on product page -->
     <template id="product_pixel" inherit_id="website_sale.product">
-        <xpath expr="//div[@id='product_detail']" position="before">
+        <xpath expr="//section[@id='product_detail']" position="before">
             <script type="text/javascript">
                 fbq('track', 'ViewContent', {
                     content_ids: ['<t t-esc="product.id"/>'],
@@ -17,7 +17,7 @@
 
     <!-- Purchase on confirmation page -->
     <template id="confirmation_pixel" inherit_id="website_sale.confirmation">
-        <xpath expr="//div[@id='o_website_sale_free_carrier']" position="before">
+        <xpath expr="//div[hasclass('oe_website_sale')]" position="inside">
             <t t-if="order">
                 <script type="text/javascript">
                     fbq('track', 'Purchase', {
