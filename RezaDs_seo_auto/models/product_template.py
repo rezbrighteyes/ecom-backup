@@ -1,6 +1,7 @@
 # -- coding: utf-8 --
-# Copyright 2026 Reza Mousavi <reza@brighteyes.com.au>
+# Copyright 2026 Reza Shiraz
 # License LGPL-3.
+#ver2
 
 import re
 import unicodedata
@@ -9,8 +10,8 @@ from odoo import api, models
 
 def _make_slug(name):
     name = unicodedata.normalize('NFKD', name).encode('ascii', 'ignore').decode('ascii')
-    name = re.sub(r'[^\w\s-]', '', name).strip().lower()
-    return re.sub(r'[\s_-]+', '-', name)
+    name = re.sub(r'[^\\w\\s-]', '', name).strip().lower()
+    return re.sub(r'[\\s_-]+', '-', name)
 
 
 def _extract_seo_description(html, max_chars=160):
@@ -18,11 +19,11 @@ def _extract_seo_description(html, max_chars=160):
         return None
     text = re.sub(r'</(h[1-6]|p|div|li)>', '. ', html, flags=re.IGNORECASE)
     text = re.sub(r'<[^>]+>', ' ', text)
-    text = re.sub(r'\.\s*\.', '.', text)
-    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r'\\.\\s*\\.', '.', text)
+    text = re.sub(r'\\s+', ' ', text).strip()
     if len(text) < 30:
         return None
-    sentences = re.split(r'(?<=[.!?])\s+', text)
+    sentences = re.split(r'(?<=[.!?])\\s+', text)
     result = ""
     for sentence in sentences:
         if not result and len(sentence) < 20:
@@ -51,12 +52,15 @@ class ProductTemplate(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
-        if 'name' in vals:
+        if 'name' in vals or 'description_ecommerce' in vals:
             for record in self:
-                record._set_seo_defaults(name_changed=True)
+                record._set_seo_defaults(
+                    name_changed='name' in vals,
+                    desc_changed='description_ecommerce' in vals,
+                )
         return res
 
-    def _set_seo_defaults(self, name_changed=False):
+    def _set_seo_defaults(self, name_changed=False, desc_changed=False):
         self.ensure_one()
         updates = {}
 
@@ -66,7 +70,7 @@ class ProductTemplate(models.Model):
         if not self.seo_name or name_changed:
             updates['seo_name'] = _make_slug(self.name)
 
-        if not self.website_meta_description:
+        if not self.website_meta_description or desc_changed:
             desc = _extract_seo_description(self.description_ecommerce)
             if desc:
                 updates['website_meta_description'] = desc
