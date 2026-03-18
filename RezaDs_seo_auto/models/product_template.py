@@ -79,13 +79,13 @@ class ProductTemplate(models.Model):
             if not record.website_meta_keywords or name_changed:
                 keywords = []
                 # Brand (from product_data_feed_brand module)
-                if record.feed_brand_id:
+                if getattr(record, 'feed_brand_id', False):
                     keywords.append(record.feed_brand_id.name)
                 # Category
                 if record.categ_id:
                     keywords.append(record.categ_id.name)
                 # Tags
-                if record.tag_ids:
+                if getattr(record, 'tag_ids', False):
                     keywords += record.tag_ids.mapped('name')
                 # Product name always last
                 keywords.append(record.name)
@@ -110,7 +110,7 @@ class ProductTemplate(models.Model):
                 'sku': self.default_code or '',
                 'brand': {
                     '@type': 'Brand',
-                    'name': self.feed_brand_id.name if self.feed_brand_id else website_name,
+                    'name': self.feed_brand_id.name if getattr(self, 'feed_brand_id', False) else website_name,
                 },
                 'offers': {
                     '@type': 'Offer',
