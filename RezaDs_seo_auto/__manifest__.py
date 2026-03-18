@@ -6,6 +6,9 @@
     'author': 'Reza D Shiraz',
     'license': 'LGPL-3',
     'depends': ['website_sale'],
+    'data': [
+        'views/product_schema.xml',
+    ],
     'installable': True,
     'autoinstall': False,
     'application': False,
