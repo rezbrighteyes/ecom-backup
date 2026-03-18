@@ -5,26 +5,7 @@
               name="RezaDs SEO - Schema.org JSON-LD">
         <xpath expr="//head" position="inside">
             <t t-if="product">
-                <t t-set="in_stock" t-value="product.qty_available > 0"/>
-                <script type="application/ld+json">
-{
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": "<t t-esc="product.name"/>",
-    "description": "<t t-esc="(product.description_sale or product.name or '').replace('&quot;', '').replace('\n', ' ')"/>",
-    "sku": "<t t-esc="product.default_code or ''"/>",
-    "offers": {
-        "@type": "Offer",
-        "priceCurrency": "AUD",
-        "price": "<t t-esc="'%.2f' % product.list_price"/>",
-        "availability": "<t t-if="in_stock">https://schema.org/InStock</t><t t-else="">https://schema.org/OutOfStock</t>",
-        "seller": {
-            "@type": "Organization",
-            "name": "<t t-esc="website.name"/>"
-        }
-    }
-}
-                </script>
+                <script type="application/ld+json" t-out="product.get_schema_jsonld(website.name)"/>
             </t>
         </xpath>
     </template>
