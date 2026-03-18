@@ -54,7 +54,7 @@ class ProductTemplate(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
-        if 'name' in vals or 'description_ecommerce' in vals:
+        if any(f in vals for f in ('name', 'description_ecommerce', 'feed_brand_id', 'tag_ids')):
             self._set_seo_defaults(
                 name_changed='name' in vals,
                 desc_changed='description_ecommerce' in vals,
@@ -78,8 +78,16 @@ class ProductTemplate(models.Model):
 
             if not record.website_meta_keywords or name_changed:
                 keywords = []
+                # Brand (from product_data_feed_brand module)
+                if record.feed_brand_id:
+                    keywords.append(record.feed_brand_id.name)
+                # Category
                 if record.categ_id:
                     keywords.append(record.categ_id.name)
+                # Tags
+                if record.tag_ids:
+                    keywords += record.tag_ids.mapped('name')
+                # Product name always last
                 keywords.append(record.name)
                 updates['website_meta_keywords'] = ', '.join(keywords)
 
@@ -100,6 +108,10 @@ class ProductTemplate(models.Model):
                 'name': self.name or '',
                 'description': self.description_sale or self.name or '',
                 'sku': self.default_code or '',
+                'brand': {
+                    '@type': 'Brand',
+                    'name': self.feed_brand_id.name if self.feed_brand_id else website_name,
+                },
                 'offers': {
                     '@type': 'Offer',
                     'priceCurrency': 'AUD',
