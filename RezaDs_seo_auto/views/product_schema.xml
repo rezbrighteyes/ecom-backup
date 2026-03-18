@@ -4,31 +4,24 @@
               inherit_id="website_sale.product"
               name="RezaDs SEO - Schema.org JSON-LD">
         <xpath expr="//head" position="inside">
-            <script type="application/ld+json">
-{
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": "<t t-esc="product.name"/>",
-    "description": "<t t-esc="product.description_sale or product.name"/>",
-    "sku": "<t t-esc="product.default_code or ''"/>",
-    "brand": {
-        "@type": "Brand",
-        "name": "<t t-esc="product.product_brand_id.name if hasattr(product, 'product_brand_id') and product.product_brand_id else product.name"/>"
-    },
-    "offers": {
-        "@type": "Offer",
-        "url": "<t t-esc="request.httprequest.url"/>",
-        "priceCurrency": "AUD",
-        "price": "<t t-esc="product.list_price"/>",
-        "priceValidUntil": "<t t-esc="(datetime.date.today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d')"/>",
-        "availability": "<t t-if="product.qty_available > 0">https://schema.org/InStock</t><t t-else="">https://schema.org/OutOfStock</t>",
-        "seller": {
-            "@type": "Organization",
-            "name": "<t t-esc="website.name"/>"
-        }
-    }
-}
-            </script>
+            <t t-set="schema_availability" t-value="'https://schema.org/InStock' if product.qty_available > 0 else 'https://schema.org/OutOfStock'"/>
+            <script type="application/ld+json" t-json="{
+                '@context': 'https://schema.org/',
+                '@type': 'Product',
+                'name': product.name,
+                'description': product.description_sale or product.name,
+                'sku': product.default_code or '',
+                'offers': {
+                    '@type': 'Offer',
+                    'priceCurrency': 'AUD',
+                    'price': product.list_price,
+                    'availability': schema_availability,
+                    'seller': {
+                        '@type': 'Organization',
+                        'name': website.name,
+                    }
+                }
+            }"/>
         </xpath>
     </template>
 </odoo>
