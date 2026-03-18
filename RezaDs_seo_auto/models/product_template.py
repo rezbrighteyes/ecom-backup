@@ -99,7 +99,12 @@ class ProductTemplate(models.Model):
         try:
             availability = (
                 'https://schema.org/InStock'
-                if self.qty_available > 0
+        is_published = self.website_published or self.is_published
+        availability = (
+            'https://schema.org/InStock'
+            if is_published
+            else 'https://schema.org/OutOfStock'
+        )
                 else 'https://schema.org/OutOfStock'
             )
             data = {
