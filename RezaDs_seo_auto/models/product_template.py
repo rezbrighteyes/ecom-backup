@@ -88,22 +88,29 @@ class ProductTemplate(models.Model):
 
     def get_schema_jsonld(self, website_name=''):
         self.ensure_one()
-        availability = 'https://schema.org/InStock' if self.qty_available > 0 else 'https://schema.org/OutOfStock'
-        data = {
-            '@context': 'https://schema.org/',
-            '@type': 'Product',
-            'name': self.name,
-            'description': self.description_sale or self.name or '',
-            'sku': self.default_code or '',
-            'offers': {
-                '@type': 'Offer',
-                'priceCurrency': 'AUD',
-                'price': '%.2f' % self.list_price,
-                'availability': availability,
-                'seller': {
-                    '@type': 'Organization',
-                    'name': website_name,
+        try:
+            availability = (
+                'https://schema.org/InStock'
+                if self.qty_available > 0
+                else 'https://schema.org/OutOfStock'
+            )
+            data = {
+                '@context': 'https://schema.org/',
+                '@type': 'Product',
+                'name': self.name or '',
+                'description': self.description_sale or self.name or '',
+                'sku': self.default_code or '',
+                'offers': {
+                    '@type': 'Offer',
+                    'priceCurrency': 'AUD',
+                    'price': '%.2f' % (self.list_price or 0),
+                    'availability': availability,
+                    'seller': {
+                        '@type': 'Organization',
+                        'name': website_name or '',
+                    }
                 }
             }
-        }
-        return json.dumps(data, ensure_ascii=False, indent=2)
+            return json.dumps(data, ensure_ascii=False, indent=2)
+        except Exception:
+            return '{}'
