@@ -3,6 +3,7 @@
 # License LGPL-3.
 
 import re
+import json
 import unicodedata
 from odoo import api, models
 
@@ -48,41 +49,68 @@ class ProductTemplate(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
-        for record in records:
-            record._set_seo_defaults()
+        records._set_seo_defaults()
         return records
 
     def write(self, vals):
         res = super().write(vals)
         if 'name' in vals or 'description_ecommerce' in vals:
-            for record in self:
-                record._set_seo_defaults(
-                    name_changed='name' in vals,
-                    desc_changed='description_ecommerce' in vals,
-                )
+            self._set_seo_defaults(
+                name_changed='name' in vals,
+                desc_changed='description_ecommerce' in vals,
+            )
         return res
 
     def _set_seo_defaults(self, name_changed=False, desc_changed=False):
+        for record in self:
+            updates = {}
+
+            if not record.website_meta_title or name_changed:
+                updates['website_meta_title'] = record.name[:60]
+
+            if not record.seo_name or name_changed:
+                updates['seo_name'] = _make_slug(record.name)
+
+            if not record.website_meta_description or desc_changed:
+                desc = _extract_seo_description(record.description_ecommerce)
+                if desc:
+                    updates['website_meta_description'] = desc
+
+            if not record.website_meta_keywords or name_changed:
+                keywords = []
+                if record.categ_id:
+                    keywords.append(record.categ_id.name)
+                keywords.append(record.name)
+                updates['website_meta_keywords'] = ', '.join(keywords)
+
+            if updates:
+                super(ProductTemplate, record).write(updates)
+
+    def get_schema_jsonld(self, website_name=''):
         self.ensure_one()
-        updates = {}
-
-        if not self.website_meta_title or name_changed:
-            updates['website_meta_title'] = self.name[:60]
-
-        if not self.seo_name or name_changed:
-            updates['seo_name'] = _make_slug(self.name)
-
-        if not self.website_meta_description or desc_changed:
-            desc = _extract_seo_description(self.description_ecommerce)
-            if desc:
-                updates['website_meta_description'] = desc
-
-        if not self.website_meta_keywords or name_changed:
-            keywords = []
-            if self.categ_id:
-                keywords.append(self.categ_id.name)
-            keywords.append(self.name)
-            updates['website_meta_keywords'] = ', '.join(keywords)
-
-        if updates:
-            super(ProductTemplate, self).write(updates)
+        try:
+            availability = (
+                'https://schema.org/InStock'
+                if self.qty_available > 0
+                else 'https://schema.org/OutOfStock'
+            )
+            data = {
+                '@context': 'https://schema.org/',
+                '@type': 'Product',
+                'name': self.name or '',
+                'description': self.description_sale or self.name or '',
+                'sku': self.default_code or '',
+                'offers': {
+                    '@type': 'Offer',
+                    'priceCurrency': 'AUD',
+                    'price': '%.2f' % (self.list_price or 0),
+                    'availability': availability,
+                    'seller': {
+                        '@type': 'Organization',
+                        'name': website_name or '',
+                    }
+                }
+            }
+            return json.dumps(data, ensure_ascii=False, indent=2)
+        except Exception:
+            return '{}'
