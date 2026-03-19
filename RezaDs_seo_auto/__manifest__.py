@@ -1,11 +1,11 @@
 {
     'name': 'RezaDs SEO Auto',
-    'version': '18.0.1.0.0',
+    'version': '18.0.4.0.0',
     'category': 'Website/eCommerce',
-    'summary': 'Auto-set SEO slug, title and meta description on product create/write',
+    'summary': 'Auto SEO, Schema.org rich snippets, stock-aware sitemap, 301 redirects',
     'author': 'Reza D Shiraz',
     'license': 'LGPL-3',
-    'depends': ['website_sale'],
+    'depends': ['website_sale', 'stock'],
     'data': [
         'views/product_schema.xml',
     ],

@@ -1,21 +1,13 @@
-# -- coding: utf-8 --
-# Copyright 2026 Reza Shiraz
-# License LGPL-3.
-
+import logging
 from odoo import models
+
+_logger = logging.getLogger(__name__)
 
 
 class ProductTemplateSitemap(models.Model):
     _inherit = 'product.template'
 
     def _get_sitemap_urls(self, query_string=None, canonical_params=None):
-        """
-        Stock-aware sitemap priority:
-            qty > 10  → 1.0  fully stocked, crawl first
-            qty 1-10  → 0.8  low stock but available
-            qty = 0   → 0.1  out of stock, crawl last
-        lastmod reflects write_date so Google sees stock changes fast.
-        """
         root = super()._get_sitemap_urls(query_string, canonical_params)
 
         published = self.env['product.template'].sudo().search([
@@ -25,20 +17,20 @@ class ProductTemplateSitemap(models.Model):
 
         result = []
         for product in published:
-            qty = product.qty_available
+            try:
+                if product._is_in_stock():
+                    priority = 1.0
+                else:
+                    priority = 0.1
 
-            if qty > 10:
-                priority = 1.0
-            elif qty > 0:
-                priority = 0.8
-            else:
-                priority = 0.1
-
-            result.append({
-                'loc': '/shop/%s' % product.website_slug,
-                'priority': priority,
-                'lastmod': product.write_date.strftime('%Y-%m-%d'),
-            })
+                slug = product.seo_name or '%s-%s' % (product.name or '', product.id)
+                result.append({
+                    'loc': '/shop/%s' % slug,
+                    'priority': priority,
+                    'lastmod': product.write_date.strftime('%Y-%m-%d'),
+                })
+            except Exception as e:
+                _logger.warning('Sitemap error for product %s: %s', product.id, e)
 
         return result
 
