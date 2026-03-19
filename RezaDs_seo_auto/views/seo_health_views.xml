@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_template_seo_health_tree" model="ir.ui.view">
+        <field name="name">product.template.seo.health.tree</field>
+        <field name="model">product.template</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <list string="SEO Health" decoration-danger="seo_score &lt;= 2" decoration-warning="seo_score == 3" decoration-success="seo_score &gt;= 4">
+                <field name="name"/>
+                <field name="seo_score" string="Score /5" widget="progressbar" options="{'max_value': 5}"/>
+                <field name="seo_issues"/>
+                <field name="website_meta_title" string="SEO Title"/>
+                <field name="website_meta_description" string="Meta Desc"/>
+                <field name="seo_name" string="Slug"/>
+                <field name="default_code" string="SKU"/>
+                <field name="website_published" string="Published"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="product_template_seo_health_search" model="ir.ui.view">
+        <field name="name">product.template.seo.health.search</field>
+        <field name="model">product.template</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <search string="SEO Health">
+                <field name="name"/>
+                <field name="default_code"/>
+                <separator/>
+                <filter name="published" string="Published" domain="[('website_published', '=', True)]"/>
+                <separator/>
+                <filter name="poor_seo" string="Poor SEO (0-2)" domain="[('seo_score', '&lt;=', 2)]"/>
+                <filter name="ok_seo" string="OK SEO (3)" domain="[('seo_score', '=', 3)]"/>
+                <filter name="good_seo" string="Good SEO (4-5)" domain="[('seo_score', '&gt;=', 4)]"/>
+                <separator/>
+                <filter name="no_description" string="No Meta Description" domain="[('website_meta_description', '=', False)]"/>
+                <filter name="no_ecom_desc" string="No eCommerce Description" domain="[('description_ecommerce', '=', False)]"/>
+                <filter name="no_sku" string="No SKU" domain="[('default_code', '=', False)]"/>
+                <filter name="no_slug" string="No URL Slug" domain="[('seo_name', '=', False)]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="group_score" string="SEO Score" context="{'group_by': 'seo_score'}"/>
+                    <filter name="group_categ" string="Category" context="{'group_by': 'categ_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_seo_health_dashboard" model="ir.actions.act_window">
+        <field name="name">SEO Health</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="product_template_seo_health_tree"/>
+        <field name="search_view_id" ref="product_template_seo_health_search"/>
+        <field name="domain">[('website_published', '=', True)]</field>
+        <field name="context">{'search_default_published': 1, 'search_default_poor_seo': 1}</field>
+    </record>
+
+    <menuitem id="menu_seo_health_root"
+              name="SEO Health"
+              parent="website.menu_website_configuration"
+              action="action_seo_health_dashboard"
+              sequence="100"/>
+</odoo>
