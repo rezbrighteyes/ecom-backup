@@ -5,7 +5,7 @@
               name="RezaDs SEO - Schema.org JSON-LD">
         <xpath expr="//head/meta[last()]" position="after">
             <t t-if="product and product._name == 'product.template'">
-                <script type="application/ld+json" t-raw="product.get_schema_jsonld(website.name)"/>
+                <script type="application/ld+json" t-out="product.get_schema_jsonld(website.name)"/>
             </t>
         </xpath>
     </template>
