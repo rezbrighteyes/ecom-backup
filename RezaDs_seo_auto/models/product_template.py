@@ -1,7 +1,3 @@
-# -- coding: utf-8 --
-# Copyright 2026 Reza Shiraz
-# License LGPL-3.
-
 import re
 import json
 import logging
@@ -68,18 +64,14 @@ class ProductTemplate(models.Model):
     def _set_seo_defaults(self, name_changed=False, desc_changed=False):
         for record in self:
             updates = {}
-
             if not record.website_meta_title or name_changed:
                 updates['website_meta_title'] = record.name[:60]
-
             if not record.seo_name or name_changed:
                 updates['seo_name'] = _make_slug(record.name)
-
             if not record.website_meta_description or desc_changed:
                 desc = _extract_seo_description(record.description_ecommerce)
                 if desc:
                     updates['website_meta_description'] = desc
-
             if not record.website_meta_keywords or name_changed:
                 keywords = []
                 if getattr(record, 'feed_brand_id', False) and record.feed_brand_id:
@@ -90,16 +82,21 @@ class ProductTemplate(models.Model):
                     keywords += record.tag_ids.mapped('name')
                 keywords.append(record.name)
                 updates['website_meta_keywords'] = ', '.join(keywords)
-
             if updates:
                 super(ProductTemplate, record).write(updates)
 
     def get_schema_jsonld(self, website_name=''):
         self.ensure_one()
         try:
+            website = self.env['website'].get_current_website()
+            wh = website.warehouse_id
+            if wh:
+                qty = self.sudo().with_context(warehouse=wh.id).qty_available
+            else:
+                qty = self.sudo().qty_available
             availability = (
                 'https://schema.org/InStock'
-                if self.sudo().qty_available > 0
+                if qty > 0
                 else 'https://schema.org/OutOfStock'
             )
             image_url = '/web/image/product.template/%s/image_1024' % self.id
