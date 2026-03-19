@@ -5,16 +5,58 @@
         <field name="model">product.template</field>
         <field name="priority">99</field>
         <field name="arch" type="xml">
-            <list string="SEO Health" decoration-danger="seo_score &lt;= 2" decoration-warning="seo_score == 3" decoration-success="seo_score &gt;= 4">
-                <field name="name"/>
-                <field name="seo_score" string="Score /5" widget="progressbar" options="{'max_value': 5}"/>
-                <field name="seo_issues"/>
-                <field name="website_meta_title" string="SEO Title"/>
-                <field name="website_meta_description" string="Meta Desc"/>
-                <field name="seo_name" string="Slug"/>
-                <field name="default_code" string="SKU"/>
-                <field name="website_published" string="Published"/>
+            <list string="SEO Health Dashboard"
+                  decoration-danger="seo_score &lt;= 2"
+                  decoration-warning="seo_score == 3"
+                  decoration-success="seo_score &gt;= 4">
+                <field name="name" string="Product"/>
+                <field name="seo_score_display" string="SEO Score" widget="badge"
+                       decoration-danger="seo_score &lt;= 2"
+                       decoration-warning="seo_score == 3"
+                       decoration-success="seo_score &gt;= 4"/>
+                <field name="seo_score" column_invisible="1"/>
+                <field name="seo_has_title" string="Title" widget="boolean_toggle"/>
+                <field name="seo_has_description" string="Meta Desc" widget="boolean_toggle"/>
+                <field name="seo_has_slug" string="Slug" widget="boolean_toggle"/>
+                <field name="seo_has_content" string="Content" widget="boolean_toggle"/>
+                <field name="seo_has_sku" string="SKU" widget="boolean_toggle"/>
+                <field name="seo_issues" string="Missing"/>
+                <field name="categ_id" string="Category"/>
+                <field name="website_published" string="Live" widget="boolean_toggle"/>
             </list>
+        </field>
+    </record>
+
+    <record id="product_template_seo_health_kanban" model="ir.ui.view">
+        <field name="name">product.template.seo.health.kanban</field>
+        <field name="model">product.template</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" default_group_by="seo_score_display">
+                <field name="name"/>
+                <field name="seo_score"/>
+                <field name="seo_score_display"/>
+                <field name="seo_issues"/>
+                <field name="image_128"/>
+                <field name="website_published"/>
+                <templates>
+                    <t t-name="card">
+                        <aside>
+                            <field name="image_128" widget="image" options="{'size': [80, 80]}"/>
+                        </aside>
+                        <main>
+                            <field name="name" class="fw-bold"/>
+                            <field name="seo_score_display" widget="badge"
+                                   decoration-danger="seo_score &lt;= 2"
+                                   decoration-warning="seo_score == 3"
+                                   decoration-success="seo_score &gt;= 4"/>
+                            <span t-if="record.seo_issues.value" class="text-muted small">
+                                Missing: <field name="seo_issues"/>
+                            </span>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
         </field>
     </record>
 
@@ -25,21 +67,23 @@
         <field name="arch" type="xml">
             <search string="SEO Health">
                 <field name="name"/>
-                <field name="default_code"/>
+                <field name="default_code" string="SKU"/>
+                <field name="categ_id"/>
                 <separator/>
                 <filter name="published" string="Published" domain="[('website_published', '=', True)]"/>
                 <separator/>
-                <filter name="poor_seo" string="Poor SEO (0-2)" domain="[('seo_score', '&lt;=', 2)]"/>
-                <filter name="ok_seo" string="OK SEO (3)" domain="[('seo_score', '=', 3)]"/>
-                <filter name="good_seo" string="Good SEO (4-5)" domain="[('seo_score', '&gt;=', 4)]"/>
+                <filter name="poor_seo" string="Poor (0-2)" domain="[('seo_score', '&lt;=', 2)]"/>
+                <filter name="ok_seo" string="OK (3)" domain="[('seo_score', '=', 3)]"/>
+                <filter name="good_seo" string="Good (4-5)" domain="[('seo_score', '&gt;=', 4)]"/>
                 <separator/>
-                <filter name="no_description" string="No Meta Description" domain="[('website_meta_description', '=', False)]"/>
-                <filter name="no_ecom_desc" string="No eCommerce Description" domain="[('description_ecommerce', '=', False)]"/>
-                <filter name="no_sku" string="No SKU" domain="[('default_code', '=', False)]"/>
-                <filter name="no_slug" string="No URL Slug" domain="[('seo_name', '=', False)]"/>
+                <filter name="no_title" string="No Title" domain="[('seo_has_title', '=', False)]"/>
+                <filter name="no_description" string="No Meta Desc" domain="[('seo_has_description', '=', False)]"/>
+                <filter name="no_content" string="No Content" domain="[('seo_has_content', '=', False)]"/>
+                <filter name="no_sku" string="No SKU" domain="[('seo_has_sku', '=', False)]"/>
+                <filter name="no_slug" string="No Slug" domain="[('seo_has_slug', '=', False)]"/>
                 <separator/>
                 <group expand="0" string="Group By">
-                    <filter name="group_score" string="SEO Score" context="{'group_by': 'seo_score'}"/>
+                    <filter name="group_score" string="SEO Score" context="{'group_by': 'seo_score_display'}"/>
                     <filter name="group_categ" string="Category" context="{'group_by': 'categ_id'}"/>
                 </group>
             </search>
@@ -49,7 +93,7 @@
     <record id="action_seo_health_dashboard" model="ir.actions.act_window">
         <field name="name">SEO Health</field>
         <field name="res_model">product.template</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,kanban,form</field>
         <field name="view_id" ref="product_template_seo_health_tree"/>
         <field name="search_view_id" ref="product_template_seo_health_search"/>
         <field name="domain">[('website_published', '=', True)]</field>
