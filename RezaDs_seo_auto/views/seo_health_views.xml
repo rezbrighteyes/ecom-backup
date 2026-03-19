@@ -5,7 +5,7 @@
         <field name="model">product.template</field>
         <field name="priority">99</field>
         <field name="arch" type="xml">
-            <list string="SEO Health Dashboard"
+            <list string="SEO Health Dashboard — by Reza D Shiraz"
                   decoration-danger="seo_score &lt;= 2"
                   decoration-warning="seo_score == 3"
                   decoration-success="seo_score &gt;= 4">
@@ -91,7 +91,7 @@
     </record>
 
     <record id="action_seo_health_dashboard" model="ir.actions.act_window">
-        <field name="name">SEO Health</field>
+        <field name="name">SEO Health — by Reza D Shiraz</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">list,kanban,form</field>
         <field name="view_id" ref="product_template_seo_health_tree"/>
