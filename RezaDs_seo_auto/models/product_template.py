@@ -6,6 +6,7 @@ import re
 import json
 import logging
 import unicodedata
+from markupsafe import Markup
 from odoo import api, models
 
 _logger = logging.getLogger(__name__)
@@ -81,7 +82,7 @@ class ProductTemplate(models.Model):
 
             if not record.website_meta_keywords or name_changed:
                 keywords = []
-                if getattr(record, 'feed_brand_id', False):
+                if getattr(record, 'feed_brand_id', False) and record.feed_brand_id:
                     keywords.append(record.feed_brand_id.name)
                 if record.categ_id:
                     keywords.append(record.categ_id.name)
@@ -101,11 +102,13 @@ class ProductTemplate(models.Model):
                 if self.sudo().qty_available > 0
                 else 'https://schema.org/OutOfStock'
             )
+            image_url = '/web/image/product.template/%s/image_1024' % self.id
             data = {
                 '@context': 'https://schema.org/',
                 '@type': 'Product',
                 'name': self.name or '',
                 'description': self.description_sale or self.name or '',
+                'image': image_url,
                 'sku': self.default_code or '',
                 'brand': {
                     '@type': 'Brand',
@@ -122,7 +125,7 @@ class ProductTemplate(models.Model):
                     }
                 }
             }
-            return json.dumps(data, ensure_ascii=False, indent=2)
+            return Markup(json.dumps(data, ensure_ascii=False, indent=2))
         except Exception as e:
             _logger.error('Schema JSON-LD error for product %s (id=%s): %s', self.name, self.id, e)
-            return '{}'
+            return Markup('{}')
