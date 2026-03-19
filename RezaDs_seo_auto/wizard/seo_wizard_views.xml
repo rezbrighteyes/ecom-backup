@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seo_regenerate_wizard_form" model="ir.ui.view">
+        <field name="name">seo.regenerate.wizard.form</field>
+        <field name="model">seo.regenerate.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Regenerate SEO — by Reza D Shiraz">
+                <group>
+                    <div class="alert alert-info" role="alert">
+                        <strong><field name="product_count" readonly="1"/> products</strong> selected for SEO regeneration.
+                    </div>
+                </group>
+                <group string="What to regenerate">
+                    <field name="regenerate_title"/>
+                    <field name="regenerate_slug"/>
+                    <field name="regenerate_description"/>
+                    <field name="regenerate_keywords"/>
+                    <field name="regenerate_image_alt"/>
+                </group>
+                <group string="Options">
+                    <field name="overwrite_existing"/>
+                </group>
+                <footer>
+                    <button name="action_regenerate" string="Regenerate SEO" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_seo_regenerate_wizard" model="ir.actions.act_window">
+        <field name="name">Regenerate SEO</field>
+        <field name="res_model">seo.regenerate.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="product.model_product_template"/>
+        <field name="binding_view_types">list</field>
+    </record>
+</odoo>

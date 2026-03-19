@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="product_schema_jsonld"
+              inherit_id="website.layout"
+              name="RezaDs SEO - Schema.org JSON-LD">
+        <xpath expr="//head/meta[last()]" position="after">
+            <t t-if="product and product._name == 'product.template'">
+                <script type="application/ld+json" t-out="product.get_schema_jsonld(website.name)"/>
+            </t>
+        </xpath>
+    </template>
+</odoo>
