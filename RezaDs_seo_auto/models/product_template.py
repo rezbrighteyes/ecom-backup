@@ -1,11 +1,11 @@
-# -- coding: utf-8 --
-# Copyright 2026 Reza Shiraz
-# License LGPL-3.
-
 import re
 import json
+import logging
 import unicodedata
+from markupsafe import Markup
 from odoo import api, models
+
+_logger = logging.getLogger(__name__)
 
 STOP_WORDS = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
 
@@ -64,53 +64,61 @@ class ProductTemplate(models.Model):
     def _set_seo_defaults(self, name_changed=False, desc_changed=False):
         for record in self:
             updates = {}
-
             if not record.website_meta_title or name_changed:
                 updates['website_meta_title'] = record.name[:60]
-
             if not record.seo_name or name_changed:
                 updates['seo_name'] = _make_slug(record.name)
-
             if not record.website_meta_description or desc_changed:
                 desc = _extract_seo_description(record.description_ecommerce)
                 if desc:
                     updates['website_meta_description'] = desc
-
             if not record.website_meta_keywords or name_changed:
                 keywords = []
-                # Brand (from product_data_feed_brand module)
-                if getattr(record, 'feed_brand_id', False):
+                if getattr(record, 'feed_brand_id', False) and record.feed_brand_id:
                     keywords.append(record.feed_brand_id.name)
-                # Category
                 if record.categ_id:
                     keywords.append(record.categ_id.name)
-                # Tags
                 if getattr(record, 'tag_ids', False):
                     keywords += record.tag_ids.mapped('name')
-                # Product name always last
                 keywords.append(record.name)
                 updates['website_meta_keywords'] = ', '.join(keywords)
-
             if updates:
                 super(ProductTemplate, record).write(updates)
+
+    def _is_in_stock(self):
+        self.ensure_one()
+        product_sudo = self.sudo()
+        if getattr(product_sudo, 'allow_out_of_stock_order', False):
+            return True
+        variant_ids = product_sudo.product_variant_ids.ids
+        if not variant_ids:
+            return False
+        quants = self.env['stock.quant'].sudo().search([
+            ('product_id', 'in', variant_ids),
+            ('location_id.usage', '=', 'internal'),
+            ('quantity', '>', 0),
+        ])
+        return sum(quants.mapped('quantity')) > 0
 
     def get_schema_jsonld(self, website_name=''):
         self.ensure_one()
         try:
             availability = (
                 'https://schema.org/InStock'
-                if self.qty_available > 0
+                if self._is_in_stock()
                 else 'https://schema.org/OutOfStock'
             )
+            image_url = '/web/image/product.template/%s/image_1024' % self.id
             data = {
                 '@context': 'https://schema.org/',
                 '@type': 'Product',
                 'name': self.name or '',
                 'description': self.description_sale or self.name or '',
+                'image': image_url,
                 'sku': self.default_code or '',
                 'brand': {
                     '@type': 'Brand',
-                    'name': self.feed_brand_id.name if getattr(self, 'feed_brand_id', False) else website_name,
+                    'name': self.feed_brand_id.name if getattr(self, 'feed_brand_id', False) and self.feed_brand_id else website_name,
                 },
                 'offers': {
                     '@type': 'Offer',
@@ -123,6 +131,7 @@ class ProductTemplate(models.Model):
                     }
                 }
             }
-            return json.dumps(data, ensure_ascii=False, indent=2)
-        except Exception:
-            return '{}'
+            return Markup(json.dumps(data, ensure_ascii=False, indent=2))
+        except Exception as e:
+            _logger.error('Schema JSON-LD error for product %s (id=%s): %s', self.name, self.id, e)
+            return Markup('{}')
