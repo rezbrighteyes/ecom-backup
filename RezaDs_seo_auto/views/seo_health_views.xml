@@ -58,7 +58,7 @@
 
     <menuitem id="menu_seo_health_root"
               name="SEO Health"
-              parent="website.menu_website_configuration"
+              parent="website.menu_site"
               action="action_seo_health_dashboard"
               sequence="100"/>
 </odoo>
