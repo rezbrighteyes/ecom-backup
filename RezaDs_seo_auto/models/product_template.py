@@ -90,13 +90,23 @@ class ProductTemplate(models.Model):
         try:
             website = self.env['website'].get_current_website()
             wh = website.warehouse_id
-            if wh:
-                qty = self.sudo().with_context(warehouse=wh.id).qty_available
-            else:
-                qty = self.sudo().qty_available
+            product_sudo = self.sudo()
+            qty1 = product_sudo.qty_available
+            qty2 = product_sudo.with_context(warehouse=wh.id).qty_available if wh else qty1
+            total_variant_qty = sum(product_sudo.product_variant_ids.mapped('qty_available'))
+
+            _logger.warning(
+                'SCHEMA DEBUG product=%s id=%s | website=%s warehouse=%s | '
+                'qty_plain=%s qty_with_wh=%s variant_total=%s | company=%s user=%s',
+                self.name, self.id,
+                website.name, wh.name if wh else 'NONE',
+                qty1, qty2, total_variant_qty,
+                self.env.company.name, self.env.user.login
+            )
+
             availability = (
                 'https://schema.org/InStock'
-                if qty > 0
+                if total_variant_qty > 0
                 else 'https://schema.org/OutOfStock'
             )
             image_url = '/web/image/product.template/%s/image_1024' % self.id
