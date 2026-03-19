@@ -4,8 +4,11 @@
 
 import re
 import json
+import logging
 import unicodedata
 from odoo import api, models
+
+_logger = logging.getLogger(__name__)
 
 STOP_WORDS = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
 
@@ -78,16 +81,12 @@ class ProductTemplate(models.Model):
 
             if not record.website_meta_keywords or name_changed:
                 keywords = []
-                # Brand (from product_data_feed_brand module)
                 if getattr(record, 'feed_brand_id', False):
                     keywords.append(record.feed_brand_id.name)
-                # Category
                 if record.categ_id:
                     keywords.append(record.categ_id.name)
-                # Tags
                 if getattr(record, 'tag_ids', False):
                     keywords += record.tag_ids.mapped('name')
-                # Product name always last
                 keywords.append(record.name)
                 updates['website_meta_keywords'] = ', '.join(keywords)
 
@@ -99,7 +98,7 @@ class ProductTemplate(models.Model):
         try:
             availability = (
                 'https://schema.org/InStock'
-                if self.qty_available > 0
+                if self.sudo().qty_available > 0
                 else 'https://schema.org/OutOfStock'
             )
             data = {
@@ -110,7 +109,7 @@ class ProductTemplate(models.Model):
                 'sku': self.default_code or '',
                 'brand': {
                     '@type': 'Brand',
-                    'name': self.feed_brand_id.name if getattr(self, 'feed_brand_id', False) else website_name,
+                    'name': self.feed_brand_id.name if getattr(self, 'feed_brand_id', False) and self.feed_brand_id else website_name,
                 },
                 'offers': {
                     '@type': 'Offer',
@@ -124,5 +123,6 @@ class ProductTemplate(models.Model):
                 }
             }
             return json.dumps(data, ensure_ascii=False, indent=2)
-        except Exception:
+        except Exception as e:
+            _logger.error('Schema JSON-LD error for product %s (id=%s): %s', self.name, self.id, e)
             return '{}'
