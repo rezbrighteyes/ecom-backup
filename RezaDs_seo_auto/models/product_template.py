@@ -85,16 +85,22 @@ class ProductTemplate(models.Model):
             if updates:
                 super(ProductTemplate, record).write(updates)
 
+    def _get_real_qty(self):
+        self.ensure_one()
+        variant_ids = self.sudo().product_variant_ids.ids
+        if not variant_ids:
+            return 0
+        quants = self.env['stock.quant'].sudo().search([
+            ('product_id', 'in', variant_ids),
+            ('location_id.usage', '=', 'internal'),
+            ('quantity', '>', 0),
+        ])
+        return sum(quants.mapped('quantity'))
+
     def get_schema_jsonld(self, website_name=''):
         self.ensure_one()
         try:
-            website = self.env['website'].get_current_website()
-            wh = website.warehouse_id
-            product_ctx = self.sudo().with_company(website.company_id)
-            if wh:
-                product_ctx = product_ctx.with_context(warehouse=wh.id)
-            qty = sum(product_ctx.product_variant_ids.mapped('qty_available'))
-
+            qty = self._get_real_qty()
             availability = (
                 'https://schema.org/InStock'
                 if qty > 0
