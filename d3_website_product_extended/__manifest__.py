@@ -1,8 +1,10 @@
 {
     'name': 'D3 Website Product Extended',
-    'summary': "D3 Website Product Extended",
+    'summary': """
+Extends Odoo Website Shop behavior by enhancing product variant visibility, modifying the shop controller, and improving product grid rendering with variant‑based displays and UI customizations.
+    """,
     'description': """
-        D3 Website Product Extended
+This module enhances Odoo’s eCommerce product browsing experience. It extends the website product grid, adds dynamic variant rendering, and overrides key parts of the /shop controller to provide richer filtering, pricing, and product listing behavior. It also introduces new front‑end assets, custom templates, and configuration settings for managing how products and variants appear on the website.
     """,
     'author': "Dimension3 Technology",
     'website': "https://d-3system.com.au",
