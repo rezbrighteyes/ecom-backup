@@ -108,16 +108,8 @@ class ProductTemplate(models.Model):
             updates = {}
 
             if not record.website_meta_title or name_changed:
-                name_part = record.name[:35] if len(record.name) > 35 else record.name
+                name_part = record.name[:45] if len(record.name) > 45 else record.name
                 title = '%s | Buy Online' % name_part
-                if len(title) <= 60:
-                    try:
-                        website = record.env['website'].get_current_website()
-                        store_name = website.name if website else ''
-                    except Exception:
-                        store_name = ''
-                    if store_name and len(title) + len(store_name) + 3 <= 60:
-                        title = '%s | %s' % (title, store_name)
                 updates['website_meta_title'] = title[:60]
 
             if not record.seo_name or name_changed:
