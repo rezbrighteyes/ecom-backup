@@ -85,25 +85,27 @@ class ProductTemplate(models.Model):
             if updates:
                 super(ProductTemplate, record).write(updates)
 
-    def _get_real_qty(self):
+    def _is_in_stock(self):
         self.ensure_one()
-        variant_ids = self.sudo().product_variant_ids.ids
+        product_sudo = self.sudo()
+        if getattr(product_sudo, 'allow_out_of_stock_order', False):
+            return True
+        variant_ids = product_sudo.product_variant_ids.ids
         if not variant_ids:
-            return 0
+            return False
         quants = self.env['stock.quant'].sudo().search([
             ('product_id', 'in', variant_ids),
             ('location_id.usage', '=', 'internal'),
             ('quantity', '>', 0),
         ])
-        return sum(quants.mapped('quantity'))
+        return sum(quants.mapped('quantity')) > 0
 
     def get_schema_jsonld(self, website_name=''):
         self.ensure_one()
         try:
-            qty = self._get_real_qty()
             availability = (
                 'https://schema.org/InStock'
-                if qty > 0
+                if self._is_in_stock()
                 else 'https://schema.org/OutOfStock'
             )
             image_url = '/web/image/product.template/%s/image_1024' % self.id
