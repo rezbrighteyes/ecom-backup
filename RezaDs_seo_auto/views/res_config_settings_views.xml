@@ -3,51 +3,41 @@
     <record id="res_config_settings_view_form_seo" model="ir.ui.view">
         <field name="name">res.config.settings.view.form.seo</field>
         <field name="model">res.config.settings</field>
-        <field name="inherit_id" ref="website.res_config_settings_view_form"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//setting[@id='google_analytics_setting']" position="before">
+            <xpath expr="//form" position="inside">
                 <block title="RezaDs SEO — by Reza D Shiraz" name="seo_settings">
-                    <setting string="Meta Title Template" help="Use %(name)s for product name. Example: %(name)s | Buy Online">
-                        <div class="content-group">
-                            <div class="row mt16">
-                                <label for="seo_meta_title_template" class="col-lg-3 o_light_label"/>
-                                <field name="seo_meta_title_template" class="col-lg-6"/>
-                            </div>
-                        </div>
+                    <setting string="Meta Title Template">
+                        <field name="seo_meta_title_template"/>
                     </setting>
-                    <setting string="Default Brand Name" help="Fallback brand for Schema.org when product has no brand set.">
-                        <div class="content-group">
-                            <div class="row mt16">
-                                <label for="seo_default_brand" class="col-lg-3 o_light_label"/>
-                                <field name="seo_default_brand" class="col-lg-6"/>
-                            </div>
-                        </div>
+                    <setting string="Default Brand Name">
+                        <field name="seo_default_brand"/>
                     </setting>
-                    <setting string="Product Schema" help="Inject Product JSON-LD for Google rich results.">
+                    <setting string="Product Schema">
                         <field name="seo_enable_schema"/>
                     </setting>
-                    <setting string="Breadcrumb Schema" help="Inject BreadcrumbList JSON-LD.">
+                    <setting string="Breadcrumb Schema">
                         <field name="seo_enable_breadcrumbs"/>
                     </setting>
-                    <setting string="Auto Noindex" help="Add noindex on unpublished or inactive products.">
+                    <setting string="Auto Noindex">
                         <field name="seo_enable_noindex"/>
                     </setting>
-                    <setting string="Auto SEO Title" help="Auto-generate title on product create/rename.">
+                    <setting string="Auto SEO Title">
                         <field name="seo_enable_auto_title"/>
                     </setting>
-                    <setting string="Auto URL Slug" help="Auto-generate clean URL slug.">
+                    <setting string="Auto URL Slug">
                         <field name="seo_enable_auto_slug"/>
                     </setting>
-                    <setting string="Auto Meta Description" help="Auto-generate from eCommerce description.">
+                    <setting string="Auto Meta Description">
                         <field name="seo_enable_auto_description"/>
                     </setting>
-                    <setting string="Auto Keywords" help="Auto-generate from brand, category, tags.">
+                    <setting string="Auto Keywords">
                         <field name="seo_enable_auto_keywords"/>
                     </setting>
-                    <setting string="Auto Image Alt Text" help="Auto-set alt text using product name.">
+                    <setting string="Auto Image Alt Text">
                         <field name="seo_enable_auto_image_alt"/>
                     </setting>
-                    <setting string="301 Redirects" help="Auto-create redirects when URL slug changes.">
+                    <setting string="301 Redirects">
                         <field name="seo_enable_redirects"/>
                     </setting>
                 </block>
