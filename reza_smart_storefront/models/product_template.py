@@ -35,15 +35,23 @@ class ProductTemplateSF(models.Model):
             return 'Only %d left in stock!' % qty
         return ''
 
-    def _sf_get_cross_sells(self, limit=4):
+    def _sf_get_cross_sells(self, limit=6):
         self.ensure_one()
+        try:
+            website = self.env['website'].get_current_website()
+            company = website.company_id
+        except Exception:
+            company = self.env.company
+
         domain = [
             ('website_published', '=', True),
             ('sale_ok', '=', True),
             ('id', '!=', self.id),
+            ('company_id', 'in', [company.id, False]),
         ]
         if self.public_categ_ids:
             domain.append(('public_categ_ids', 'in', self.public_categ_ids.ids))
+
         products = self.env['product.template'].sudo().search(domain, limit=limit * 3)
         price = self.list_price
         similar = products.filtered(
