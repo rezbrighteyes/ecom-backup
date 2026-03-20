@@ -55,8 +55,10 @@ class ProductTemplateSF(models.Model):
         try:
             website = self.env['website'].get_current_website()
             company = website.company_id
+            website_id = website.id
         except Exception:
             company = self.env.company
+            website_id = False
 
         domain = [
             ('website_published', '=', True),
@@ -64,6 +66,10 @@ class ProductTemplateSF(models.Model):
             ('id', '!=', self.id),
             ('company_id', 'in', [company.id, False]),
         ]
+
+        if website_id:
+            domain.append(('website_id', 'in', [website_id, False]))
+
         if self.public_categ_ids:
             domain.append(('public_categ_ids', 'in', self.public_categ_ids.ids))
 
