@@ -13,10 +13,10 @@
                         <div class="o_setting_right_pane">
                             <label for="seo_meta_title_template" string="Meta Title Template"/>
                             <div class="text-muted">
-                                Template for auto-generated SEO titles. Use %(name)s for product name.
+                                Template for auto-generated SEO titles. Use %%(name)s for product name.
                             </div>
                             <div class="content-group mt8">
-                                <field name="seo_meta_title_template" placeholder="%(name)s | Buy Online"/>
+                                <field name="seo_meta_title_template" placeholder="Product Name | Buy Online"/>
                             </div>
                         </div>
                     </div>
