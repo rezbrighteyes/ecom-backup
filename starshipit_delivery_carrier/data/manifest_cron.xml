@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<odoo>
+    <!-- Copyright (c) 2018-Present Webkul Software Pvt. Ltd. (<https://webkul.com/>) -->
+    <!-- See LICENSE URL <https://store.webkul.com/license.html/> for full copyright and licensing details. -->
+    <record id="ir_cron_starshipit_manifest" model="ir.cron">
+        <field name="name">Create Starshipit Order Manifest</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="model_id" ref="model_delivery_carrier_starshipit_manifest_cron"/>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="state">code</field>
+        <field name="code">model.starshipit_manifest_cron()</field>
+        <field name="active" eval="True"/>
+    </record>
+    
+    <data>
+        <record id='seq_manifest_orders_id' model='ir.sequence'>
+            <field name='name'>Booking Id</field>
+            <field name="code">delivery.carrier.starshipit.manifest.cron.id</field>
+            <field name="prefix">MF-</field>
+            <field name="padding">5</field>
+            <field name="suffix">N</field>
+            <field name="company_id" eval="False" />
+            <field name="number_increment">1</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Copyright (c) 2018-Present Webkul Software Pvt. Ltd. (<https://webkul.com/>) -->
+    <!-- See LICENSE URL <https://store.webkul.com/license.html/> for full copyright and licensing details. -->
+    <data noupdate="1">
+
+        <record forcecreate="True" id="product_product_starshipit_delivery" model="product.product">
+            <field name="name">Delivery by Starshipit</field>
+            <field name="default_code">Delivery</field>
+            <field name="type">service</field>
+            <field name="standard_price">10.0</field>
+            <field name="list_price">10.0</field>
+        </record>
+
+        <record forcecreate="True" id="starshipit_stock_packaging" model="stock.package.type">
+            <field name="name">Starshipit Custom Package</field>
+            <field name='package_carrier_type'>starshipit</field>
+            <field name="shipper_package_code">None</field>
+            <field name="height">10</field>
+            <field name="max_weight">2</field>
+            <field name="base_weight">0.1</field>
+            <field name="width">10</field>
+            <field name="packaging_length">10</field>
+            <field name="cover_amount">10</field>
+        </record>
+
+        <record forcecreate="True" id="starshipit_delivery_carrier" model="delivery.carrier">
+            <field name="name">Starshipit</field>
+            <field name="delivery_type">starshipit</field>
+            <field name="product_id" ref="product_product_starshipit_delivery"></field>
+            <field name="packaging_type_id" ref="starshipit_stock_packaging" />
+            <field name="void_shipment">False</field>
+            <field name="uom_id" ref='uom.product_uom_kgm' />
+            <field name='delivery_uom'>KG</field>
+        </record>
+    </data>
+</odoo>

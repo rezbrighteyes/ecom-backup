@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Copyright (c) 2025-Present Webkul Software Pvt. Ltd. (<https://webkul.com/>) -->
+    <!-- See LICENSE URL <https://store.webkul.com/license.html/> for full copyright and licensing
+    details. -->
+    <record id="view_so_warning_wizard_form" model="ir.ui.view">
+        <field name="name">so.warning.wizard.form</field>
+        <field name="model">so.warning.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Package Already Assigned">
+                <group>
+                    <p> One or more stock move lines are already assigned to a package.<br /> Are
+                        you sure you want to continue? </p>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Yes, Continue"
+                        class="btn-primary" />
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

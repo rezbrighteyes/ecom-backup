@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Copyright (c) 2025-Present Webkul Software Pvt. Ltd. (<https://webkul.com/>) -->
+  <!-- See LICENSE URL <https://store.webkul.com/license.html/> for full copyright and licensing
+  details. -->
+
+  <record model="ir.ui.view" id="product_packaging_delivery_form">
+    <field name="name">product.packaging.form.delivery</field>
+    <field name="model">stock.package.type</field>
+    <field name="inherit_id" ref="stock.stock_package_type_form" />
+    <field name="arch" type="xml">
+      <group name="delivery" position="attributes">
+        <attribute name="col">3</attribute>
+      </group>
+      <field name='barcode' position='before'>
+        <field
+              name="wk_max_qty"
+              required="true" />
+      </field>
+      <group name="delivery" position="after">
+        <group name="cover_amount"
+          invisible="package_carrier_type in ('fixed', 'base_on_rule', 'none')">
+          <label for="cover_amount" string='Cover Amount' />
+          <div>
+            <field
+              class="oe_inline"
+              name="cover_amount"
+              required="package_carrier_type not in ('fixed', 'base_on_rule', 'none')" />
+            <field
+              class="oe_inline"
+              name="cover_amount_option"
+              required="package_carrier_type not in ('fixed', 'base_on_rule', 'none')" />
+          </div>
+        </group>
+        <notebook>
+          <page string='Products'>
+            <field name='product_tmpl_ids' />
+          </page>
+        </notebook>
+      </group>
+
+      <field name="shipper_package_code" position="attributes">
+        <attribute name="required">package_carrier_type not in ['fixed', 'base_on_rule', 'none']</attribute>
+      </field>
+      <field name="height" position="attributes">
+        <attribute name="required">package_carrier_type not in ['fixed', 'base_on_rule', 'none']</attribute>
+      </field>
+      <field name="width" position="attributes">
+        <attribute name="required">package_carrier_type not in ['fixed', 'base_on_rule', 'none']</attribute>
+      </field>
+      <field name="packaging_length" position="attributes">
+        <attribute name="required">package_carrier_type not in ['fixed', 'base_on_rule', 'none']</attribute>
+      </field>
+      <field name="max_weight" position="attributes">
+        <attribute name="required">package_carrier_type not in ['fixed', 'base_on_rule', 'none']</attribute>
+      </field>
+    </field>
+  </record>
+
+
+</odoo>
