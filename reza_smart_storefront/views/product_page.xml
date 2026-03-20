@@ -52,7 +52,7 @@
     </template>
 
     <template id="smart_cross_sells" inherit_id="website_sale.product" name="Smart Storefront - Cross Sells">
-        <xpath expr="//div[@id='product_full_description']" position="after">
+        <xpath expr="//div[@id='oe_structure_website_sale_product_2']" position="after">
             <t t-set="cross_sells" t-value="product._sf_get_cross_sells(4)"/>
             <section t-if="cross_sells" class="container my-4">
                 <h5 class="mb-3">You might also like</h5>
