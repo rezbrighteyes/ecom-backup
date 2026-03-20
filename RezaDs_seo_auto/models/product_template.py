@@ -149,17 +149,77 @@ class ProductTemplate(models.Model):
         ])
         return sum(quants.mapped('quantity')) > 0
 
+    def _get_domain(self):
+        try:
+            website = self.env['website'].get_current_website()
+            domain = website.domain or ''
+            if domain and not domain.startswith('http'):
+                domain = 'https://%s' % domain
+            return domain.rstrip('/')
+        except Exception:
+            return ''
+
+    def get_noindex(self):
+        self.ensure_one()
+        try:
+            if not self.website_published:
+                return True
+            if not self.sale_ok:
+                return True
+            if not self.active:
+                return True
+            if not self._is_in_stock() and not getattr(self.sudo(), 'allow_out_of_stock_order', False):
+                return False
+            return False
+        except Exception:
+            return False
+
+    def get_breadcrumb_jsonld(self, website_name=''):
+        self.ensure_one()
+        try:
+            domain = self._get_domain()
+            items = []
+            items.append({
+                '@type': 'ListItem',
+                'position': 1,
+                'name': website_name or 'Home',
+                'item': '%s/' % domain if domain else '/',
+            })
+            items.append({
+                '@type': 'ListItem',
+                'position': 2,
+                'name': 'Shop',
+                'item': '%s/shop' % domain if domain else '/shop',
+            })
+            if self.categ_id and self.categ_id.name:
+                categ_slug = _make_slug(self.categ_id.name)
+                items.append({
+                    '@type': 'ListItem',
+                    'position': 3,
+                    'name': self.categ_id.name,
+                    'item': '%s/shop/category/%s' % (domain, categ_slug) if domain else '/shop/category/%s' % categ_slug,
+                })
+            slug = self.seo_name or self.id
+            items.append({
+                '@type': 'ListItem',
+                'position': len(items) + 1,
+                'name': self.name or '',
+                'item': '%s/shop/%s' % (domain, slug) if domain else '/shop/%s' % slug,
+            })
+            data = {
+                '@context': 'https://schema.org/',
+                '@type': 'BreadcrumbList',
+                'itemListElement': items,
+            }
+            return Markup(json.dumps(data, ensure_ascii=False, indent=2))
+        except Exception as e:
+            _logger.error('Breadcrumb JSON-LD error for product %s: %s', self.name, e)
+            return Markup('{}')
+
     def get_schema_jsonld(self, website_name=''):
         self.ensure_one()
         try:
-            try:
-                website = self.env['website'].get_current_website()
-                domain = website.domain or ''
-                if domain and not domain.startswith('http'):
-                    domain = 'https://%s' % domain
-                domain = domain.rstrip('/')
-            except Exception:
-                domain = ''
+            domain = self._get_domain()
 
             availability = (
                 'https://schema.org/InStock'

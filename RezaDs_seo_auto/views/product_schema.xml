@@ -6,6 +6,10 @@
         <xpath expr="//head/meta[last()]" position="after">
             <t t-if="product and product._name == 'product.template'">
                 <script type="application/ld+json" t-out="product.get_schema_jsonld(website.name)"/>
+                <script type="application/ld+json" t-out="product.get_breadcrumb_jsonld(website.name)"/>
+                <t t-if="product.get_noindex()">
+                    <meta name="robots" content="noindex, nofollow"/>
+                </t>
             </t>
         </xpath>
     </template>

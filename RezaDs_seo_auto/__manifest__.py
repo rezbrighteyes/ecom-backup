@@ -1,8 +1,8 @@
 {
     'name': 'RezaDs SEO Auto',
-    'version': '18.0.6.0.0',
+    'version': '18.0.7.0.0',
     'category': 'Website/eCommerce',
-    'summary': 'Auto SEO, Schema.org, 301 redirects, image alt text, SEO health dashboard, bulk wizard',
+    'summary': 'Auto SEO, Schema.org, breadcrumbs, 301 redirects, noindex, image alt, SEO dashboard',
     'author': 'Reza D Shiraz',
     'license': 'LGPL-3',
     'depends': ['website_sale', 'stock'],
