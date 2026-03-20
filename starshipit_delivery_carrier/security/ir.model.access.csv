@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_available_services_manager,Available Services,model_starshipit_available_services,base.group_user,1,1,1,1
+manifest_cron_starshipit,Cron manifest order,model_delivery_carrier_starshipit_manifest_cron,base.group_user,1,1,1,1

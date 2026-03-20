@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Copyright (c) 2025-Present Webkul Software Pvt. Ltd. (<https://webkul.com/>) -->
+    <!-- See LICENSE URL <https://store.webkul.com/license.html/> for full copyright and licensing
+    details. -->
+    <record id="delivery_carrier_package_form" model="ir.ui.view">
+        <field name="name">product.package.form</field>
+        <field name="model">product.package</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string='Product Package'>
+                <sheet>
+                    <group name="a">
+                        <group name="a1">
+
+                            <field name='order_id' required="0" readonly="1" />
+                            <field name='delivery_type' invisible="1" />
+                            <field name='packaging_id' invisible="1" />
+                            <field name='cover_amount' required="1" />
+                            <field name="product_id" readonly="1" />
+                            <field name="pckage_id" />
+                            <field name="package_id" string='Product Default Package' invisible="1" />
+                            <field name="packaging_id" string='Carrier Default Package' readonly="1" />
+                        </group>
+                        <group name="a2">
+                            <field name="weight" required="1" />
+                            <field name='length' required="1" />
+                            <field name='height' required="1" />
+                            <field name='width' required="1" />
+                            <field name="quantity" readonly="1" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="delivery_carrier_manual_package_form" model="ir.ui.view">
+        <field name="name">product.manual.package.form</field>
+        <field name="model">product.manual.package</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string='Product Manual Package'>
+                <sheet>
+                    <group name="a">
+                        <group name="a1">
+                            <field name='order_id' required="0" readonly="1" />
+                            <field name="product_id" readonly="0" />
+                            <field name="carrier_package_id" string='Carrier Default Package'
+                                readonly="1" />
+                            <field name="package_id" />
+                            <field name="product_package_id" string='Product Default Package'
+                                invisible="1" />
+                            <field name="cover_amount" required="1" />
+                        </group>
+                        <group name="a2">
+                            <field name="weight" required="1" />
+                            <field name='length' required="1" />
+                            <field name='height' required="1" />
+                            <field name='width' required="1" />
+                            <field name="quantity" readonly="0" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_order_form" model="ir.ui.view">
+        <field name="name">sale.order.form</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//notebook/page[last()]" position="after">
+                <page string='Product Package' name='package' invisible="multi_package == False">
+                    <group name="a">
+                        <group name="a1">
+                            <label for="create_package" />
+                            <div class="o_row" name="Create Package" string="Create Package">
+                                <field name="create_package" required="1" />
+                                <button name="generate_sale_packages" type="object"
+                                    string="Generate Sale Packages" class="btn-primary"
+                                    invisible="create_package != 'auto' or packaging_type_all_product or carrier_id == False" />
+                            </div>
+                            <field name="package_id"
+                                invisible="create_package != 'auto' or not packaging_type_all_product" />
+                            <field name="delivery_type" invisible="1" />
+                        </group>
+                        <group name="a2">
+                        </group>
+                    </group>
+                    <separator string="Sale Packages"
+                        invisible="packaging_type_all_product or carrier_id == False" />
+                    <field name='carrier_id' invisible='1' />
+                    <field name='wk_manual_packaging_ids' invisible="create_package == 'auto'"
+                        string="">
+                        <list editable="bottom">
+                            <field name="product_id"
+                                domain="[('id', 'in', product_ids),('type','!=','service')]" />
+                            <field name="quantity" decoration-danger="eligible_quantity" />
+                            <field name="package_id" />
+                            <field name="eligible_quantity" column_invisible="1" />
+                            <field name="product_ids" column_invisible="1" />
+                            <field name="product_package_id" column_invisible="1" />
+                            <field name="carrier_package_id" column_invisible="1" />
+                            <field name="weight" column_invisible="True" />
+                        </list>
+                    </field>
+                    <field name='wk_packaging_ids'
+                        invisible="create_package == 'manual' or packaging_type_all_product or carrier_id == False"
+                        string="">
+                        <list editable="bottom" create="false">
+                            <field name="product_id" readonly="1" />
+                            <field name="quantity" readonly="1" />
+                            <field name="pckage_id" />
+                            <field name="package_id" column_invisible="True" />
+                            <field name="packaging_id" column_invisible="True" />
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_form_view" model="ir.ui.view">
+        <field name="name">product.template.supplier.form.inherit</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view" />
+        <field name="arch" type="xml">
+            <group name="inventory" position="after">
+                <group name="shippingpackaging" string="Shipping Packaging" colspan="4">
+                    <field name="wk_packaging_ids" nolabel="1" />
+                </group>
+            </group>
+        </field>
+    </record>
+</odoo>
