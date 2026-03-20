@@ -50,36 +50,4 @@
             </div>
         </xpath>
     </template>
-
-    <template id="smart_cross_sells" inherit_id="website_sale.product" name="Smart Storefront - Cross Sells">
-        <xpath expr="//div[@id='oe_structure_website_sale_product_2']" position="after">
-            <t t-set="cross_sells" t-value="product._sf_get_cross_sells(4)"/>
-            <section t-if="cross_sells" class="container my-4">
-                <h5 class="mb-3">You might also like</h5>
-                <div class="row g-3">
-                    <t t-foreach="cross_sells" t-as="cs_product">
-                        <div class="col-6 col-md-3">
-                            <a t-att-href="'/shop/%s' % (cs_product.seo_name or cs_product.id)" class="text-decoration-none">
-                                <div class="card h-100 border-0 shadow-sm">
-                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 160px; overflow: hidden;">
-                                        <img t-att-src="'/web/image/product.template/%s/image_256' % cs_product.id"
-                                             t-att-alt="cs_product.name"
-                                             class="img-fluid"
-                                             style="max-height: 150px; object-fit: contain;"
-                                             loading="lazy"/>
-                                    </div>
-                                    <div class="card-body p-2">
-                                        <p class="mb-1 text-dark small fw-bold text-truncate" t-out="cs_product.name"/>
-                                        <p class="mb-0 text-primary fw-bold">
-                                            $<t t-out="'%.2f' % cs_product.list_price"/>
-                                        </p>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                    </t>
-                </div>
-            </section>
-        </xpath>
-    </template>
 </odoo>
