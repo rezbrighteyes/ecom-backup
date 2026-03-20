@@ -5,15 +5,15 @@
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="website.res_config_settings_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//div[hasclass('o_settings_container')]" position="after">
-                <h2 class="mt32">Smart SEO by Reza D Shiraz</h2>
+            <xpath expr="//setting[@id='plausible_setting']" position="after">
+                <h2 class="mt32">Smart SEO</h2>
                 <div class="row mt16 o_settings_container">
                     <div class="col-12 col-lg-6 o_setting_box">
                         <div class="o_setting_left_pane"/>
                         <div class="o_setting_right_pane">
                             <label for="seo_meta_title_template" string="Meta Title Template"/>
                             <div class="text-muted">
-                                Template for auto-generated SEO titles. Use %%(name)s for product name.
+                                Template for auto-generated SEO titles. Use the placeholder name for product name.
                             </div>
                             <div class="content-group mt8">
                                 <field name="seo_meta_title_template" placeholder="Product Name | Buy Online"/>
@@ -25,16 +25,13 @@
                         <div class="o_setting_right_pane">
                             <label for="seo_default_brand" string="Default Brand Name"/>
                             <div class="text-muted">
-                                Fallback brand for Schema.org when product has no brand. Leave empty to use website name.
+                                Fallback brand for Schema.org when product has no brand.
                             </div>
                             <div class="content-group mt8">
                                 <field name="seo_default_brand" placeholder="My Store Name"/>
                             </div>
                         </div>
                     </div>
-                </div>
-                <h3 class="mt16">Schema.org Structured Data</h3>
-                <div class="row mt8 o_settings_container">
                     <div class="col-12 col-lg-6 o_setting_box">
                         <div class="o_setting_left_pane">
                             <field name="seo_enable_schema"/>
@@ -42,7 +39,7 @@
                         <div class="o_setting_right_pane">
                             <label for="seo_enable_schema" string="Product Schema"/>
                             <div class="text-muted">
-                                Inject Product JSON-LD on every product page. Enables rich results in Google with price, stock, and brand.
+                                Inject Product JSON-LD for Google rich results with price, stock, and brand.
                             </div>
                         </div>
                     </div>
@@ -53,7 +50,7 @@
                         <div class="o_setting_right_pane">
                             <label for="seo_enable_breadcrumbs" string="Breadcrumb Schema"/>
                             <div class="text-muted">
-                                Inject BreadcrumbList JSON-LD so Google shows navigation path in search results.
+                                Inject BreadcrumbList JSON-LD for navigation path in search results.
                             </div>
                         </div>
                     </div>
@@ -64,13 +61,10 @@
                         <div class="o_setting_right_pane">
                             <label for="seo_enable_noindex" string="Auto Noindex"/>
                             <div class="text-muted">
-                                Add noindex meta tag on unpublished or inactive products to save Google crawl budget.
+                                Add noindex on unpublished or inactive products to save crawl budget.
                             </div>
                         </div>
                     </div>
-                </div>
-                <h3 class="mt16">Auto-Fill on Product Create/Update</h3>
-                <div class="row mt8 o_settings_container">
                     <div class="col-12 col-lg-6 o_setting_box">
                         <div class="o_setting_left_pane">
                             <field name="seo_enable_auto_title"/>
@@ -78,7 +72,7 @@
                         <div class="o_setting_right_pane">
                             <label for="seo_enable_auto_title" string="Auto SEO Title"/>
                             <div class="text-muted">
-                                Generate SEO title from the template above when a product is created or renamed.
+                                Generate SEO title when a product is created or renamed.
                             </div>
                         </div>
                     </div>
@@ -89,7 +83,7 @@
                         <div class="o_setting_right_pane">
                             <label for="seo_enable_auto_slug" string="Auto URL Slug"/>
                             <div class="text-muted">
-                                Generate clean URL slugs with stop words removed. E.g. "the-big-red-chair" becomes "big-red-chair".
+                                Generate clean slugs with stop words removed.
                             </div>
                         </div>
                     </div>
@@ -100,7 +94,7 @@
                         <div class="o_setting_right_pane">
                             <label for="seo_enable_auto_description" string="Auto Meta Description"/>
                             <div class="text-muted">
-                                Extract meta description from eCommerce description, trimmed to 160 characters.
+                                Extract meta description from eCommerce description.
                             </div>
                         </div>
                     </div>
@@ -122,7 +116,7 @@
                         <div class="o_setting_right_pane">
                             <label for="seo_enable_auto_image_alt" string="Auto Image Alt Text"/>
                             <div class="text-muted">
-                                Set image alt text using product name and brand for Google Image Search.
+                                Set image alt text using product name and brand.
                             </div>
                         </div>
                     </div>
@@ -133,10 +127,13 @@
                         <div class="o_setting_right_pane">
                             <label for="seo_enable_redirects" string="301 Redirects"/>
                             <div class="text-muted">
-                                Auto-create 301 redirects when product URL slug changes to protect Google rankings.
+                                Auto-create redirects when product URL slug changes.
                             </div>
                         </div>
                     </div>
+                </div>
+                <div class="text-muted mt8 fst-italic">
+                    Smart SEO v18.0.8.0.0 — by Reza D Shiraz
                 </div>
             </xpath>
         </field>
