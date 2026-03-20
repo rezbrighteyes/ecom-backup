@@ -1,8 +1,8 @@
 {
     'name': 'RezaDs SEO Auto',
-    'version': '18.0.7.0.0',
+    'version': '18.0.8.0.0',
     'category': 'Website/eCommerce',
-    'summary': 'Auto SEO, Schema.org, breadcrumbs, 301 redirects, noindex, image alt, SEO dashboard',
+    'summary': 'Complete eCommerce SEO: Schema.org, breadcrumbs, auto meta, 301 redirects, sitemap, dashboard',
     'author': 'Reza D Shiraz',
     'license': 'LGPL-3',
     'depends': ['website_sale', 'stock'],
@@ -10,6 +10,7 @@
         'security/ir.model.access.csv',
         'views/product_schema.xml',
         'views/seo_health_views.xml',
+        'views/res_config_settings_views.xml',
         'wizard/seo_wizard_views.xml',
     ],
     'installable': True,

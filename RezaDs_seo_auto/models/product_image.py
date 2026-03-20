@@ -7,16 +7,25 @@ _logger = logging.getLogger(__name__)
 class ProductImage(models.Model):
     _inherit = 'product.image'
 
+    def _seo_image_alt_enabled(self):
+        try:
+            return self.env['ir.config_parameter'].sudo().get_param(
+                'rezads_seo.enable_auto_image_alt', 'True'
+            ) == 'True'
+        except Exception:
+            return True
+
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
-        for record in records:
-            record._set_image_alt()
+        if records._seo_image_alt_enabled():
+            for record in records:
+                record._set_image_alt()
         return records
 
     def write(self, vals):
         res = super().write(vals)
-        if 'product_tmpl_id' in vals:
+        if 'product_tmpl_id' in vals and self._seo_image_alt_enabled():
             for record in self:
                 record._set_image_alt()
         return res
@@ -53,7 +62,5 @@ class ProductImage(models.Model):
                 count += 1
                 if count % 100 == 0:
                     self.env.cr.commit()
-                    _logger.info('Alt text updated: %s images so far', count)
         self.env.cr.commit()
-        _logger.info('Alt text bulk fix done: %s images updated', count)
         return count

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_seo" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.seo</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="RezaDs SEO" string="RezaDs SEO" groups="base.group_system">
+                    <block title="SEO Auto-Fill Settings" name="seo_auto_fill">
+                        <setting id="seo_meta_title_template" string="Meta Title Template" help="Template for auto-generated product SEO titles. Use %(name)s for product name.">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="seo_meta_title_template" class="col-lg-3 o_light_label"/>
+                                    <field name="seo_meta_title_template" class="col-lg-6" placeholder="%(name)s | Buy Online"/>
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="seo_default_brand" string="Default Brand Name" help="Used in Schema.org when product has no brand. Leave empty to use website name.">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="seo_default_brand" class="col-lg-3 o_light_label"/>
+                                    <field name="seo_default_brand" class="col-lg-6" placeholder="My Store Name"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                    <block title="Schema.org Structured Data" name="seo_schema">
+                        <setting id="seo_enable_schema" help="Inject Product JSON-LD on product pages for Google rich results.">
+                            <field name="seo_enable_schema"/>
+                        </setting>
+                        <setting id="seo_enable_breadcrumbs" help="Inject BreadcrumbList JSON-LD for better search result display.">
+                            <field name="seo_enable_breadcrumbs"/>
+                        </setting>
+                        <setting id="seo_enable_noindex" help="Auto add noindex meta tag on unpublished or inactive products.">
+                            <field name="seo_enable_noindex"/>
+                        </setting>
+                    </block>
+                    <block title="Auto-Fill Features" name="seo_features">
+                        <setting id="seo_enable_auto_title" help="Auto-generate SEO title when product is created or renamed.">
+                            <field name="seo_enable_auto_title"/>
+                        </setting>
+                        <setting id="seo_enable_auto_slug" help="Auto-generate clean URL slug from product name.">
+                            <field name="seo_enable_auto_slug"/>
+                        </setting>
+                        <setting id="seo_enable_auto_description" help="Auto-generate meta description from eCommerce description.">
+                            <field name="seo_enable_auto_description"/>
+                        </setting>
+                        <setting id="seo_enable_auto_keywords" help="Auto-generate keywords from brand, category, tags and product name.">
+                            <field name="seo_enable_auto_keywords"/>
+                        </setting>
+                        <setting id="seo_enable_auto_image_alt" help="Auto-set image alt text using product name and brand.">
+                            <field name="seo_enable_auto_image_alt"/>
+                        </setting>
+                        <setting id="seo_enable_redirects" help="Auto-create 301 redirects when product URL changes.">
+                            <field name="seo_enable_redirects"/>
+                        </setting>
+                    </block>
+                    <block title="Module Info" name="seo_info">
+                        <div class="text-muted mt8">
+                            RezaDs SEO Auto v18.0.8.0.0 — by Reza D Shiraz
+                        </div>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>
