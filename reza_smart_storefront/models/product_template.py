@@ -1,6 +1,14 @@
 from datetime import date, timedelta
 from odoo import models
 
+SHIPPING_THRESHOLDS = {
+    'Mangrove Jacks': 69,
+    'WhatYouNeed': 150,
+    'ecomsuperstore': 150,
+    'Sunglass Superstore': 150,
+}
+DEFAULT_SHIPPING_THRESHOLD = 150
+
 
 class ProductTemplateSF(models.Model):
     _inherit = 'product.template'
@@ -10,6 +18,13 @@ class ProductTemplateSF(models.Model):
         while delivery.weekday() >= 5:
             delivery += timedelta(days=1)
         return delivery.strftime('%A %d %B')
+
+    def _sf_get_shipping_threshold(self):
+        try:
+            website = self.env['website'].get_current_website()
+            return SHIPPING_THRESHOLDS.get(website.name, DEFAULT_SHIPPING_THRESHOLD)
+        except Exception:
+            return DEFAULT_SHIPPING_THRESHOLD
 
     def _sf_get_stock_qty(self):
         self.ensure_one()
@@ -35,7 +50,7 @@ class ProductTemplateSF(models.Model):
             return 'Only %d left in stock!' % qty
         return ''
 
-    def _sf_get_cross_sells(self, limit=6):
+    def _sf_get_cross_sells(self, limit=4):
         self.ensure_one()
         try:
             website = self.env['website'].get_current_website()
