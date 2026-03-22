@@ -78,24 +78,14 @@ class ProductTemplateSF(models.Model):
 
     def _sf_get_cross_sells(self, limit=4):
         self.ensure_one()
-        try:
-            website = self.env['website'].get_current_website()
-            company = website.company_id
-            website_id = website.id
-        except Exception:
-            return self.env['product.template']
 
-        # Products assigned to this website OR shared (no website)
-        # BUT must match the website's company OR have no company
         domain = [
             ('website_published', '=', True),
             ('sale_ok', '=', True),
             ('id', '!=', self.id),
-            ('website_id', 'in', [website_id, False]),
-            ('company_id', 'in', [company.id, False]),
         ]
 
-        # Try same public category first
+        # Same public category only
         if self.public_categ_ids:
             cat_domain = domain + [('public_categ_ids', 'in', self.public_categ_ids.ids)]
             products = self.env['product.template'].sudo().search(cat_domain, limit=limit * 5)
@@ -107,7 +97,5 @@ class ProductTemplateSF(models.Model):
                     return similar[:limit]
                 return in_stock[:limit]
 
-        # Fallback: any product on this website/company in stock
-        products = self.env['product.template'].sudo().search(domain, limit=limit * 5)
-        in_stock = products.filtered(lambda p: p._sf_is_available())
-        return in_stock[:limit]
+        # No category or no results — return empty, template shows trust badges
+        return self.env['product.template']
