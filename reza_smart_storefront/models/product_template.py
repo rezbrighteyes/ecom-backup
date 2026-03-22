@@ -14,9 +14,21 @@ class ProductTemplateSF(models.Model):
     _inherit = 'product.template'
 
     def _sf_get_delivery_date(self, days=3):
-        delivery = date.today() + timedelta(days=days)
-        while delivery.weekday() >= 5:
+        today = date.today()
+        # If ordered on weekend, start counting from Monday
+        if today.weekday() == 5:  # Saturday
+            today += timedelta(days=2)
+        elif today.weekday() == 6:  # Sunday
+            today += timedelta(days=1)
+
+        # Count only business days
+        business_days = 0
+        delivery = today
+        while business_days < days:
             delivery += timedelta(days=1)
+            if delivery.weekday() < 5:  # Mon-Fri
+                business_days += 1
+
         return delivery.strftime('%A %d %B')
 
     def _sf_get_shipping_threshold(self):
@@ -73,11 +85,29 @@ class ProductTemplateSF(models.Model):
         if self.public_categ_ids:
             domain.append(('public_categ_ids', 'in', self.public_categ_ids.ids))
 
-        products = self.env['product.template'].sudo().search(domain, limit=limit * 3)
+        products = self.env['product.template'].sudo().search(domain, limit=limit * 5)
+
+        # Filter only products that are in stock
+        in_stock = products.filtered(lambda p: p._sf_is_available())
+
         price = self.list_price
-        similar = products.filtered(
+        similar = in_stock.filtered(
             lambda p: price * 0.3 <= p.list_price <= price * 3
         )
         if len(similar) < limit:
-            similar = products
+            similar = in_stock
         return similar[:limit]
+
+    def _sf_is_available(self):
+        self.ensure_one()
+        if getattr(self, 'allow_out_of_stock_order', False):
+            return True
+        variant_ids = self.sudo().product_variant_ids.ids
+        if not variant_ids:
+            return False
+        quants = self.env['stock.quant'].sudo().search([
+            ('product_id', 'in', variant_ids),
+            ('location_id.usage', '=', 'internal'),
+            ('quantity', '>', 0),
+        ], limit=1)
+        return bool(quants)
