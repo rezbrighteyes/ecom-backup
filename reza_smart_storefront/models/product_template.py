@@ -80,19 +80,19 @@ class ProductTemplateSF(models.Model):
         self.ensure_one()
         try:
             website = self.env['website'].get_current_website()
+            company = website.company_id
             website_id = website.id
         except Exception:
-            website_id = False
-
-        if not website_id:
             return self.env['product.template']
 
-        # Only products explicitly assigned to this website
+        # Products assigned to this website OR shared (no website)
+        # BUT must match the website's company OR have no company
         domain = [
             ('website_published', '=', True),
             ('sale_ok', '=', True),
             ('id', '!=', self.id),
-            ('website_id', '=', website_id),
+            ('website_id', 'in', [website_id, False]),
+            ('company_id', 'in', [company.id, False]),
         ]
 
         # Try same public category first
@@ -107,7 +107,7 @@ class ProductTemplateSF(models.Model):
                     return similar[:limit]
                 return in_stock[:limit]
 
-        # Fallback: any product on this website that's in stock
+        # Fallback: any product on this website/company in stock
         products = self.env['product.template'].sudo().search(domain, limit=limit * 5)
         in_stock = products.filtered(lambda p: p._sf_is_available())
         return in_stock[:limit]
