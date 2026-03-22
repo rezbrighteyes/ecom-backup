@@ -64,7 +64,7 @@
                                 </div>
                                 <div class="sf-details-content" itemprop="description" t-field="product.website_description"/>
                             </div>
-                            <aside class="sf-sidebar">
+                            <aside class="sf-sidebar" id="sf_sidebar">
                                 <t t-set="cross_sells" t-value="product._sf_get_cross_sells(4)"/>
                                 <t t-if="cross_sells">
                                     <h3 class="sf-sidebar-title">You might also like</h3>
@@ -72,8 +72,8 @@
                                         <t t-foreach="cross_sells" t-as="item">
                                             <t t-set="first_variant" t-value="item.product_variant_ids[:1]"/>
                                             <t t-if="first_variant">
-                                                <div class="sf-related-item">
-                                                    <a t-attf-href="/shop/#{slug(item)}" class="sf-related-link">
+                                                <div class="sf-related-item" t-att-data-product-id="first_variant.id" t-att-data-name="item.name" t-att-data-price="'$%.2f' % item.list_price">
+                                                    <a t-att-href="item.website_url" class="sf-related-link">
                                                         <img t-att-src="'/web/image/product.template/%s/image_128' % item.id" class="sf-related-thumb" t-att-alt="item.name" loading="lazy"/>
                                                         <div class="sf-related-info">
                                                             <div class="sf-related-name" t-esc="item.name"/>
@@ -82,14 +82,9 @@
                                                             </div>
                                                         </div>
                                                     </a>
-                                                    <form action="/shop/cart/update" method="POST" style="margin:0;">
-                                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                                        <input type="hidden" name="product_id" t-att-value="first_variant.id"/>
-                                                        <input type="hidden" name="add_qty" value="1"/>
-                                                        <button type="submit" class="sf-add-cart" title="Add to cart">
-                                                            <i class="fa fa-shopping-cart"/>
-                                                        </button>
-                                                    </form>
+                                                    <button type="button" class="sf-add-cart" t-att-data-variant-id="first_variant.id" title="Add to cart">
+                                                        <i class="fa fa-shopping-cart"/>
+                                                    </button>
                                                 </div>
                                             </t>
                                         </t>

@@ -1,115 +1,137 @@
-document.addEventListener('DOMContentLoaded', function() {
-    function makeToast() {
-        var t = document.createElement('div');
-        t.id = 'sf-cart-toast';
-        t.style.cssText = 'position:fixed;top:20px;right:20px;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.15);padding:16px 20px;z-index:9999;display:none;min-width:280px;border:1px solid rgba(0,0,0,0.08);';
+(function () {
+    "use strict";
 
-        var header = document.createElement('div');
-        header.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:12px;';
-        var dot = document.createElement('div');
-        dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;';
-        var title = document.createElement('strong');
-        title.style.fontSize = '14px';
-        title.textContent = 'Added to cart';
-        var close = document.createElement('span');
-        close.style.cssText = 'margin-left:auto;cursor:pointer;color:#999;font-size:18px;';
-        close.textContent = '\u00d7';
-        close.addEventListener('click', function() { t.style.display = 'none'; });
-        header.appendChild(dot);
-        header.appendChild(title);
-        header.appendChild(close);
-
-        var product = document.createElement('div');
-        product.id = 'sf-toast-product';
-        product.style.cssText = 'display:flex;align-items:center;gap:10px;';
-
-        var link = document.createElement('a');
-        link.href = '/shop/cart';
-        link.style.cssText = 'display:block;text-align:center;background:#0F1720;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;margin-top:12px;';
-        link.textContent = 'View cart';
-
-        t.appendChild(header);
-        t.appendChild(product);
-        t.appendChild(link);
-        document.body.appendChild(t);
-        return t;
+    function ready(fn) {
+        if (document.readyState !== 'loading') { fn(); }
+        else { document.addEventListener('DOMContentLoaded', fn); }
     }
 
-    var forms = document.querySelectorAll('.sf-sidebar form');
-    if (!forms.length) return;
+    ready(function () {
+        var sidebar = document.getElementById('sf_sidebar');
+        if (!sidebar) return;
 
-    var toast = makeToast();
+        var buttons = sidebar.querySelectorAll('.sf-add-cart');
+        if (!buttons.length) return;
 
-    forms.forEach(function(form) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            var btn = form.querySelector('.sf-add-cart');
-            var item = form.closest('.sf-related-item');
-            var name = item ? item.querySelector('.sf-related-name').textContent : '';
-            var price = item ? item.querySelector('.sf-related-price').textContent : '';
-            var productId = form.querySelector('input[name="product_id"]').value;
+        // Build toast
+        var toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.15);padding:16px 20px;z-index:9999;display:none;min-width:280px;max-width:340px;border:1px solid rgba(0,0,0,0.08);';
 
-            btn.style.opacity = '0.5';
+        var toastHeader = document.createElement('div');
+        toastHeader.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:12px;';
 
-            fetch('/shop/cart/update_json', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
+        var dot = document.createElement('div');
+        dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;';
+        toastHeader.appendChild(dot);
+
+        var toastTitle = document.createElement('strong');
+        toastTitle.style.fontSize = '14px';
+        toastTitle.textContent = 'Added to cart';
+        toastHeader.appendChild(toastTitle);
+
+        var toastClose = document.createElement('span');
+        toastClose.style.cssText = 'margin-left:auto;cursor:pointer;color:#999;font-size:18px;line-height:1;';
+        toastClose.textContent = '\u00d7';
+        toastClose.addEventListener('click', function () { toast.style.display = 'none'; });
+        toastHeader.appendChild(toastClose);
+
+        var toastBody = document.createElement('div');
+        toastBody.style.cssText = 'display:flex;align-items:center;gap:10px;';
+
+        var toastImg = document.createElement('img');
+        toastImg.style.cssText = 'width:48px;height:48px;border-radius:8px;object-fit:cover;';
+
+        var toastInfo = document.createElement('div');
+        var toastName = document.createElement('div');
+        toastName.style.cssText = 'font-size:13px;font-weight:600;';
+        var toastPrice = document.createElement('div');
+        toastPrice.style.cssText = 'font-size:14px;color:#D4AF37;font-weight:700;';
+        toastInfo.appendChild(toastName);
+        toastInfo.appendChild(toastPrice);
+        toastBody.appendChild(toastImg);
+        toastBody.appendChild(toastInfo);
+
+        var toastLink = document.createElement('a');
+        toastLink.href = '/shop/cart';
+        toastLink.style.cssText = 'display:block;text-align:center;background:#0F1720;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;margin-top:12px;';
+        toastLink.textContent = 'View cart';
+
+        toast.appendChild(toastHeader);
+        toast.appendChild(toastBody);
+        toast.appendChild(toastLink);
+        document.body.appendChild(toast);
+
+        var hideTimer = null;
+
+        function showToast(variantId, name, price) {
+            toastImg.src = '/web/image/product.product/' + variantId + '/image_128';
+            toastName.textContent = name;
+            toastPrice.textContent = price;
+            toast.style.display = 'block';
+            if (hideTimer) clearTimeout(hideTimer);
+            hideTimer = setTimeout(function () { toast.style.display = 'none'; }, 4000);
+        }
+
+        function getCsrf() {
+            var el = document.querySelector('input[name="csrf_token"]');
+            return el ? el.value : '';
+        }
+
+        buttons.forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                var item = btn.closest('.sf-related-item');
+                var variantId = btn.getAttribute('data-variant-id');
+                var name = item.getAttribute('data-name');
+                var price = item.getAttribute('data-price');
+
+                btn.style.opacity = '0.5';
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/shop/cart/update_json', true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        try {
+                            var data = JSON.parse(xhr.responseText);
+                            if (data.result) {
+                                btn.style.opacity = '1';
+                                btn.style.background = '#10b981';
+                                btn.style.borderColor = '#10b981';
+                                btn.style.color = '#fff';
+
+                                var badge = document.querySelector('.my_cart_quantity');
+                                if (badge) {
+                                    badge.textContent = data.result.cart_quantity;
+                                    badge.classList.remove('d-none');
+                                }
+
+                                showToast(variantId, name, price);
+
+                                setTimeout(function () {
+                                    btn.style.background = '';
+                                    btn.style.borderColor = '';
+                                    btn.style.color = '';
+                                }, 2000);
+                                return;
+                            }
+                        } catch (err) {}
+                    }
+                    // Fallback
+                    window.location.href = '/shop/cart/update?product_id=' + variantId + '&add_qty=1&csrf_token=' + getCsrf();
+                };
+                xhr.onerror = function () {
+                    window.location.href = '/shop/cart/update?product_id=' + variantId + '&add_qty=1&csrf_token=' + getCsrf();
+                };
+                xhr.send(JSON.stringify({
                     jsonrpc: '2.0',
                     method: 'call',
-                    params: {product_id: parseInt(productId), add_qty: 1}
-                }),
-                credentials: 'same-origin'
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (data.result) {
-                    btn.style.opacity = '1';
-                    btn.style.background = '#10b981';
-                    btn.style.borderColor = '#10b981';
-                    btn.style.color = '#fff';
-
-                    var badge = document.querySelector('.my_cart_quantity');
-                    if (badge) {
-                        badge.textContent = data.result.cart_quantity;
-                        badge.classList.remove('d-none');
-                    }
-
-                    var tp = document.getElementById('sf-toast-product');
-                    tp.textContent = '';
-
-                    var tImg = document.createElement('img');
-                    tImg.src = '/web/image/product.product/' + productId + '/image_128';
-                    tImg.style.cssText = 'width:48px;height:48px;border-radius:8px;object-fit:cover;';
-
-                    var tInfo = document.createElement('div');
-                    var tName = document.createElement('div');
-                    tName.style.cssText = 'font-size:13px;font-weight:600;';
-                    tName.textContent = name;
-                    var tPrice = document.createElement('div');
-                    tPrice.style.cssText = 'font-size:14px;color:#D4AF37;font-weight:700;';
-                    tPrice.textContent = price;
-                    tInfo.appendChild(tName);
-                    tInfo.appendChild(tPrice);
-                    tp.appendChild(tImg);
-                    tp.appendChild(tInfo);
-
-                    toast.style.display = 'block';
-                    setTimeout(function() { toast.style.display = 'none'; }, 4000);
-                    setTimeout(function() {
-                        btn.style.background = '';
-                        btn.style.borderColor = '';
-                        btn.style.color = '';
-                    }, 2000);
-                }
-            })
-            .catch(function() {
-                btn.style.opacity = '1';
-                form.submit();
+                    params: {product_id: parseInt(variantId), add_qty: 1}
+                }));
             });
         });
     });
-});
+})();
