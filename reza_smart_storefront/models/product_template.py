@@ -59,34 +59,55 @@ class ProductTemplateSF(models.Model):
             return 'Only %d left in stock!' % qty
         return ''
 
+    def _sf_is_available(self):
+        self.ensure_one()
+        if getattr(self, 'allow_out_of_stock_order', False):
+            return True
+        variant_ids = self.sudo().product_variant_ids.ids
+        if not variant_ids:
+            return False
+        self.env.cr.execute("""
+            SELECT 1 FROM stock_quant sq
+            JOIN stock_location sl ON sl.id = sq.location_id
+            WHERE sq.product_id IN %s
+            AND sl.usage = 'internal'
+            AND sq.quantity > 0
+            LIMIT 1
+        """, (tuple(variant_ids),))
+        return bool(self.env.cr.fetchone())
+
     def _sf_get_cross_sells(self, limit=4):
         self.ensure_one()
         try:
             website = self.env['website'].get_current_website()
-            company = website.company_id
             website_id = website.id
         except Exception:
-            company = self.env.company
             website_id = False
 
+        if not website_id:
+            return self.env['product.template']
+
+        # Only products explicitly assigned to this website
         domain = [
             ('website_published', '=', True),
             ('sale_ok', '=', True),
             ('id', '!=', self.id),
-            ('company_id', 'in', [company.id, False]),
+            ('website_id', '=', website_id),
         ]
 
-        if website_id:
-            domain.append(('website_id', 'in', [website_id, False]))
-
+        # Try same public category first
         if self.public_categ_ids:
-            domain.append(('public_categ_ids', 'in', self.public_categ_ids.ids))
+            cat_domain = domain + [('public_categ_ids', 'in', self.public_categ_ids.ids)]
+            products = self.env['product.template'].sudo().search(cat_domain, limit=limit * 5)
+            in_stock = products.filtered(lambda p: p._sf_is_available())
+            if in_stock:
+                price = self.list_price
+                similar = in_stock.filtered(lambda p: price * 0.3 <= p.list_price <= price * 3)
+                if len(similar) >= limit:
+                    return similar[:limit]
+                return in_stock[:limit]
 
-        products = self.env['product.template'].sudo().search(domain, limit=limit * 3)
-        price = self.list_price
-        similar = products.filtered(
-            lambda p: price * 0.3 <= p.list_price <= price * 3
-        )
-        if len(similar) < limit:
-            similar = products
-        return similar[:limit]
+        # Fallback: any product on this website that's in stock
+        products = self.env['product.template'].sudo().search(domain, limit=limit * 5)
+        in_stock = products.filtered(lambda p: p._sf_is_available())
+        return in_stock[:limit]
