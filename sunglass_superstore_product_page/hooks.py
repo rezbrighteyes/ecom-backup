@@ -13,6 +13,7 @@ SS_VIEW_KEYS = [
     'sunglass_superstore_product_page.ss_stock_urgency',
     'sunglass_superstore_product_page.ss_trust_badges',
     'sunglass_superstore_product_page.ss_product_description_crosssells',
+    'sunglass_superstore_product_page.product_hide_native_description',
 ]
 
 
