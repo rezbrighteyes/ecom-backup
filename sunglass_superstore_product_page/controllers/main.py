@@ -1,1 +1,1 @@
-# No controller overrides needed — delivery estimate handled by separate module
+# Delivery estimate is handled by a separate module
