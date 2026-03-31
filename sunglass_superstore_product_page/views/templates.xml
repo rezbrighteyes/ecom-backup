@@ -1,22 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!--
-        BASE VIEW — scoped to website_id=5 by post_init_hook/_apply_scoping.
-        All child templates inherit from this, so they only render on
-        Sunglass Superstore. reza_smart_storefront is unaffected on
-        other websites.
-    -->
-    <template id="product_website_5_view"
-              name="SS: Product Page Base (website 5)"
-              inherit_id="website_sale.product">
-        <xpath expr="." position="inside"/>
-    </template>
-
     <!-- 1. Collection label above product name -->
     <template id="product_collection_label"
               name="SS: Collection Label"
-              inherit_id="sunglass_superstore_product_page.product_website_5_view">
+              inherit_id="website_sale.product"
+              priority="20">
         <xpath expr="//h1[@itemprop='name']" position="before">
             <t t-if="product.public_categ_ids">
                 <p class="ss-collection-label text-uppercase fw-semibold mb-1">
@@ -29,7 +18,8 @@
     <!-- 2. Discount % OFF badge -->
     <template id="product_price_badge"
               name="SS: Discount Badge"
-              inherit_id="sunglass_superstore_product_page.product_website_5_view">
+              inherit_id="website_sale.product"
+              priority="20">
         <xpath expr="//t[@t-call='website_sale.product_price']" position="after">
             <t t-if="combination_info.get('has_discounted_price')
                      and combination_info.get('list_price')
@@ -48,11 +38,10 @@
     <!-- 3. Replace CTA: vertical qty + black Add to Cart + wishlist heart -->
     <template id="product_cta_wrapper"
               name="SS: CTA Wrapper"
-              inherit_id="sunglass_superstore_product_page.product_website_5_view">
+              inherit_id="website_sale.product"
+              priority="20">
         <xpath expr="//div[@id='o_wsale_cta_wrapper']" position="replace">
             <div id="o_wsale_cta_wrapper" class="d-flex align-items-stretch gap-2 mb-3">
-
-                <!-- Qty: exact Odoo structure inside .input-group so JS binds correctly -->
                 <div t-attf-class="css_quantity input-group ss-qty-wrapper {{'d-none' if combination_info['prevent_zero_price_sale'] else ''}}"
                      contenteditable="false">
                     <a t-attf-href="#"
@@ -71,8 +60,6 @@
                         <i class="fa fa-minus"/>
                     </a>
                 </div>
-
-                <!-- Add to Cart -->
                 <div id="add_to_cart_wrap"
                      t-attf-class="{{'d-none' if combination_info['prevent_zero_price_sale'] else 'd-flex'}} flex-grow-1">
                     <a role="button" id="add_to_cart" href="#"
@@ -80,8 +67,6 @@
                         <i class="fa fa-shopping-cart me-2"/>ADD TO CART
                     </a>
                 </div>
-
-                <!-- Wishlist -->
                 <t t-if="is_view_active('website_sale_wishlist.add_to_wishlist')">
                     <t t-call="website_sale_wishlist.add_to_wishlist">
                         <t t-set="_btn_classes"
@@ -94,7 +79,6 @@
                         <i class="fa fa-heart-o"/>
                     </button>
                 </t>
-
                 <div id="product_option_block" class="d-flex flex-wrap w-100"/>
             </div>
         </xpath>
@@ -103,7 +87,8 @@
     <!-- 4. Payment methods -->
     <template id="product_payment_methods"
               name="SS: Payment Methods"
-              inherit_id="sunglass_superstore_product_page.product_website_5_view">
+              inherit_id="website_sale.product"
+              priority="20">
         <xpath expr="//div[@id='o_wsale_cta_wrapper']" position="after">
             <div class="ss-payment border-top border-bottom py-3 my-2">
                 <div class="d-flex align-items-center gap-2 mb-2">
@@ -127,13 +112,13 @@
         </xpath>
     </template>
 
-    <!-- 5. Replace accordion with three inline tabs. -->
+    <!-- 5. Replace accordion -->
     <template id="product_accordion_custom"
               name="SS: Custom Accordion"
-              inherit_id="sunglass_superstore_product_page.product_website_5_view">
+              inherit_id="website_sale.product"
+              priority="20">
         <xpath expr="//t[@t-call='website_sale.product_accordion']" position="replace">
             <div id="product_accordion" class="accordion accordion-flush my-4">
-
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button fw-medium"
@@ -155,7 +140,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed fw-medium"
@@ -164,9 +148,7 @@
                                 data-bs-target="#ss_collapse_size"
                                 aria-expanded="false"
                                 aria-controls="ss_collapse_size">
-                            <span class="ss-accordion-label">
-                                Size &amp; Fit
-                            </span>
+                            <span class="ss-accordion-label">Size &amp; Fit</span>
                         </button>
                     </h2>
                     <div id="ss_collapse_size" class="accordion-collapse collapse">
@@ -174,7 +156,6 @@
                              id="oe_structure_ss_size_fit"/>
                     </div>
                 </div>
-
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed fw-medium"
@@ -183,9 +164,7 @@
                                 data-bs-target="#ss_collapse_material"
                                 aria-expanded="false"
                                 aria-controls="ss_collapse_material">
-                            <span class="ss-accordion-label">
-                                Material &amp; Care
-                            </span>
+                            <span class="ss-accordion-label">Material &amp; Care</span>
                         </button>
                     </h2>
                     <div id="ss_collapse_material" class="accordion-collapse collapse">
@@ -193,7 +172,6 @@
                              id="oe_structure_ss_material"/>
                     </div>
                 </div>
-
             </div>
         </xpath>
     </template>
