@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Stock urgency: inject after the ADD TO CART button, not the wrapper
-         which sunglass templates.xml replaces -->
     <template id="ss_stock_urgency"
               inherit_id="website_sale.product"
               name="SS: Stock Urgency"
@@ -61,83 +59,50 @@
         </xpath>
     </template>
 
+    <!-- Inject cross-sells AFTER the accordion block that templates.xml emits.
+         product_full_description no longer exists — accordion replaced it. -->
     <template id="ss_product_description_crosssells"
-              inherit_id="website_sale.product"
-              name="SS: Description and Cross-Sells"
+              inherit_id="sunglass_superstore_product_page.product_accordion_custom"
+              name="SS: Cross-Sells Sidebar"
               priority="25">
-        <xpath expr="//div[@id='product_full_description']" position="replace">
-            <t t-if="product.website_description">
-                <section id="product_full_description" class="sf-product-details">
-                    <div class="container">
-                        <div class="sf-details-grid">
-                            <div class="sf-details-main">
-                                <div class="sf-details-header">
-                                    <h2 class="sf-details-title">Product Information</h2>
-                                </div>
-                                <div class="sf-details-content" itemprop="description" t-field="product.website_description"/>
-                            </div>
-                            <aside class="sf-sidebar" id="sf_sidebar">
-                                <t t-set="cross_sells" t-value="product._sf_get_cross_sells(4)"/>
-                                <t t-if="cross_sells">
-                                    <h3 class="sf-sidebar-title">You might also like</h3>
-                                    <div class="sf-related-list">
-                                        <t t-foreach="cross_sells" t-as="item">
-                                            <t t-set="first_variant" t-value="item.product_variant_ids[:1]"/>
-                                            <t t-if="first_variant">
-                                                <div class="sf-related-item"
-                                                     t-att-data-product-id="first_variant.id"
-                                                     t-att-data-name="item.name"
-                                                     t-att-data-price="'$%.2f' % item.list_price">
-                                                    <a t-att-href="item.website_url" class="sf-related-link">
-                                                        <img t-att-src="'/web/image/product.template/%s/image_128' % item.id"
-                                                             class="sf-related-thumb"
-                                                             t-att-alt="item.name"
-                                                             loading="lazy"/>
-                                                        <div class="sf-related-info">
-                                                            <div class="sf-related-name" t-esc="item.name"/>
-                                                            <div class="sf-related-price" t-if="item.list_price">
-                                                                $<t t-esc="'%.2f' % item.list_price"/>
-                                                            </div>
-                                                        </div>
-                                                    </a>
-                                                    <button type="button" class="sf-add-cart"
-                                                            t-att-data-variant-id="first_variant.id"
-                                                            title="Add to cart">
-                                                        <i class="fa fa-shopping-cart"/>
-                                                    </button>
+        <xpath expr="//div[@id='product_accordion']" position="after">
+            <t t-set="cross_sells" t-value="product._sf_get_cross_sells(4)"/>
+            <t t-if="cross_sells">
+                <section class="sf-crosssells-section container my-4">
+                    <div class="sf-details-grid">
+                        <div/>
+                        <aside class="sf-sidebar" id="sf_sidebar">
+                            <h3 class="sf-sidebar-title">You might also like</h3>
+                            <div class="sf-related-list">
+                                <t t-foreach="cross_sells" t-as="item">
+                                    <t t-set="first_variant" t-value="item.product_variant_ids[:1]"/>
+                                    <t t-if="first_variant">
+                                        <div class="sf-related-item"
+                                             t-att-data-product-id="first_variant.id"
+                                             t-att-data-name="item.name"
+                                             t-att-data-price="'$%.2f' % item.list_price">
+                                            <a t-att-href="item.website_url" class="sf-related-link">
+                                                <img t-att-src="'/web/image/product.template/%s/image_128' % item.id"
+                                                     class="sf-related-thumb"
+                                                     t-att-alt="item.name"
+                                                     loading="lazy"/>
+                                                <div class="sf-related-info">
+                                                    <div class="sf-related-name" t-esc="item.name"/>
+                                                    <div class="sf-related-price" t-if="item.list_price">
+                                                        $<t t-esc="'%.2f' % item.list_price"/>
+                                                    </div>
                                                 </div>
-                                            </t>
-                                        </t>
-                                    </div>
+                                            </a>
+                                            <button type="button" class="sf-add-cart"
+                                                    t-att-data-variant-id="first_variant.id"
+                                                    title="Add to cart">
+                                                <i class="fa fa-shopping-cart"/>
+                                            </button>
+                                        </div>
+                                    </t>
                                 </t>
-                                <t t-else="">
-                                    <h3 class="sf-sidebar-title">Why shop with us</h3>
-                                    <div class="sf-trust-sidebar">
-                                        <div class="sf-trust-row-item">
-                                            <i class="fa fa-truck sf-trust-ico"/>
-                                            <div>
-                                                <strong>Fast Dispatch</strong>
-                                                <small>Ships within 24 hours</small>
-                                            </div>
-                                        </div>
-                                        <div class="sf-trust-row-item">
-                                            <i class="fa fa-lock sf-trust-ico"/>
-                                            <div>
-                                                <strong>Secure Checkout</strong>
-                                                <small>SSL encrypted payments</small>
-                                            </div>
-                                        </div>
-                                        <div class="sf-trust-row-item">
-                                            <i class="fa fa-refresh sf-trust-ico"/>
-                                            <div>
-                                                <strong>Easy Returns</strong>
-                                                <small>30-day hassle free</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </t>
-                            </aside>
-                        </div>
+                            </div>
+                        </aside>
                     </div>
                 </section>
             </t>
