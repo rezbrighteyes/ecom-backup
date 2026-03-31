@@ -1,8 +1,11 @@
+// ── Collection label ─────────────────────────────────────────
 .ss-collection-label {
   font-size: 0.68rem;
   letter-spacing: 0.14em;
   color: #888 !important;
 }
+
+// ── Discount badge ────────────────────────────────────────────
 .ss-off-badge {
   background-color: #c0392b !important;
   color: #fff;
@@ -12,6 +15,8 @@
   font-weight: 700;
   vertical-align: middle;
 }
+
+// ── Vertical qty control ──────────────────────────────────────
 .ss-qty {
   min-width: 50px;
   width: 50px;
@@ -37,6 +42,8 @@
   &::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   -moz-appearance: textfield;
 }
+
+// ── Add to Cart ───────────────────────────────────────────────
 .ss-btn-cart {
   background-color: #111 !important;
   border-color: #111 !important;
@@ -52,6 +59,8 @@
     color: #fff !important;
   }
 }
+
+// ── Wishlist heart ────────────────────────────────────────────
 .ss-btn-wishlist {
   min-width: 52px;
   min-height: 52px;
@@ -63,9 +72,17 @@
   transition: border-color 0.2s, color 0.2s;
   &:hover { border-color: #111 !important; color: #111 !important; }
 }
+
+// ── Payment methods ───────────────────────────────────────────
 .ss-payment { border-color: #e9ecef !important; }
 .ss-pay-title { letter-spacing: 0.06em; color: #444; }
-.ss-pay-badge { color: #333; letter-spacing: 0.06em; i { color: #2ecc71; } }
+.ss-pay-badge {
+  color: #333;
+  letter-spacing: 0.06em;
+  i { color: #2ecc71; }
+}
+
+// ── Accordion ─────────────────────────────────────────────────
 .ss-accordion-label {
   text-transform: uppercase;
   font-size: 0.78rem;
@@ -73,10 +90,11 @@
   font-weight: 600;
 }
 
-// Hide the orphan description rendered below the accordion by the base template
-// We display it inside our Product Details accordion tab instead
-.o_wsale_product_page #product_description_short,
-.o_wsale_product_page [itemprop="description"],
-.o_wsale_product_page #product_description {
-    display: none !important;
+// ── Hide reza_smart_storefront description section ────────────
+// reza_smart_storefront renders website_description in sf-product-details
+// globally. For Sunglass Superstore we render it inside our accordion tab.
+// This SCSS is only loaded for website_id=5 via our scoped module asset.
+.o_wsale_product_page #product_full_description,
+.o_wsale_product_page .sf-product-details {
+  display: none !important;
 }
