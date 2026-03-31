@@ -19,11 +19,12 @@
         </xpath>
     </template>
 
-    <!-- 2. Discount % OFF badge -->
+    <!-- 2. Discount % OFF badge — injected AFTER the price call
+         inside website_sale.product (safe, known structure) -->
     <template id="product_price_badge"
               name="SS: Discount Badge"
-              inherit_id="website_sale.product_price">
-        <xpath expr="//div[hasclass('d-flex')]" position="inside">
+              inherit_id="website_sale.product">
+        <xpath expr="//t[@t-call='website_sale.product_price']" position="after">
             <t t-if="combination_info.get('has_discounted_price')
                      and combination_info.get('list_price')
                      and combination_info.get('price')">
@@ -79,7 +80,7 @@
                     </a>
                 </div>
 
-                <!-- Wishlist heart (falls back to plain button if wishlist not installed) -->
+                <!-- Wishlist heart -->
                 <t t-if="is_view_active('website_sale_wishlist.add_to_wishlist')">
                     <t t-call="website_sale_wishlist.add_to_wishlist">
                         <t t-set="_btn_classes"
@@ -137,7 +138,7 @@
         </xpath>
     </template>
 
-    <!-- 5b. Add Size & Fit accordion tab -->
+    <!-- 5b. Size and Fit accordion tab -->
     <template id="accordion_size_fit"
               name="SS: Accordion Size and Fit"
               inherit_id="website_sale.product_accordion">
@@ -163,7 +164,7 @@
         </xpath>
     </template>
 
-    <!-- 5c. Add Material & Care accordion tab -->
+    <!-- 5c. Material and Care accordion tab -->
     <template id="accordion_material_care"
               name="SS: Accordion Material and Care"
               inherit_id="website_sale.product_accordion">
@@ -189,7 +190,7 @@
         </xpath>
     </template>
 
-    <!-- 6. Estimated delivery date below accordion -->
+    <!-- 6. Estimated delivery below accordion -->
     <template id="product_estimated_delivery"
               name="SS: Estimated Delivery"
               inherit_id="website_sale.product">
