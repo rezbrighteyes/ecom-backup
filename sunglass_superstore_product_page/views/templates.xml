@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!--
+        BASE VIEW — scoped to website_id=5 by post_init_hook/_apply_scoping.
+        All child templates inherit from this, so they only render on
+        Sunglass Superstore. reza_smart_storefront is unaffected on
+        other websites.
+    -->
+    <template id="product_website_5_view"
+              name="SS: Product Page Base (website 5)"
+              inherit_id="website_sale.product">
+        <xpath expr="." position="inside"/>
+    </template>
+
     <!-- 1. Collection label above product name -->
     <template id="product_collection_label"
               name="SS: Collection Label"
@@ -115,10 +127,7 @@
         </xpath>
     </template>
 
-    <!-- 5. Replace accordion with three inline tabs.
-         description_ecommerce + website_description rendered inside
-         Product Details tab. sf-product-details section from
-         reza_smart_storefront is hidden via SCSS only for this website. -->
+    <!-- 5. Replace accordion with three inline tabs. -->
     <template id="product_accordion_custom"
               name="SS: Custom Accordion"
               inherit_id="sunglass_superstore_product_page.product_website_5_view">
@@ -142,7 +151,8 @@
                         <div class="accordion-body">
                             <div t-field="product.description_ecommerce"
                                  class="mb-2 oe_structure"
-                                 placeholder="Add a product description here."/>                        </div>
+                                 placeholder="Add a product description here."/>
+                        </div>
                     </div>
                 </div>
 
