@@ -91,7 +91,7 @@
         </xpath>
     </template>
 
-    <!-- 4. Payment methods: Afterpay / PayPal / Zip -->
+    <!-- 4. Payment methods -->
     <template id="product_payment_methods"
               name="SS: Payment Methods"
               inherit_id="website_sale.product">
@@ -118,32 +118,61 @@
         </xpath>
     </template>
 
-    <!-- 5. Replace accordion t-call with three inline tabs -->
+    <!-- 5. Hide the full-width description block below accordion
+         (product.website_description rendered in product_full_description)
+         We display description_ecommerce inside our accordion instead -->
+    <template id="product_hide_full_description"
+              name="SS: Hide Full Description"
+              inherit_id="website_sale.product">
+        <xpath expr="//div[@id='product_full_description']" position="replace">
+            <!-- hidden: moved into Product Details accordion tab -->
+        </xpath>
+    </template>
+
+    <!-- 6. Also hide description_ecommerce from its original location
+         so it only appears inside our accordion below -->
+    <template id="product_hide_inline_description"
+              name="SS: Hide Inline Description"
+              inherit_id="website_sale.product">
+        <xpath expr="//div[@t-field='product.description_ecommerce']" position="replace">
+            <!-- hidden: rendered inside accordion -->
+        </xpath>
+    </template>
+
+    <!-- 7. Replace accordion with our three tabs
+         Product Details tab includes both description fields -->
     <template id="product_accordion_custom"
               name="SS: Custom Accordion"
               inherit_id="website_sale.product">
         <xpath expr="//t[@t-call='website_sale.product_accordion']" position="replace">
             <div id="product_accordion" class="accordion accordion-flush my-4">
 
+                <!-- Product Details & Specifications — open by default -->
                 <div class="accordion-item">
                     <h2 class="accordion-header">
-                        <button class="accordion-button collapsed fw-medium"
+                        <button class="accordion-button fw-medium"
                                 type="button"
                                 data-bs-toggle="collapse"
                                 data-bs-target="#ss_collapse_details"
-                                aria-expanded="false"
+                                aria-expanded="true"
                                 aria-controls="ss_collapse_details">
                             <span class="ss-accordion-label">
                                 Product Details &amp; Specifications
                             </span>
                         </button>
                     </h2>
-                    <div id="ss_collapse_details" class="accordion-collapse collapse">
-                        <div class="accordion-body oe_structure"
-                             id="oe_structure_ss_details"/>
+                    <div id="ss_collapse_details" class="accordion-collapse collapse show">
+                        <div class="accordion-body">
+                            <div t-field="product.description_ecommerce"
+                                 class="oe_structure mb-2"
+                                 placeholder="Add a product description here."/>
+                            <div t-field="product.website_description"
+                                 class="oe_structure"/>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Size & Fit -->
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed fw-medium"
@@ -163,6 +192,7 @@
                     </div>
                 </div>
 
+                <!-- Material & Care -->
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed fw-medium"
