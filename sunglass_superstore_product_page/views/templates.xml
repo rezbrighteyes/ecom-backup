@@ -118,9 +118,7 @@
         </xpath>
     </template>
 
-    <!-- 5. Replace the entire product_accordion t-call with our own
-         three tabs inline — avoids all is_view_active() conditions
-         and missing span xpath problems entirely -->
+    <!-- 5. Replace accordion t-call with our own three tabs inline -->
     <template id="product_accordion_custom"
               name="SS: Custom Accordion"
               inherit_id="website_sale.product">
@@ -128,7 +126,6 @@
             <div id="product_accordion"
                  class="accordion accordion-flush my-4">
 
-                <!-- Product Details & Specifications -->
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed fw-medium"
@@ -149,7 +146,6 @@
                     </div>
                 </div>
 
-                <!-- Size & Fit -->
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed fw-medium"
@@ -170,7 +166,6 @@
                     </div>
                 </div>
 
-                <!-- Material & Care -->
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed fw-medium"
@@ -192,24 +187,6 @@
                 </div>
 
             </div>
-        </xpath>
-    </template>
-
-    <!-- 6. Estimated delivery -->
-    <template id="product_estimated_delivery"
-              name="SS: Estimated Delivery"
-              inherit_id="website_sale.product">
-        <xpath expr="//t[@t-call='website_sale.product_accordion']" position="after">
-            <t t-if="estimated_delivery_date">
-                <div class="ss-delivery d-flex align-items-center gap-2 mt-3">
-                    <i class="fa fa-truck fa-flip-horizontal text-muted"/>
-                    <span class="small text-muted">
-                        Estimated Delivery:
-                        <strong class="text-uppercase"
-                                t-out="estimated_delivery_date"/>
-                    </span>
-                </div>
-            </t>
         </xpath>
     </template>
 
