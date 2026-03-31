@@ -16,31 +16,37 @@
   vertical-align: middle;
 }
 
-// ── Vertical qty control ──────────────────────────────────────
-.ss-qty {
-  min-width: 50px;
-  width: 50px;
+// ── Qty control — vertical layout matching Odoo JS binding ──
+.ss-qty-wrapper.css_quantity.input-group {
+  flex-direction: column !important;
+  width: 52px !important;
+  min-width: 52px;
   border: 1px solid #dee2e6 !important;
   border-radius: 2px;
-  user-select: none;
-}
-.ss-qty-btn {
-  width: 100%;
-  padding: 9px 0;
-  color: #555;
-  font-size: 0.65rem;
-  text-decoration: none;
-  &:hover { background-color: #f5f5f5; color: #000; }
-}
-.ss-qty-input {
-  width: 100%;
-  height: 34px;
-  font-size: 0.9rem;
-  border-top: 1px solid #dee2e6 !important;
-  border-bottom: 1px solid #dee2e6 !important;
-  &::-webkit-inner-spin-button,
-  &::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  -moz-appearance: textfield;
+  flex-wrap: nowrap;
+  .ss-qty-btn.btn {
+    width: 100%;
+    padding: 7px 0;
+    text-align: center;
+    color: #555;
+    font-size: 0.65rem;
+    line-height: 1;
+    &:hover { background-color: #f5f5f5; color: #000; }
+  }
+  .ss-qty-input.form-control {
+    width: 100% !important;
+    min-width: unset;
+    height: 28px;
+    border: none !important;
+    border-top: 1px solid #dee2e6 !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    border-radius: 0 !important;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0;
+    box-shadow: none !important;
+  }
 }
 
 // ── Add to Cart ───────────────────────────────────────────────

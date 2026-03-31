@@ -40,29 +40,29 @@
         <xpath expr="//div[@id='o_wsale_cta_wrapper']" position="replace">
             <div id="o_wsale_cta_wrapper" class="d-flex align-items-stretch gap-2 mb-3">
 
-                <!-- Vertical qty -->
-                <div class="css_quantity ss-qty d-flex flex-column border align-items-center justify-content-between bg-white"
+                <!-- Qty: exact Odoo structure inside .input-group so JS binds correctly -->
+                <div t-attf-class="css_quantity input-group ss-qty-wrapper {{'d-none' if combination_info['prevent_zero_price_sale'] else ''}}"
                      contenteditable="false">
-                    <a href="#"
-                       class="js_add_cart_json ss-qty-btn d-flex align-items-center justify-content-center w-100"
-                       data-dir="1" aria-label="Increase quantity">
+                    <a t-attf-href="#"
+                       class="btn btn-link js_add_cart_json ss-qty-btn"
+                       aria-label="Add one" title="Add one">
                         <i class="fa fa-plus"/>
                     </a>
                     <input type="text"
+                           class="form-control quantity text-center ss-qty-input"
+                           data-min="1"
                            name="add_qty"
-                           data-field="add_qty"
-                           class="js_quantity quantity ss-qty-input text-center border-0 fw-bold bg-transparent"
-                           value="1"/>
-                    <a href="#"
-                       class="js_add_cart_json ss-qty-btn d-flex align-items-center justify-content-center w-100"
-                       data-dir="-1" aria-label="Decrease quantity">
+                           t-att-value="1"/>
+                    <a t-attf-href="#"
+                       class="btn btn-link js_add_cart_json ss-qty-btn"
+                       aria-label="Remove one" title="Remove one">
                         <i class="fa fa-minus"/>
                     </a>
                 </div>
 
-                <!-- Add to cart — flex-grow-1 forces it to fill remaining width -->
+                <!-- Add to Cart -->
                 <div id="add_to_cart_wrap"
-                     t-attf-class="{{'d-none' if combination_info['prevent_zero_price_sale'] else 'd-flex'}} flex-grow-1 flex-shrink-0">
+                     t-attf-class="{{'d-none' if combination_info['prevent_zero_price_sale'] else 'd-flex'}} flex-grow-1">
                     <a role="button" id="add_to_cart" href="#"
                        class="btn ss-btn-cart js_check_product a-submit w-100 d-flex align-items-center justify-content-center fw-bold text-uppercase">
                         <i class="fa fa-shopping-cart me-2"/>ADD TO CART
