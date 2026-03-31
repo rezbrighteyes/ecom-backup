@@ -4,7 +4,7 @@
     <!-- 1. Collection label above product name -->
     <template id="product_collection_label"
               name="SS: Collection Label"
-              inherit_id="website_sale.product">
+              inherit_id="sunglass_superstore_product_page.product_website_5_view">
         <xpath expr="//h1[@itemprop='name']" position="before">
             <t t-if="product.public_categ_ids">
                 <p class="ss-collection-label text-uppercase fw-semibold mb-1">
@@ -17,7 +17,7 @@
     <!-- 2. Discount % OFF badge -->
     <template id="product_price_badge"
               name="SS: Discount Badge"
-              inherit_id="website_sale.product">
+              inherit_id="sunglass_superstore_product_page.product_website_5_view">
         <xpath expr="//t[@t-call='website_sale.product_price']" position="after">
             <t t-if="combination_info.get('has_discounted_price')
                      and combination_info.get('list_price')
@@ -36,7 +36,7 @@
     <!-- 3. Replace CTA: vertical qty + black Add to Cart + wishlist heart -->
     <template id="product_cta_wrapper"
               name="SS: CTA Wrapper"
-              inherit_id="website_sale.product">
+              inherit_id="sunglass_superstore_product_page.product_website_5_view">
         <xpath expr="//div[@id='o_wsale_cta_wrapper']" position="replace">
             <div id="o_wsale_cta_wrapper"
                  class="d-flex align-items-stretch gap-2 mb-3 flex-nowrap">
@@ -94,7 +94,7 @@
     <!-- 4. Payment methods -->
     <template id="product_payment_methods"
               name="SS: Payment Methods"
-              inherit_id="website_sale.product">
+              inherit_id="sunglass_superstore_product_page.product_website_5_view">
         <xpath expr="//div[@id='o_wsale_cta_wrapper']" position="after">
             <div class="ss-payment border-top border-bottom py-3 my-2">
                 <div class="d-flex align-items-center gap-2 mb-2">
@@ -124,7 +124,7 @@
          reza_smart_storefront is hidden via SCSS only for this website. -->
     <template id="product_accordion_custom"
               name="SS: Custom Accordion"
-              inherit_id="website_sale.product">
+              inherit_id="sunglass_superstore_product_page.product_website_5_view">
         <xpath expr="//t[@t-call='website_sale.product_accordion']" position="replace">
             <div id="product_accordion" class="accordion accordion-flush my-4">
 
