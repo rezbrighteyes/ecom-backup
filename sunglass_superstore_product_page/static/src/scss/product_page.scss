@@ -98,3 +98,18 @@ body[data-website-id="5"] {
     display: none !important;
   }
 }
+
+
+// ── Hide description_ecommerce from original spot in view 5291 ──
+// We render it inside our accordion tab — suppress the original location
+body[data-website-id="5"] {
+  .o_wsale_product_page #product_detail div[t-field="product.description_ecommerce"],
+  .o_wsale_product_page #product_detail .oe_structure.oe_empty[placeholder] {
+    display: none !important;
+  }
+  // Also hide sf-product-details from reza_smart_storefront
+  .o_wsale_product_page #product_full_description,
+  .o_wsale_product_page .sf-product-details {
+    display: none !important;
+  }
+}

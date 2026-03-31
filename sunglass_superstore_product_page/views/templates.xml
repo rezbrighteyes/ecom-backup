@@ -38,50 +38,47 @@
               name="SS: CTA Wrapper"
               inherit_id="sunglass_superstore_product_page.product_website_5_view">
         <xpath expr="//div[@id='o_wsale_cta_wrapper']" position="replace">
-            <div id="o_wsale_cta_wrapper"
-                 class="d-flex align-items-stretch gap-2 mb-3 flex-nowrap">
+            <div id="o_wsale_cta_wrapper" class="d-flex align-items-stretch gap-2 mb-3">
 
-                <div class="ss-qty d-flex flex-column border align-items-center
-                            justify-content-between bg-white">
+                <!-- Vertical qty -->
+                <div class="css_quantity ss-qty d-flex flex-column border align-items-center justify-content-between bg-white"
+                     contenteditable="false">
                     <a href="#"
-                       class="js_add_cart_json ss-qty-btn d-flex align-items-center
-                              justify-content-center w-100"
+                       class="js_add_cart_json ss-qty-btn d-flex align-items-center justify-content-center w-100"
                        data-dir="1" aria-label="Increase quantity">
                         <i class="fa fa-plus"/>
                     </a>
-                    <input type="number"
+                    <input type="text"
                            name="add_qty"
-                           class="js_quantity quantity ss-qty-input text-center
-                                  border-0 fw-bold bg-transparent"
-                           value="1" min="1"/>
+                           data-field="add_qty"
+                           class="js_quantity quantity ss-qty-input text-center border-0 fw-bold bg-transparent"
+                           value="1"/>
                     <a href="#"
-                       class="js_add_cart_json ss-qty-btn d-flex align-items-center
-                              justify-content-center w-100"
+                       class="js_add_cart_json ss-qty-btn d-flex align-items-center justify-content-center w-100"
                        data-dir="-1" aria-label="Decrease quantity">
                         <i class="fa fa-minus"/>
                     </a>
                 </div>
 
+                <!-- Add to cart — flex-grow-1 forces it to fill remaining width -->
                 <div id="add_to_cart_wrap"
-                     t-attf-class="{{'d-none' if combination_info['prevent_zero_price_sale'] else 'd-flex'}} flex-grow-1">
+                     t-attf-class="{{'d-none' if combination_info['prevent_zero_price_sale'] else 'd-flex'}} flex-grow-1 flex-shrink-0">
                     <a role="button" id="add_to_cart" href="#"
-                       class="btn ss-btn-cart js_check_product a-submit
-                              w-100 d-flex align-items-center
-                              justify-content-center fw-bold text-uppercase">
+                       class="btn ss-btn-cart js_check_product a-submit w-100 d-flex align-items-center justify-content-center fw-bold text-uppercase">
                         <i class="fa fa-shopping-cart me-2"/>ADD TO CART
                     </a>
                 </div>
 
+                <!-- Wishlist -->
                 <t t-if="is_view_active('website_sale_wishlist.add_to_wishlist')">
                     <t t-call="website_sale_wishlist.add_to_wishlist">
                         <t t-set="_btn_classes"
-                           t-valuef="btn ss-btn-wishlist d-flex align-items-center justify-content-center"/>
+                           t-valuef="btn ss-btn-wishlist d-flex align-items-center justify-content-center flex-shrink-0"/>
                     </t>
                 </t>
                 <t t-else="">
                     <button type="button"
-                            class="btn ss-btn-wishlist d-flex align-items-center
-                                   justify-content-center">
+                            class="btn ss-btn-wishlist d-flex align-items-center justify-content-center flex-shrink-0">
                         <i class="fa fa-heart-o"/>
                     </button>
                 </t>
