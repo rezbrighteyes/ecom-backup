@@ -90,11 +90,11 @@
   font-weight: 600;
 }
 
-// ── Hide reza_smart_storefront description section ────────────
-// reza_smart_storefront renders website_description in sf-product-details
-// globally. For Sunglass Superstore we render it inside our accordion tab.
-// This SCSS is only loaded for website_id=5 via our scoped module asset.
-.o_wsale_product_page #product_full_description,
-.o_wsale_product_page .sf-product-details {
-  display: none !important;
+// ── Hide reza_smart_storefront section ONLY on website_id=5 ───
+// Odoo 18 sets data-website-id on <body> — scope hide to SS only
+body[data-website-id="5"] {
+  .o_wsale_product_page #product_full_description,
+  .o_wsale_product_page .sf-product-details {
+    display: none !important;
+  }
 }

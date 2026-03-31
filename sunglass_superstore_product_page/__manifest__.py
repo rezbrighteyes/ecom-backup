@@ -18,6 +18,7 @@
         ],
     },
     'post_init_hook': 'post_init_hook',
+    'post_update_hook': 'post_update_hook',
     'installable': True,
     'auto_install': False,
 }
