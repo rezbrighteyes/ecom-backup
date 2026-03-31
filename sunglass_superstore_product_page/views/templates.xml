@@ -145,10 +145,7 @@
                         <div class="accordion-body">
                             <div t-field="product.description_ecommerce"
                                  class="mb-2 oe_structure"
-                                 placeholder="Add a product description here."/>
-                            <div t-field="product.website_description"
-                                 class="oe_structure"/>
-                        </div>
+                                 placeholder="Add a product description here."/>                        </div>
                     </div>
                 </div>
 
