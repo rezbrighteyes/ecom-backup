@@ -118,36 +118,16 @@
         </xpath>
     </template>
 
-    <!-- 5. Hide the full-width description block below accordion
-         (product.website_description rendered in product_full_description)
-         We display description_ecommerce inside our accordion instead -->
-    <template id="product_hide_full_description"
-              name="SS: Hide Full Description"
-              inherit_id="website_sale.product">
-        <xpath expr="//div[@id='product_full_description']" position="replace">
-            <!-- hidden: moved into Product Details accordion tab -->
-        </xpath>
-    </template>
-
-    <!-- 6. Also hide description_ecommerce from its original location
-         so it only appears inside our accordion below -->
-    <template id="product_hide_inline_description"
-              name="SS: Hide Inline Description"
-              inherit_id="website_sale.product">
-        <xpath expr="//div[@t-field='product.description_ecommerce']" position="replace">
-            <!-- hidden: rendered inside accordion -->
-        </xpath>
-    </template>
-
-    <!-- 7. Replace accordion with our three tabs
-         Product Details tab includes both description fields -->
+    <!-- 5. Replace accordion with three inline tabs.
+         description_ecommerce + website_description rendered inside
+         Product Details tab. sf-product-details section from
+         reza_smart_storefront is hidden via SCSS only for this website. -->
     <template id="product_accordion_custom"
               name="SS: Custom Accordion"
               inherit_id="website_sale.product">
         <xpath expr="//t[@t-call='website_sale.product_accordion']" position="replace">
             <div id="product_accordion" class="accordion accordion-flush my-4">
 
-                <!-- Product Details & Specifications — open by default -->
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button fw-medium"
@@ -164,7 +144,7 @@
                     <div id="ss_collapse_details" class="accordion-collapse collapse show">
                         <div class="accordion-body">
                             <div t-field="product.description_ecommerce"
-                                 class="oe_structure mb-2"
+                                 class="mb-2 oe_structure"
                                  placeholder="Add a product description here."/>
                             <div t-field="product.website_description"
                                  class="oe_structure"/>
@@ -172,7 +152,6 @@
                     </div>
                 </div>
 
-                <!-- Size & Fit -->
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed fw-medium"
@@ -192,7 +171,6 @@
                     </div>
                 </div>
 
-                <!-- Material & Care -->
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed fw-medium"
