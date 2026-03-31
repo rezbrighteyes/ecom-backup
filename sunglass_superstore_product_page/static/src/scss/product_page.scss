@@ -72,3 +72,11 @@
   letter-spacing: 0.08em;
   font-weight: 600;
 }
+
+// Hide the orphan description rendered below the accordion by the base template
+// We display it inside our Product Details accordion tab instead
+.o_wsale_product_page #product_description_short,
+.o_wsale_product_page [itemprop="description"],
+.o_wsale_product_page #product_description {
+    display: none !important;
+}
