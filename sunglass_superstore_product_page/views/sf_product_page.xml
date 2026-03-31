@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Stock urgency: inject after the ADD TO CART button, not the wrapper
+         which sunglass templates.xml replaces -->
     <template id="ss_stock_urgency"
               inherit_id="website_sale.product"
               name="SS: Stock Urgency"
-              priority="20">
+              priority="25">
         <xpath expr="//div[@id='o_wsale_cta_wrapper']" position="after">
             <t t-set="stock_msg" t-value="product._sf_get_stock_message()"/>
             <div t-if="stock_msg" class="sf-stock-urgency mt-2 mb-2">
@@ -19,7 +21,7 @@
     <template id="ss_trust_badges"
               inherit_id="website_sale.product"
               name="SS: Trust Badges"
-              priority="20">
+              priority="25">
         <xpath expr="//div[@id='o_product_terms_and_share']" position="before">
             <div class="sf-trust-row my-3">
                 <t t-set="ship_threshold" t-value="product._sf_get_shipping_threshold()"/>
@@ -62,7 +64,7 @@
     <template id="ss_product_description_crosssells"
               inherit_id="website_sale.product"
               name="SS: Description and Cross-Sells"
-              priority="20">
+              priority="25">
         <xpath expr="//div[@id='product_full_description']" position="replace">
             <t t-if="product.website_description">
                 <section id="product_full_description" class="sf-product-details">
