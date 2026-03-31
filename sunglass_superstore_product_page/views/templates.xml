@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         Sunglass Superstore — Product Page Templates
+         website_id is scoped to website id=5 via post_init_hook
+         ============================================================ -->
+
+    <!-- 1. Collection label above product name -->
+    <template id="product_collection_label"
+              name="SS: Collection Label"
+              inherit_id="website_sale.product">
+        <xpath expr="//h1[@itemprop='name']" position="before">
+            <t t-if="product.public_categ_ids">
+                <p class="ss-collection-label text-uppercase fw-semibold mb-1">
+                    <t t-out="product.public_categ_ids[0].name"/>
+                </p>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- 2. Discount % OFF badge -->
+    <template id="product_price_badge"
+              name="SS: Discount Badge"
+              inherit_id="website_sale.product_price">
+        <xpath expr="//div[hasclass('d-flex')]" position="inside">
+            <t t-if="combination_info.get('has_discounted_price')
+                     and combination_info.get('list_price')
+                     and combination_info.get('price')">
+                <t t-set="ss_pct"
+                   t-value="round((1 - combination_info['price'] / combination_info['list_price']) * 100)"/>
+                <t t-if="ss_pct > 0">
+                    <span class="badge ss-off-badge ms-2 align-self-center px-2 py-1">
+                        <t t-out="'%d%% OFF' % ss_pct"/>
+                    </span>
+                </t>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- 3. Replace CTA: vertical qty + black Add to Cart + wishlist heart -->
+    <template id="product_cta_wrapper"
+              name="SS: CTA Wrapper"
+              inherit_id="website_sale.product">
+        <xpath expr="//div[@id='o_wsale_cta_wrapper']" position="replace">
+            <div id="o_wsale_cta_wrapper"
+                 class="d-flex align-items-stretch gap-2 mb-3 flex-nowrap">
+
+                <!-- Vertical qty control -->
+                <div class="ss-qty d-flex flex-column border align-items-center
+                            justify-content-between bg-white">
+                    <a href="#"
+                       class="js_add_cart_json ss-qty-btn d-flex align-items-center
+                              justify-content-center w-100"
+                       data-dir="1" aria-label="Increase quantity">
+                        <i class="fa fa-plus"/>
+                    </a>
+                    <input type="number"
+                           name="add_qty"
+                           class="js_quantity quantity ss-qty-input text-center
+                                  border-0 fw-bold bg-transparent"
+                           value="1" min="1"/>
+                    <a href="#"
+                       class="js_add_cart_json ss-qty-btn d-flex align-items-center
+                              justify-content-center w-100"
+                       data-dir="-1" aria-label="Decrease quantity">
+                        <i class="fa fa-minus"/>
+                    </a>
+                </div>
+
+                <!-- Black ADD TO CART -->
+                <div id="add_to_cart_wrap"
+                     t-attf-class="{{'d-none' if combination_info['prevent_zero_price_sale'] else 'd-flex'}} flex-grow-1">
+                    <a role="button" id="add_to_cart" href="#"
+                       class="btn ss-btn-cart js_check_product a-submit
+                              w-100 d-flex align-items-center
+                              justify-content-center fw-bold text-uppercase">
+                        <i class="fa fa-shopping-cart me-2"/>ADD TO CART
+                    </a>
+                </div>
+
+                <!-- Wishlist heart (falls back to plain button if wishlist not installed) -->
+                <t t-if="is_view_active('website_sale_wishlist.add_to_wishlist')">
+                    <t t-call="website_sale_wishlist.add_to_wishlist">
+                        <t t-set="_btn_classes"
+                           t-valuef="btn ss-btn-wishlist d-flex align-items-center justify-content-center"/>
+                    </t>
+                </t>
+                <t t-else="">
+                    <button type="button"
+                            class="btn ss-btn-wishlist d-flex align-items-center
+                                   justify-content-center">
+                        <i class="fa fa-heart-o"/>
+                    </button>
+                </t>
+
+                <div id="product_option_block" class="d-flex flex-wrap w-100"/>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- 4. Payment methods: Afterpay / PayPal / Zip -->
+    <template id="product_payment_methods"
+              name="SS: Payment Methods"
+              inherit_id="website_sale.product">
+        <xpath expr="//div[@id='o_wsale_cta_wrapper']" position="after">
+            <div class="ss-payment border-top border-bottom py-3 my-2">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="ss-pay-title small fw-semibold text-uppercase">
+                        Pay it in 4 / Installment Overtime?
+                    </span>
+                    <i class="fa fa-chevron-down small text-muted"/>
+                </div>
+                <div class="d-flex flex-wrap gap-4">
+                    <span class="ss-pay-badge small fw-bold text-uppercase">
+                        <i class="fa fa-check-circle me-1"/> AFTERPAY
+                    </span>
+                    <span class="ss-pay-badge small fw-bold text-uppercase">
+                        <i class="fa fa-check-circle me-1"/> PAYPAL
+                    </span>
+                    <span class="ss-pay-badge small fw-bold text-uppercase">
+                        <i class="fa fa-check-circle me-1"/> ZIP
+                    </span>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- 5a. Rename description accordion tab -->
+    <template id="accordion_description_label"
+              name="SS: Accordion Description Label"
+              inherit_id="website_sale.accordion_description_item">
+        <xpath expr="//span[hasclass('accordion-header-label')]" position="replace">
+            <span class="accordion-header-label ss-accordion-label">
+                Product Details &amp; Specifications
+            </span>
+        </xpath>
+    </template>
+
+    <!-- 5b. Add Size & Fit accordion tab -->
+    <template id="accordion_size_fit"
+              name="SS: Accordion Size and Fit"
+              inherit_id="website_sale.product_accordion">
+        <xpath expr="//div[@id='product_accordion']" position="inside">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed bg-white text-dark"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#ss_collapse_size"
+                            aria-expanded="false"
+                            aria-controls="ss_collapse_size">
+                        <span class="accordion-header-label ss-accordion-label">
+                            Size &amp; Fit
+                        </span>
+                    </button>
+                </h2>
+                <div id="ss_collapse_size" class="accordion-collapse collapse">
+                    <div class="accordion-body oe_structure"
+                         id="oe_structure_ss_size_fit"/>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- 5c. Add Material & Care accordion tab -->
+    <template id="accordion_material_care"
+              name="SS: Accordion Material and Care"
+              inherit_id="website_sale.product_accordion">
+        <xpath expr="//div[@id='product_accordion']" position="inside">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed bg-white text-dark"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#ss_collapse_material"
+                            aria-expanded="false"
+                            aria-controls="ss_collapse_material">
+                        <span class="accordion-header-label ss-accordion-label">
+                            Material &amp; Care
+                        </span>
+                    </button>
+                </h2>
+                <div id="ss_collapse_material" class="accordion-collapse collapse">
+                    <div class="accordion-body oe_structure"
+                         id="oe_structure_ss_material"/>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- 6. Estimated delivery date below accordion -->
+    <template id="product_estimated_delivery"
+              name="SS: Estimated Delivery"
+              inherit_id="website_sale.product">
+        <xpath expr="//t[@t-call='website_sale.product_accordion']" position="after">
+            <t t-if="estimated_delivery_date">
+                <div class="ss-delivery d-flex align-items-center gap-2 mt-3">
+                    <i class="fa fa-truck fa-flip-horizontal text-muted"/>
+                    <span class="small text-muted">
+                        Estimated Delivery:
+                        <strong class="text-uppercase"
+                                t-out="estimated_delivery_date"/>
+                    </span>
+                </div>
+            </t>
+        </xpath>
+    </template>
+
+</odoo>
