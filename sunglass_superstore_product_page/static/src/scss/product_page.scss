@@ -24,97 +24,29 @@
   flex-basis: 100%;
 }
 
-.ss-qty-wrapper.css_quantity.input-group {
-  flex-direction: column !important;
-  flex-wrap: nowrap !important;
-  width: 52px !important;
-  min-width: 52px !important;
-  max-width: 52px !important;
-  flex-shrink: 0 !important;
-  border: 1px solid #dee2e6 !important;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.ss-qty-wrapper .ss-qty-btn.btn {
-  width: 100%;
-  padding: 8px 0;
-  text-align: center;
-  color: #555;
-  font-size: 0.65rem;
-  line-height: 1;
-  border: none !important;
-  background: #fff;
-  margin: 0;
-}
-
-.ss-qty-wrapper .ss-qty-btn.btn:hover {
-  background-color: #f5f5f5;
-  color: #000;
-}
-
-.ss-qty-wrapper .ss-qty-input.form-control {
-  width: 100% !important;
-  min-width: unset;
-  height: 28px;
-  border: none !important;
-  border-top: 1px solid #dee2e6 !important;
-  border-bottom: 1px solid #dee2e6 !important;
-  border-radius: 0 !important;
-  text-align: center;
-  font-weight: 700;
-  font-size: 0.9rem;
-  padding: 0;
-  box-shadow: none !important;
-}
-
 #o_wsale_cta_wrapper #add_to_cart_wrap {
   flex: 1 1 0% !important;
-  display: flex !important;
-  width: 100% !important;
-  min-width: 0;
-  display: flex !important;
 }
 
-.ss-btn-cart {
+#o_wsale_cta_wrapper #add_to_cart {
   background-color: #111 !important;
   border-color: #111 !important;
   color: #fff !important;
   border-radius: 2px;
   letter-spacing: 0.1em;
   font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
   min-height: 52px;
-  white-space: nowrap;
-  transition: background-color 0.2s;
-}
-
-.ss-btn-cart:hover,
-.ss-btn-cart:focus {
-  background-color: #333 !important;
-  border-color: #333 !important;
-  color: #fff !important;
-}
-
-.ss-btn-wishlist {
-  min-width: 52px !important;
-  max-width: 52px !important;
-  min-height: 52px;
-  border: 1px solid #dee2e6 !important;
-  border-radius: 2px;
-  background-color: #fff !important;
-  color: #444 !important;
-  font-size: 1.1rem;
-  flex-shrink: 0 !important;
   display: flex !important;
   align-items: center;
   justify-content: center;
-  padding: 0 !important;
-  transition: border-color 0.2s, color 0.2s;
 }
 
-.ss-btn-wishlist:hover {
-  border-color: #111 !important;
-  color: #111 !important;
+#o_wsale_cta_wrapper #add_to_cart:hover,
+#o_wsale_cta_wrapper #add_to_cart:focus {
+  background-color: #333 !important;
+  border-color: #333 !important;
 }
 
 .ss-payment {

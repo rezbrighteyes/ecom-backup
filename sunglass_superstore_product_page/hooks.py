@@ -4,7 +4,6 @@ _logger = logging.getLogger(__name__)
 SS_WEBSITE_NAME = 'Sunglass Superstore'
 
 SS_VIEW_KEYS = [
-    'sunglass_superstore_product_page.product_cta_wrapper',
     'sunglass_superstore_product_page.product_collection_label',
     'sunglass_superstore_product_page.product_accordion_custom',
     'sunglass_superstore_product_page.product_price_badge',
