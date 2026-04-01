@@ -175,14 +175,4 @@
             </div>
         </xpath>
     </template>
-
-
-    <!-- 6. Hide native product_full_description — content is in accordion above -->
-    <template id="product_hide_native_description"
-              name="SS: Hide Native Description Div"
-              inherit_id="website_sale.product"
-              priority="20">
-        <xpath expr="//div[@id='product_full_description']" position="replace"/>
-    </template>
-
 </odoo>
