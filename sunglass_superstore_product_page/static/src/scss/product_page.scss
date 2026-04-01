@@ -1,22 +1,54 @@
+/* ═══ Sunglass Superstore — Premium Product Page ═══ */
+
+/* Collection label */
 .ss-collection-label {
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
-  color: #888 !important;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: #999 !important;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px !important;
 }
 
+/* Product title */
+.ss-theme h1[itemprop="name"] {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: #0a0a0a;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Price */
+.ss-theme .product_price .oe_price {
+  font-size: 1.8rem !important;
+  font-weight: 800 !important;
+  color: #0a0a0a !important;
+}
+
+.ss-theme .product_price .oe_default_price {
+  font-size: 1rem !important;
+  color: #999 !important;
+}
+
+/* Discount badge */
 .ss-off-badge {
-  background-color: #c0392b !important;
+  background-color: #e53935 !important;
   color: #fff;
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  border-radius: 3px;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  border-radius: 4px;
   font-weight: 700;
-  vertical-align: middle;
+  padding: 4px 10px !important;
 }
 
+/* ═══ CTA Section ═══ */
 .ss-theme #o_wsale_cta_wrapper {
   flex-wrap: nowrap !important;
-  gap: 8px !important;
+  gap: 10px !important;
+  margin-top: 1.2rem !important;
+  margin-bottom: 0.5rem !important;
 }
 
 .ss-theme #o_wsale_cta_wrapper #product_option_block {
@@ -24,52 +56,183 @@
   flex-basis: 100%;
 }
 
+/* Qty counter */
+.ss-theme .css_quantity.input-group {
+  border: 2px solid #e0e0e0 !important;
+  border-radius: 6px !important;
+  overflow: hidden;
+  flex-wrap: nowrap !important;
+}
+
+.ss-theme .css_quantity .js_add_cart_json {
+  min-width: 44px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa !important;
+  border: none !important;
+  color: #333 !important;
+  font-size: 1rem;
+  transition: background 0.15s;
+}
+
+.ss-theme .css_quantity .js_add_cart_json:hover {
+  background: #f0f0f0 !important;
+}
+
+.ss-theme .css_quantity .quantity {
+  border: none !important;
+  border-left: 2px solid #e0e0e0 !important;
+  border-right: 2px solid #e0e0e0 !important;
+  border-radius: 0 !important;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+  width: 52px !important;
+  min-width: 52px;
+  box-shadow: none !important;
+}
+
+/* Add to Cart */
 .ss-theme #add_to_cart_wrap {
   flex: 1 1 0% !important;
 }
 
 .ss-theme #add_to_cart {
-  background-color: #111 !important;
-  border-color: #111 !important;
+  background-color: #0a0a0a !important;
+  border-color: #0a0a0a !important;
   color: #fff !important;
-  border-radius: 2px;
-  letter-spacing: 0.1em;
-  font-size: 0.82rem;
+  border-radius: 6px !important;
+  letter-spacing: 0.12em;
+  font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
   min-height: 52px;
   display: flex !important;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
 }
 
-.ss-theme #add_to_cart:hover,
-.ss-theme #add_to_cart:focus {
-  background-color: #333 !important;
-  border-color: #333 !important;
+.ss-theme #add_to_cart:hover {
+  background-color: #222 !important;
+  border-color: #222 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
+/* Wishlist */
+.ss-theme .o_wsale_product_btn_wishlist {
+  min-width: 52px !important;
+  max-width: 52px !important;
+  min-height: 52px;
+  border: 2px solid #e0e0e0 !important;
+  border-radius: 6px !important;
+  background: #fff !important;
+  color: #999 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  transition: all 0.2s ease;
+  flex-shrink: 0 !important;
+}
+
+.ss-theme .o_wsale_product_btn_wishlist:hover {
+  border-color: #e53935 !important;
+  color: #e53935 !important;
+}
+
+/* ═══ Payment Methods ═══ */
 .ss-payment {
-  border-color: #e9ecef !important;
+  border-color: #f0f0f0 !important;
+  padding: 1rem 0 !important;
 }
 
 .ss-pay-title {
-  letter-spacing: 0.06em;
-  color: #444;
+  letter-spacing: 0.08em;
+  color: #666;
+  font-size: 0.75rem !important;
 }
 
 .ss-pay-badge {
   color: #333;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem !important;
 }
 
 .ss-pay-badge i {
   color: #2ecc71;
 }
 
+/* ═══ Accordion ═══ */
+.ss-theme .accordion-item {
+  border: none !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+
+.ss-theme .accordion-button {
+  padding: 1.2rem 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.ss-theme .accordion-button:focus {
+  box-shadow: none !important;
+}
+
 .ss-accordion-label {
   text-transform: uppercase;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: #0a0a0a;
+}
+
+.ss-theme .accordion-body {
+  padding: 0 0 1.2rem 0 !important;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: #555;
+}
+
+/* ═══ Trust Badges ═══ */
+.ss-theme .sf-trust-badge {
+  border: 1px solid #f0f0f0 !important;
+  border-radius: 8px !important;
+  padding: 1rem 0.5rem !important;
+  transition: all 0.2s ease;
+}
+
+.ss-theme .sf-trust-badge:hover {
+  border-color: #ddd !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.ss-theme .sf-delivery-estimate {
+  border: 1px solid #f0f0f0 !important;
+  border-radius: 8px !important;
+}
+
+/* ═══ Description section ═══ */
+.ss-theme .oe_structure[t-field],
+.ss-theme [data-oe-field="description_ecommerce"] {
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: #555;
+}
+
+/* ═══ Breadcrumb ═══ */
+.ss-theme .o_wsale_breadcrumb {
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+}
+
+.ss-theme .o_wsale_breadcrumb a {
+  color: #999;
+  transition: color 0.15s;
+}
+
+.ss-theme .o_wsale_breadcrumb a:hover {
+  color: #0a0a0a;
 }
