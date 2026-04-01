@@ -1,0 +1,121 @@
+// ── Collection label ─────────────────────────────────────────
+.ss-collection-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  color: #888 !important;
+}
+
+// ── Discount badge ────────────────────────────────────────────
+.ss-off-badge {
+  background-color: #c0392b !important;
+  color: #fff;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  border-radius: 3px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+// ── Qty control — vertical layout matching Odoo JS binding ──
+.ss-qty-wrapper.css_quantity.input-group {
+  flex-direction: column !important;
+  width: 52px !important;
+  min-width: 52px;
+  border: 1px solid #dee2e6 !important;
+  border-radius: 2px;
+  flex-wrap: nowrap;
+  .ss-qty-btn.btn {
+    width: 100%;
+    padding: 7px 0;
+    text-align: center;
+    color: #555;
+    font-size: 0.65rem;
+    line-height: 1;
+    &:hover { background-color: #f5f5f5; color: #000; }
+  }
+  .ss-qty-input.form-control {
+    width: 100% !important;
+    min-width: unset;
+    height: 28px;
+    border: none !important;
+    border-top: 1px solid #dee2e6 !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    border-radius: 0 !important;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0;
+    box-shadow: none !important;
+  }
+}
+
+// ── Add to Cart ───────────────────────────────────────────────
+.ss-btn-cart {
+  background-color: #111 !important;
+  border-color: #111 !important;
+  color: #fff !important;
+  border-radius: 2px;
+  letter-spacing: 0.1em;
+  font-size: 0.82rem;
+  min-height: 52px;
+  transition: background-color 0.2s;
+  &:hover, &:focus {
+    background-color: #333 !important;
+    border-color: #333 !important;
+    color: #fff !important;
+  }
+}
+
+// ── Wishlist heart ────────────────────────────────────────────
+.ss-btn-wishlist {
+  min-width: 52px;
+  min-height: 52px;
+  border: 1px solid #dee2e6 !important;
+  border-radius: 2px;
+  background-color: #fff !important;
+  color: #444 !important;
+  font-size: 1.1rem;
+  transition: border-color 0.2s, color 0.2s;
+  &:hover { border-color: #111 !important; color: #111 !important; }
+}
+
+// ── Payment methods ───────────────────────────────────────────
+.ss-payment { border-color: #e9ecef !important; }
+.ss-pay-title { letter-spacing: 0.06em; color: #444; }
+.ss-pay-badge {
+  color: #333;
+  letter-spacing: 0.06em;
+  i { color: #2ecc71; }
+}
+
+// ── Accordion ─────────────────────────────────────────────────
+.ss-accordion-label {
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+// ── Hide reza_smart_storefront section ONLY on website_id=5 ───
+// Odoo 18 sets data-website-id on <body> — scope hide to SS only
+body[data-website-id="5"] {
+  .o_wsale_product_page #product_full_description,
+  .o_wsale_product_page .sf-product-details {
+    display: none !important;
+  }
+}
+
+
+// ── Hide description_ecommerce from original spot in view 5291 ──
+// We render it inside our accordion tab — suppress the original location
+body[data-website-id="5"] {
+  .o_wsale_product_page #product_detail div[t-field="product.description_ecommerce"],
+  .o_wsale_product_page #product_detail .oe_structure.oe_empty[placeholder] {
+    display: none !important;
+  }
+  // Also hide sf-product-details from reza_smart_storefront
+  .o_wsale_product_page #product_full_description,
+  .o_wsale_product_page .sf-product-details {
+    display: none !important;
+  }
+}
