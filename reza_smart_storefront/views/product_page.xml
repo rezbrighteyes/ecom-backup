@@ -61,7 +61,7 @@
 
     <template id="product_description_crosssells" name="Smart Storefront - Description and Cross-Sells"
               inherit_id="website_sale.product">
-        <xpath expr="//div[@id='product_full_description']" position="replace">
+        <xpath expr="//div[@id='product_full_description']" position="replace" optional="True">
             <t t-if="product.website_description and website.name != 'Sunglass Superstore'">
                 <section id="product_full_description" class="sf-product-details">
                     <div class="container">
