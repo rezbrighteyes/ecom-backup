@@ -150,3 +150,18 @@ body[data-website-id="5"] .o_wsale_product_page #product_full_description {
 body[data-website-id="5"] .o_wsale_product_page .sf-product-details {
   display: none !important;
 }
+body[data-website-id="5"] .ss-qty-wrapper.css_quantity.input-group {
+  overflow: hidden;
+}
+
+body[data-website-id="5"] .ss-qty-wrapper .ss-qty-btn.btn {
+  border: none !important;
+  background: #fff;
+  margin: 0;
+  padding: 8px 0;
+}
+
+body[data-website-id="5"] .ss-qty-wrapper .ss-qty-input.form-control {
+  border-left: none !important;
+  border-right: none !important;
+}
