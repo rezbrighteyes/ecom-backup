@@ -2,14 +2,12 @@
 // Sunglass Superstore — Product Page (website_id = 5 only)
 // ══════════════════════════════════════════════════════════════
 
-
 // ── Collection label ─────────────────────────────────────────
 .ss-collection-label {
   font-size: 0.68rem;
   letter-spacing: 0.14em;
   color: #888 !important;
 }
-
 
 // ── Discount badge ────────────────────────────────────────────
 .ss-off-badge {
@@ -22,8 +20,8 @@
   vertical-align: middle;
 }
 
-
 // ── CTA row — qty | add-to-cart | wishlist ────────────────────
+// Force single row, no wrapping, proper sizing
 body[data-website-id="5"] #o_wsale_cta_wrapper {
   display: flex !important;
   flex-wrap: nowrap !important;
@@ -31,12 +29,12 @@ body[data-website-id="5"] #o_wsale_cta_wrapper {
   gap: 8px;
   margin-bottom: 1rem;
 
+  // push product_option_block below the main row
   #product_option_block {
     order: 99;
     flex-basis: 100%;
   }
 }
-
 
 // ── Qty control — vertical +/1/- ─────────────────────────────
 .ss-qty-wrapper.css_quantity.input-group {
@@ -59,7 +57,6 @@ body[data-website-id="5"] #o_wsale_cta_wrapper {
     border: none !important;
     &:hover { background-color: #f5f5f5; color: #000; }
   }
-
   .ss-qty-input.form-control {
     width: 100% !important;
     min-width: unset;
@@ -75,7 +72,6 @@ body[data-website-id="5"] #o_wsale_cta_wrapper {
     box-shadow: none !important;
   }
 }
-
 
 // ── Add to Cart ───────────────────────────────────────────────
 body[data-website-id="5"] #add_to_cart_wrap {
@@ -100,7 +96,6 @@ body[data-website-id="5"] #add_to_cart_wrap {
   }
 }
 
-
 // ── Wishlist heart ────────────────────────────────────────────
 .ss-btn-wishlist,
 body[data-website-id="5"] #o_wsale_cta_wrapper .o_wsale_product_btn_wishlist {
@@ -121,7 +116,6 @@ body[data-website-id="5"] #o_wsale_cta_wrapper .o_wsale_product_btn_wishlist {
   &:hover { border-color: #111 !important; color: #111 !important; }
 }
 
-
 // ── Payment methods ───────────────────────────────────────────
 .ss-payment { border-color: #e9ecef !important; }
 .ss-pay-title { letter-spacing: 0.06em; color: #444; }
@@ -131,7 +125,6 @@ body[data-website-id="5"] #o_wsale_cta_wrapper .o_wsale_product_btn_wishlist {
   i { color: #2ecc71; }
 }
 
-
 // ── Accordion ─────────────────────────────────────────────────
 .ss-accordion-label {
   text-transform: uppercase;
@@ -140,7 +133,6 @@ body[data-website-id="5"] #o_wsale_cta_wrapper .o_wsale_product_btn_wishlist {
   font-weight: 600;
 }
 
-
 // ══════════════════════════════════════════════════════════════
 // HIDE DUPLICATE CONTENT — website_id = 5 only
 // ══════════════════════════════════════════════════════════════
@@ -148,22 +140,20 @@ body[data-website-id="5"] #o_wsale_cta_wrapper .o_wsale_product_btn_wishlist {
 body[data-website-id="5"] {
 
   // 1. Hide inline description_ecommerce below the title
+  //    (it's already shown inside the accordion)
+  //    Odoo renders t-field as data-oe-field in the DOM
   .o_wsale_product_page #product_detail [data-oe-field="description_ecommerce"] {
     display: none !important;
   }
 
-  // 2. Hide bottom product_full_description / reza cross-sells section
+  // 2. Hide bottom product_full_description section
+  //    (reza_smart_storefront may or may not replace this via xpath)
   .o_wsale_product_page #product_full_description,
   .o_wsale_product_page .sf-product-details {
     display: none !important;
   }
 
-  // 3. Hide website_description rendered outside accordion
-  .o_wsale_product_page [data-oe-field="website_description"]:not(.sf-product-details *) {
-    display: none !important;
-  }
-
-  // 4. Fallback: oe_structure with detailed description placeholder
+  // 3. Fallback: also target the oe_structure with description placeholder
   .o_wsale_product_page #product_detail > .oe_structure[placeholder*="detailed"] {
     display: none !important;
   }
