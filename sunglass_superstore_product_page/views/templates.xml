@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+
+    <!-- 0. Add SS scope class to product page -->
+    <template id="product_ss_scope"
+              name="SS: Scope Class"
+              inherit_id="website_sale.product"
+              priority="10">
+        <xpath expr="//section[@id='product_detail']" position="attributes">
+            <attribute name="class" add="ss-theme" separator=" "/>
+        </xpath>
+    </template>
+
     <!-- 1. Collection label above product name -->
     <template id="product_collection_label"
               name="SS: Collection Label"
