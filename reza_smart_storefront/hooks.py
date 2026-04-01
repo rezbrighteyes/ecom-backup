@@ -9,6 +9,7 @@ SF_VIEW_KEYS = [
     'reza_smart_storefront.product_description_crosssells',
 ]
 
+
 def _scope_views_to_non_ss_websites(env):
     exclude = env['website'].sudo().search(
         [('name', '=', EXCLUDE_WEBSITE_NAME)], limit=1
@@ -32,7 +33,15 @@ def _scope_views_to_non_ss_websites(env):
             ])
             if not existing:
                 view.copy({'website_id': website.id})
-                _logger.info('Scoped %s → website_id=%s', key, website.id)
+                _logger.info('Scoped %s to website_id=%s', key, website.id)
     for key, view in base_views.items():
         if not view.website_id:
             view.website_id = target_websites[0].id
+
+
+def post_init_hook(env):
+    _scope_views_to_non_ss_websites(env)
+
+
+def post_update_hook(env):
+    _scope_views_to_non_ss_websites(env)
