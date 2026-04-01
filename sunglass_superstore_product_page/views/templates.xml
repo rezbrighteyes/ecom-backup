@@ -115,6 +115,11 @@
                         </button>
                     </h2>
                     <div id="ss_collapse_size" class="accordion-collapse collapse">
+                        <div t-field="product.website_description"
+                                 class="mb-2 oe_structure"
+                                 placeholder="Add a product description here."/>
+                        </div>
+                        
                         <div class="accordion-body oe_structure"
                              id="oe_structure_ss_size_fit"/>
                     </div>
