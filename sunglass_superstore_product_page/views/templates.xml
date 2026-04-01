@@ -8,7 +8,7 @@
               inherit_id="website_sale.product"
               priority="10">
         <xpath expr="//section[@id='product_detail']" position="attributes">
-            <attribute name="class" add="ss-theme" separator=" "/>
+            <attribute name="t-attf-class" add="ss-theme" separator=" "/>
         </xpath>
     </template>
 
