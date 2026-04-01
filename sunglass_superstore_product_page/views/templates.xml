@@ -70,12 +70,13 @@
                 <t t-if="is_view_active('website_sale_wishlist.add_to_wishlist')">
                     <t t-call="website_sale_wishlist.add_to_wishlist">
                         <t t-set="_btn_classes"
-                           t-valuef="btn ss-btn-wishlist d-flex align-items-center justify-content-center flex-shrink-0"/>
+                           t-valuef="btn ss-btn-wishlist o_add_wishlist d-flex align-items-center justify-content-center flex-shrink-0"/>
                     </t>
                 </t>
                 <t t-else="">
                     <button type="button"
-                            class="btn ss-btn-wishlist d-flex align-items-center justify-content-center flex-shrink-0">
+                            class="btn ss-btn-wishlist d-flex align-items-center justify-content-center flex-shrink-0"
+                            disabled="disabled" title="Wishlist not available">
                         <i class="fa fa-heart-o"/>
                     </button>
                 </t>
@@ -175,4 +176,15 @@
             </div>
         </xpath>
     </template>
+
+    <!-- 6. Hide inline description_ecommerce (shown in accordion instead) -->
+    <template id="product_hide_inline_description"
+              name="SS: Hide Inline Description"
+              inherit_id="website_sale.product"
+              priority="20">
+        <xpath expr="//div[@t-field='product.description_ecommerce']" position="replace">
+            <!-- Removed: description is shown inside accordion tab instead -->
+        </xpath>
+    </template>
+
 </odoo>

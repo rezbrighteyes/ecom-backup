@@ -3,13 +3,13 @@ _logger = logging.getLogger(__name__)
 
 SS_WEBSITE_NAME = 'Sunglass Superstore'
 
-# These are the actual XML ids as Odoo stores them (module.template_id)
 SS_VIEW_KEYS = [
     'sunglass_superstore_product_page.product_cta_wrapper',
     'sunglass_superstore_product_page.product_collection_label',
     'sunglass_superstore_product_page.product_accordion_custom',
     'sunglass_superstore_product_page.product_price_badge',
     'sunglass_superstore_product_page.product_payment_methods',
+    'sunglass_superstore_product_page.product_hide_inline_description',
     'sunglass_superstore_product_page.ss_stock_urgency',
     'sunglass_superstore_product_page.ss_trust_badges',
     'sunglass_superstore_product_page.ss_product_description_crosssells',
