@@ -3,19 +3,6 @@ _logger = logging.getLogger(__name__)
 
 SS_WEBSITE_NAME = 'Sunglass Superstore'
 
-SS_VIEW_KEYS = [
-    'sunglass_superstore_product_page.product_ss_scope',
-    'sunglass_superstore_product_page.product_collection_label',
-    'sunglass_superstore_product_page.product_accordion_custom',
-    'sunglass_superstore_product_page.product_fullwidth_accordion',
-    'sunglass_superstore_product_page.product_price_badge',
-    'sunglass_superstore_product_page.product_payment_methods',
-    'sunglass_superstore_product_page.product_hide_inline_description',
-    'sunglass_superstore_product_page.ss_stock_urgency',
-    'sunglass_superstore_product_page.ss_trust_badges',
-    'sunglass_superstore_product_page.ss_product_description_crosssells',
-]
-
 
 def _scope_views_to_website(env):
     website = env['website'].sudo().search(
@@ -27,12 +14,16 @@ def _scope_views_to_website(env):
             SS_WEBSITE_NAME
         )
         return
+
     views = env['ir.ui.view'].with_context(active_test=False).search([
-        ('key', 'in', SS_VIEW_KEYS),
+        ('key', 'like', 'sunglass_superstore_product_page.'),
     ])
+
     _logger.info(
-        'sunglass_superstore_product_page: found %d views to scope', len(views)
+        'sunglass_superstore_product_page: scoping %d views to website %s',
+        len(views), website.id
     )
+
     for view in views:
         if view.website_id.id != website.id:
             view.website_id = website.id
