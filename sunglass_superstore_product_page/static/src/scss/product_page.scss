@@ -1,12 +1,56 @@
-/* ═══ Sunglass Superstore — Premium Product Page ═══ */
+/* ============================================================
+   Sunglass Superstore — Premium Product Page
+   Meta/Oakley inspired clean layout
+   ============================================================ */
 
-.ss-collection-label {
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  color: #999 !important;
-  font-weight: 600;
+/* ── Fix row alignment for proper layout ── */
+#product_detail.ss-theme > .row {
+  align-items: flex-start !important;
 }
 
+/* ── Right panel — floating card like Meta ── */
+#product_detail.ss-theme .col-lg-6.mt-md-4 {
+  position: sticky !important;
+  top: 80px !important;
+  align-self: flex-start !important;
+}
+
+/* ── Collection label ── */
+.ss-collection-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  color: #999 !important;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 6px !important;
+}
+
+/* ── Product title ── */
+#product_detail.ss-theme h1[itemprop="name"] {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: #0a0a0a;
+  margin-bottom: 0.5rem !important;
+}
+
+/* ── Price ── */
+#product_detail.ss-theme .product_price .oe_price .oe_currency_value,
+#product_detail.ss-theme .product_price .oe_price {
+  font-size: 1.9rem !important;
+  font-weight: 800 !important;
+  color: #0a0a0a !important;
+  letter-spacing: -0.02em;
+}
+
+#product_detail.ss-theme .product_price .oe_default_price {
+  font-size: 1rem !important;
+  color: #aaa !important;
+  text-decoration: line-through;
+}
+
+/* ── Discount badge ── */
 .ss-off-badge {
   background-color: #e53935 !important;
   color: #fff;
@@ -15,202 +59,241 @@
   border-radius: 4px;
   font-weight: 700;
   padding: 4px 10px !important;
+  vertical-align: middle;
 }
 
-/* CTA row */
-.ss-theme #o_wsale_cta_wrapper {
-  flex-wrap: nowrap !important;
+/* ── CTA wrapper ── */
+#product_detail.ss-theme #o_wsale_cta_wrapper {
   gap: 10px !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.75rem !important;
+  flex-wrap: nowrap !important;
   align-items: stretch !important;
 }
 
-/* Qty counter */
-.ss-theme .css_quantity.input-group {
+/* ── Add to cart button ── */
+#product_detail.ss-theme #add_to_cart_wrap {
+  flex: 1 !important;
+}
+
+#product_detail.ss-theme #add_to_cart {
+  width: 100% !important;
+  background-color: #0F1720 !important;
+  border-color: #0F1720 !important;
+  color: #fff !important;
+  border-radius: 6px !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 0.1em !important;
+  min-height: 52px !important;
+  white-space: nowrap !important;
+  text-transform: uppercase !important;
+  padding: 0 24px !important;
+  transition: background 0.2s !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+#product_detail.ss-theme #add_to_cart:hover {
+  background-color: #1e2e40 !important;
+  border-color: #1e2e40 !important;
+}
+
+/* ── Qty counter ── */
+#product_detail.ss-theme .css_quantity.input-group {
   border: 2px solid #e0e0e0 !important;
   border-radius: 6px !important;
   overflow: hidden;
   flex-wrap: nowrap !important;
-  margin-right: 0 !important;
-  margin-bottom: 0 !important;
+  width: 110px !important;
+  min-width: 110px !important;
+  flex-shrink: 0 !important;
 }
 
-.ss-theme .css_quantity .js_add_cart_json {
-  min-width: 40px;
+#product_detail.ss-theme .css_quantity .js_add_cart_json {
+  width: 36px !important;
+  min-width: 36px !important;
   display: flex !important;
-  align-items: center;
-  justify-content: center;
+  align-items: center !important;
+  justify-content: center !important;
   background: #fafafa !important;
   border: none !important;
   color: #333 !important;
-  font-size: 0.9rem;
-  padding: 0 !important;
+  font-size: 1rem;
 }
 
-.ss-theme .css_quantity .js_add_cart_json:hover {
+#product_detail.ss-theme .css_quantity .js_add_cart_json:hover {
   background: #f0f0f0 !important;
 }
 
-.ss-theme .css_quantity .quantity {
+#product_detail.ss-theme .css_quantity input.quantity {
   border: none !important;
-  border-left: 2px solid #e0e0e0 !important;
-  border-right: 2px solid #e0e0e0 !important;
-  border-radius: 0 !important;
-  text-align: center;
-  font-weight: 700;
-  font-size: 1rem;
-  width: 48px !important;
-  min-width: 48px;
-  box-shadow: none !important;
-  padding: 0 !important;
+  border-left: 1px solid #e0e0e0 !important;
+  border-right: 1px solid #e0e0e0 !important;
+  text-align: center !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+  background: #fff !important;
+  flex: 1 !important;
 }
 
-/* Add to Cart */
-.ss-theme #add_to_cart_wrap {
-  flex: 1 1 0% !important;
-  display: flex !important;
-  margin-right: 0 !important;
-  margin-bottom: 0 !important;
-}
-
-.ss-theme #add_to_cart {
-  background-color: #0a0a0a !important;
-  border-color: #0a0a0a !important;
-  color: #fff !important;
-  border-radius: 6px !important;
-  letter-spacing: 0.12em;
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  min-height: 52px;
-  width: 100% !important;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  flex-grow: 1 !important;
-}
-
-.ss-theme #add_to_cart:hover {
-  background-color: #222 !important;
-  border-color: #222 !important;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-/* Wishlist — pull out of product_option_block visually */
-.ss-theme #product_option_block {
-  order: -1 !important;
-  flex-basis: auto !important;
-  width: auto !important;
-  flex-wrap: nowrap !important;
-}
-
-.ss-theme #product_option_block .o_add_wishlist_dyn {
+/* ── Wishlist button ── */
+#product_detail.ss-theme .o_wsale_wishlist_add_to_wishlist {
   min-width: 52px !important;
-  min-height: 52px;
+  min-height: 52px !important;
+  width: 52px !important;
+  height: 52px !important;
   border: 2px solid #e0e0e0 !important;
   border-radius: 6px !important;
   background: #fff !important;
-  color: #999 !important;
+  color: #555 !important;
   display: flex !important;
-  align-items: center;
-  justify-content: center;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  transition: border-color 0.2s !important;
   padding: 0 !important;
-  transition: all 0.2s ease;
-  margin: 0 !important;
 }
 
-.ss-theme #product_option_block .o_add_wishlist_dyn:hover {
-  border-color: #e53935 !important;
-  color: #e53935 !important;
+#product_detail.ss-theme .o_wsale_wishlist_add_to_wishlist:hover {
+  border-color: #0F1720 !important;
+  color: #0F1720 !important;
 }
 
-.ss-theme #product_option_block .o_add_wishlist_dyn i {
-  margin: 0 !important;
-  font-size: 1.1rem;
-}
-
-/* Payment methods */
+/* ── Payment methods ── */
 .ss-payment {
-  border-color: #f0f0f0 !important;
+  border-top: 1px solid #f0f0f0 !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+  padding: 12px 0 !important;
+  margin: 12px 0 !important;
 }
 
 .ss-pay-title {
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
   color: #666;
-  font-size: 0.75rem !important;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 .ss-pay-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
   color: #333;
-  letter-spacing: 0.08em;
-  font-size: 0.75rem !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .ss-pay-badge i {
   color: #2ecc71;
 }
 
-/* Accordion */
-.ss-theme .accordion-item {
-  border: none !important;
-  border-bottom: 1px solid #f0f0f0 !important;
+/* ── Trust badges ── */
+.sf-trust-row {
+  border-top: 1px solid #f0f0f0;
+  padding-top: 16px !important;
+  margin-top: 8px !important;
+  margin-bottom: 4px !important;
 }
 
-.ss-theme .accordion-button {
-  padding: 1.2rem 0 !important;
+.sf-trust-badge {
   background: transparent !important;
-  box-shadow: none !important;
+  border: none !important;
+  padding: 8px 4px !important;
+}
+
+.sf-trust-badge i {
+  font-size: 20px !important;
+  margin-bottom: 2px !important;
+}
+
+.sf-trust-badge small {
+  font-size: 0.68rem !important;
+  color: #555 !important;
+  text-align: center;
+  line-height: 1.3 !important;
+}
+
+.sf-delivery-estimate {
+  background: #f8f9fa !important;
+  border-radius: 6px !important;
+  border: none !important;
+  padding: 10px 16px !important;
+  margin-top: 8px !important;
+}
+
+/* ── Hide terms in right column ── */
+#product_detail.ss-theme #o_product_terms_and_share {
+  display: none !important;
+}
+
+/* ── Accordion full width below ── */
+#ss_product_accordion_section {
+  padding-top: 16px !important;
+  padding-bottom: 32px !important;
 }
 
 .ss-accordion-label {
   text-transform: uppercase;
-  font-size: 0.8rem;
-  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
   font-weight: 700;
   color: #0a0a0a;
 }
 
-.ss-theme .accordion-body {
-  padding: 0 0 1.2rem 0 !important;
-  font-size: 0.95rem;
-  line-height: 1.75;
-  color: #555;
+#ss_product_accordion_section .accordion-button {
+  padding: 16px 0 !important;
+  background: transparent !important;
+  border-bottom: 1px solid #eee !important;
+  box-shadow: none !important;
 }
 
-/* Trust badges */
-.ss-theme .sf-trust-badge {
-  border: 1px solid #f0f0f0 !important;
-  border-radius: 8px !important;
-  padding: 1rem 0.5rem !important;
+#ss_product_accordion_section .accordion-item {
+  border: none !important;
 }
 
-.ss-theme .sf-delivery-estimate {
-  border: 1px solid #f0f0f0 !important;
-  border-radius: 8px !important;
+#ss_product_accordion_section .accordion-body {
+  padding: 16px 0 !important;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: #444;
 }
 
-/* Price */
-.ss-theme .product_price .oe_price {
-  font-size: 1.8rem !important;
-  font-weight: 800 !important;
-  color: #0a0a0a !important;
+/* ── Mobile ── */
+@media (max-width: 991px) {
+  #product_detail.ss-theme .col-lg-6.mt-md-4 {
+    position: static !important;
+  }
 }
 
-/* Title */
-.ss-theme h1[itemprop="name"] {
-  font-size: 1.9rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  color: #0a0a0a;
+/* ── Fix carousel clipping accordion ── */
+#product_detail.ss-theme .o_wsale_product_images,
+#product_detail.ss-theme .o_wsale_product_images .carousel,
+#product_detail.ss-theme .o_wsale_product_images .carousel-inner {
+  overflow: visible !important;
 }
 
-/* Breadcrumb */
-.ss-theme .o_wsale_breadcrumb a {
-  color: #999;
+/* ── Accordion in left column ── */
+.ss-left-accordion {
+  background: #fff !important;
+  position: relative !important;
+  z-index: 2 !important;
+  margin-top: 1rem !important;
 }
 
-.ss-theme .o_wsale_breadcrumb a:hover {
-  color: #0a0a0a;
+/* ── Hero + grid image layout ── */
+.ss-hero-img {
+  border-radius: 8px 8px 0 0;
+  object-fit: contain;
+  background: #f6f6f6;
+  min-height: 400px;
+}
+
+.ss-grid-img {
+  border-radius: 4px;
+  object-fit: contain;
+  background: #f6f6f6;
+  aspect-ratio: 1;
 }

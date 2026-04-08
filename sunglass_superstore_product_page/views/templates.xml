@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-
     <!-- 0. Add SS scope class to product page -->
     <template id="product_ss_scope"
               name="SS: Scope Class"
@@ -46,8 +45,7 @@
         </xpath>
     </template>
 
-
-    <!-- 4. Payment methods -->
+    <!-- 3. Payment methods -->
     <template id="product_payment_methods"
               name="SS: Payment Methods"
               inherit_id="website_sale.product"
@@ -75,77 +73,122 @@
         </xpath>
     </template>
 
-    <!-- 5. Replace accordion -->
+    <!-- 4. Remove accordion from right column -->
     <template id="product_accordion_custom"
-              name="SS: Custom Accordion"
+              name="SS: Remove Accordion From Right Column"
               inherit_id="website_sale.product"
               priority="20">
         <xpath expr="//t[@t-call='website_sale.product_accordion']" position="replace">
-            <div id="product_accordion" class="accordion accordion-flush my-4">
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button fw-medium"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#ss_collapse_details"
-                                aria-expanded="true"
-                                aria-controls="ss_collapse_details">
-                            <span class="ss-accordion-label">
-                                Product Details &amp; Specifications
-                            </span>
-                        </button>
-                    </h2>
-                    <div id="ss_collapse_details" class="accordion-collapse collapse show">
-                        <div class="accordion-body">
-                            <div t-field="product.website_description"
-                                 class="mb-2 oe_structure"
-                                 placeholder="Add a product description here."/>
+            <!-- accordion moved to left column below image -->
+        </xpath>
+    </template>
+
+    <!-- 5. Hide inline description -->
+    <template id="product_hide_inline_description"
+              name="SS: Hide Inline Description"
+              inherit_id="website_sale.product"
+              priority="20">
+        <xpath expr="//div[@t-field='product.description_ecommerce']" position="replace">
+            <!-- shown in accordion below image -->
+        </xpath>
+    </template>
+
+    <!-- 6. Accordion below image in left column -->
+    <template id="product_fullwidth_accordion"
+              name="SS: Accordion Below Image"
+              inherit_id="website_sale.product"
+              priority="30">
+        <xpath expr="//t[@t-call='website_sale.shop_product_images']" position="after">
+            <div id="ss_product_accordion_section" class="ss-left-accordion mt-3">
+                <div id="product_accordion" class="accordion accordion-flush">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button fw-medium"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#ss_collapse_details"
+                                    aria-expanded="true"
+                                    aria-controls="ss_collapse_details">
+                                <span class="ss-accordion-label">
+                                    Product Details &amp; Specifications
+                                </span>
+                            </button>
+                        </h2>
+                        <div id="ss_collapse_details" class="accordion-collapse collapse show">
+                            <div class="accordion-body">
+                                <div t-field="product.website_description"
+                                     class="mb-2 oe_structure"
+                                     placeholder="Add a product description here."/>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button collapsed fw-medium"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#ss_collapse_size"
-                                aria-expanded="false"
-                                aria-controls="ss_collapse_size">
-                            <span class="ss-accordion-label">Size &amp; Fit</span>
-                        </button>
-                    </h2>
-                    <div id="ss_collapse_size" class="accordion-collapse collapse">
-                        <div class="accordion-body oe_structure"
-                             id="oe_structure_ss_size_fit"/>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-medium"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#ss_collapse_size"
+                                    aria-expanded="false"
+                                    aria-controls="ss_collapse_size">
+                                <span class="ss-accordion-label">Size &amp; Fit</span>
+                            </button>
+                        </h2>
+                        <div id="ss_collapse_size" class="accordion-collapse collapse">
+                            <div class="accordion-body oe_structure"
+                                 id="oe_structure_ss_size_fit"/>
+                        </div>
                     </div>
-                </div>
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button collapsed fw-medium"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#ss_collapse_material"
-                                aria-expanded="false"
-                                aria-controls="ss_collapse_material">
-                            <span class="ss-accordion-label">Material &amp; Care</span>
-                        </button>
-                    </h2>
-                    <div id="ss_collapse_material" class="accordion-collapse collapse">
-                        <div class="accordion-body oe_structure"
-                             id="oe_structure_ss_material"/>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-medium"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#ss_collapse_material"
+                                    aria-expanded="false"
+                                    aria-controls="ss_collapse_material">
+                                <span class="ss-accordion-label">Material &amp; Care</span>
+                            </button>
+                        </h2>
+                        <div id="ss_collapse_material" class="accordion-collapse collapse">
+                            <div class="accordion-body oe_structure"
+                                 id="oe_structure_ss_material"/>
+                        </div>
                     </div>
                 </div>
             </div>
         </xpath>
     </template>
 
-    <!-- 6. Hide inline description_ecommerce (shown in accordion instead) -->
-    <template id="product_hide_inline_description"
-              name="SS: Hide Inline Description"
-              inherit_id="website_sale.product"
+    <!-- 7. Custom SS image layout — hero first + grid below -->
+    <template id="shop_product_ss_grid"
+              name="SS: Hero + Grid Image Layout"
+              inherit_id="website_sale.shop_product_images"
               priority="20">
-        <xpath expr="//div[@t-field='product.description_ecommerce']" position="replace">
-            <!-- Removed: description is shown inside accordion tab instead -->
+        <xpath expr="//t[@t-call]" position="replace">
+            <t t-if="product_images">
+                <div class="ss-hero-image mb-2 position-relative">
+                    <t t-set="ribbon" t-value="product_variant.sudo().variant_ribbon_id or product.sudo().website_ribbon_id"/>
+                    <span t-if="ribbon" t-attf-class="o_ribbon #{ribbon._get_position_class()} z-1"
+                          t-attf-style="#{ribbon['text_color'] and ('color: %s; ' % ribbon['text_color'])}#{ribbon['bg_color'] and 'background-color:' + ribbon['bg_color']}"
+                          t-out="ribbon['name'] or ''"/>
+                    <img t-attf-src="/web/image/{{ product_images[0]._name }}/{{ product_images[0].id }}/image_1920"
+                         class="w-100 ss-hero-img"
+                         t-att-alt="product.name"
+                         loading="eager"/>
+                </div>
+                <t t-if="len(product_images) > 1">
+                    <div class="row g-2">
+                        <t t-foreach="product_images[1:]" t-as="pimage">
+                            <div class="col-6">
+                                <img t-attf-src="/web/image/{{ pimage._name }}/{{ pimage.id }}/image_1024"
+                                     class="w-100 ss-grid-img"
+                                     t-att-alt="product.name"
+                                     loading="lazy"/>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
         </xpath>
     </template>
 

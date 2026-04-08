@@ -7,6 +7,7 @@ SS_VIEW_KEYS = [
     'sunglass_superstore_product_page.product_ss_scope',
     'sunglass_superstore_product_page.product_collection_label',
     'sunglass_superstore_product_page.product_accordion_custom',
+    'sunglass_superstore_product_page.product_fullwidth_accordion',
     'sunglass_superstore_product_page.product_price_badge',
     'sunglass_superstore_product_page.product_payment_methods',
     'sunglass_superstore_product_page.product_hide_inline_description',
