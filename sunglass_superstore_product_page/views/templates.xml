@@ -155,7 +155,7 @@
                         <div class="row g-3">
                             <t t-foreach="cross_sells" t-as="item">
                                 <t t-set="item_in_stock" t-value="item._sf_is_available()"/>
-                                <div class="col-6 col-md-6">
+                                <div class="col-3">
                                     <div class="ss-crosssell-card">
                                         <a t-att-href="item.website_url" class="text-decoration-none">
                                             <div class="ss-crosssell-img-wrap">
@@ -211,7 +211,7 @@
                     <t t-if="len(product_images) > 1">
                         <div class="row g-2">
                             <t t-foreach="product_images[1:]" t-as="pimage">
-                                <div class="col-6">
+                                <div class="col-3">
                                     <img t-attf-src="/web/image/{{ pimage._name }}/{{ pimage.id }}/image_1024"
                                          class="w-100 ss-grid-img"
                                          t-att-alt="product.name"
