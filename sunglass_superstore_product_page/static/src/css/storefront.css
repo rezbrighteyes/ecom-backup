@@ -92,7 +92,7 @@
 
 @media (min-width: 992px) {
     .ss-crosssells-section {
-        max-width: 50%;
+    
     }
 }
 
@@ -105,7 +105,7 @@
 
 @media (min-width: 992px) {
     .ss-crosssells-section {
-        max-width: 50%;
+    
         padding-right: 1.5rem;
     }
 }
