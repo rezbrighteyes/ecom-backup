@@ -405,3 +405,13 @@
     max-width: 35% !important;
   }
 }
+
+// ── Right panel styling ───────────────────────────────────────
+@media (min-width: 992px) {
+  .ss-theme #product_details {
+    background: #fff;
+    border-radius: 35px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    padding: 24px !important;
+  }
+}
