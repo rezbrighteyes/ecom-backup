@@ -393,8 +393,4 @@
   white-space: nowrap;
 }
 
-// Hide native dynamic snippet on SS — replaced by custom cross-sells
-.ss-theme ~ .s_dynamic_snippet_products,
-#wrapwrap .s_dynamic_snippet_products {
-  display: none !important;
-}
+
