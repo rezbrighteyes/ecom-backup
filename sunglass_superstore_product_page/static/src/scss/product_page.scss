@@ -415,3 +415,10 @@
     padding: 24px !important;
   }
 }
+
+// ── Hide cross-sells on mobile ────────────────────────────────
+@media (max-width: 991px) {
+  .ss-crosssells-section {
+    display: none !important;
+  }
+}
