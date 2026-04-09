@@ -109,3 +109,17 @@
         padding-right: 1.5rem;
     }
 }
+
+/* Cross-sells fill full left column width */
+.ss-crosssells-section {
+    width: 100%;
+}
+
+.ss-crosssells-section .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.ss-crosssell-img-wrap {
+    aspect-ratio: 1;
+}
