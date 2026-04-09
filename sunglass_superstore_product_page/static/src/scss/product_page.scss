@@ -1,21 +1,17 @@
 /* ============================================================
    Sunglass Superstore — Premium Product Page
-   Meta/Oakley inspired clean layout
    ============================================================ */
 
-/* ── Fix row alignment for proper layout ── */
 #product_detail.ss-theme > .row {
   align-items: flex-start !important;
 }
 
-/* ── Right panel — floating card like Meta ── */
 #product_detail.ss-theme .col-lg-6.mt-md-4 {
   position: sticky !important;
   top: 80px !important;
   align-self: flex-start !important;
 }
 
-/* ── Collection label ── */
 .ss-collection-label {
   font-size: 0.72rem;
   letter-spacing: 0.18em;
@@ -25,7 +21,6 @@
   margin-bottom: 6px !important;
 }
 
-/* ── Product title ── */
 #product_detail.ss-theme h1[itemprop="name"] {
   font-size: 1.6rem;
   font-weight: 800;
@@ -35,7 +30,6 @@
   margin-bottom: 0.5rem !important;
 }
 
-/* ── Price ── */
 #product_detail.ss-theme .product_price .oe_price .oe_currency_value,
 #product_detail.ss-theme .product_price .oe_price {
   font-size: 1.9rem !important;
@@ -50,7 +44,6 @@
   text-decoration: line-through;
 }
 
-/* ── Discount badge ── */
 .ss-off-badge {
   background-color: #e53935 !important;
   color: #fff;
@@ -62,7 +55,6 @@
   vertical-align: middle;
 }
 
-/* ── CTA wrapper ── */
 #product_detail.ss-theme #o_wsale_cta_wrapper {
   gap: 10px !important;
   margin-top: 1.5rem !important;
@@ -71,7 +63,6 @@
   align-items: stretch !important;
 }
 
-/* ── Add to cart button ── */
 #product_detail.ss-theme #add_to_cart_wrap {
   flex: 1 !important;
 }
@@ -101,7 +92,6 @@
   border-color: #1e2e40 !important;
 }
 
-/* ── Qty counter ── */
 #product_detail.ss-theme .css_quantity.input-group {
   border: 2px solid #e0e0e0 !important;
   border-radius: 6px !important;
@@ -139,7 +129,6 @@
   flex: 1 !important;
 }
 
-/* ── Wishlist button ── */
 #product_detail.ss-theme .o_wsale_wishlist_add_to_wishlist {
   min-width: 52px !important;
   min-height: 52px !important;
@@ -162,7 +151,6 @@
   color: #0F1720 !important;
 }
 
-/* ── Payment methods ── */
 .ss-payment {
   border-top: 1px solid #f0f0f0 !important;
   border-bottom: 1px solid #f0f0f0 !important;
@@ -190,33 +178,33 @@
   color: #2ecc71;
 }
 
-/* ── Trust badges ── */
-.sf-trust-row {
+/* ── Trust badges — scoped to SS only ── */
+#product_detail.ss-theme .sf-trust-row {
   border-top: 1px solid #f0f0f0;
   padding-top: 16px !important;
   margin-top: 8px !important;
   margin-bottom: 4px !important;
 }
 
-.sf-trust-badge {
+#product_detail.ss-theme .sf-trust-badge {
   background: transparent !important;
   border: none !important;
   padding: 8px 4px !important;
 }
 
-.sf-trust-badge i {
+#product_detail.ss-theme .sf-trust-badge i {
   font-size: 20px !important;
   margin-bottom: 2px !important;
 }
 
-.sf-trust-badge small {
+#product_detail.ss-theme .sf-trust-badge small {
   font-size: 0.68rem !important;
   color: #555 !important;
   text-align: center;
   line-height: 1.3 !important;
 }
 
-.sf-delivery-estimate {
+#product_detail.ss-theme .sf-delivery-estimate {
   background: #f8f9fa !important;
   border-radius: 6px !important;
   border: none !important;
@@ -224,12 +212,10 @@
   margin-top: 8px !important;
 }
 
-/* ── Hide terms in right column ── */
 #product_detail.ss-theme #o_product_terms_and_share {
   display: none !important;
 }
 
-/* ── Accordion full width below ── */
 #ss_product_accordion_section {
   padding-top: 16px !important;
   padding-bottom: 32px !important;
@@ -268,24 +254,22 @@
   }
 }
 
-/* ── Mobile ── */
-// Mobile fixes
 @media (max-width: 991px) {
   .ss-hero-image + .row {
     display: none !important;
   }
 
-  #product_detail_main {
+  #product_detail.ss-theme #product_detail_main {
     display: flex !important;
     flex-wrap: wrap !important;
   }
 
-  #product_detail_main .o_wsale_product_images {
+  #product_detail.ss-theme #product_detail_main .o_wsale_product_images {
     order: 1;
     width: 100%;
   }
 
-  #product_details {
+  #product_detail.ss-theme #product_details {
     order: 2;
     width: 100%;
   }
@@ -296,14 +280,12 @@
   }
 }
 
-/* ── Fix carousel clipping accordion ── */
 #product_detail.ss-theme .o_wsale_product_images,
 #product_detail.ss-theme .o_wsale_product_images .carousel,
 #product_detail.ss-theme .o_wsale_product_images .carousel-inner {
   overflow: visible !important;
 }
 
-/* ── Accordion in left column ── */
 .ss-left-accordion {
   background: #fff !important;
   position: relative !important;
@@ -311,7 +293,6 @@
   margin-top: 1rem !important;
 }
 
-/* ── Hero + grid image layout ── */
 .ss-hero-img {
   border-radius: 8px 8px 0 0;
   object-fit: contain;
@@ -326,27 +307,45 @@
   aspect-ratio: 1;
 }
 
-// ── Cross-sells grid ──────────────────────────────────────────
 .ss-crosssells-title {
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
+  text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #111;
-  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.ss-crosssells-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #f0f0f0;
+  width: 100%;
 }
 
 .ss-crosssell-card {
   color: inherit;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: box-shadow 0.2s;
 }
 
-.ss-crosssell-card:hover .ss-crosssell-name {
-  color: #111;
+.ss-crosssell-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
 
 .ss-crosssell-img-wrap {
   background: #f8f8f8;
   aspect-ratio: 1;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .ss-crosssell-img-wrap img {
@@ -360,40 +359,46 @@
   transform: scale(1.04);
 }
 
+.ss-crosssell-body {
+  padding: 10px 12px 6px;
+  flex: 1;
+}
+
 .ss-crosssell-name {
-  font-size: 0.78rem;
-  color: #444;
-  margin-bottom: 2px;
-  white-space: nowrap;
+  font-size: 0.75rem;
+  color: #111;
+  margin-bottom: 3px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  transition: color 0.2s;
+  line-height: 1.4;
 }
 
 .ss-crosssell-price {
   font-size: 0.85rem;
   font-weight: 700;
   color: #111;
+  margin-bottom: 2px;
 }
 
-// ── Cross-sells inside left column ────────────────────────────
-.ss-crosssells-section {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.ss-crosssells-title {
-  font-size: 0.85rem;
+.ss-crosssell-btn {
+  display: block;
+  margin: 6px 12px 12px;
+  padding: 8px;
+  background: #111;
+  color: #fff !important;
+  text-align: center;
+  border-radius: 6px;
+  font-size: 0.78rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #111;
-  margin-bottom: 16px;
-  white-space: nowrap;
+  text-decoration: none !important;
+  transition: background 0.2s;
 }
 
-
+.ss-crosssell-btn:hover {
+  background: #333;
+}
 
 @media (min-width: 992px) {
   .ss-theme .o_wsale_product_images {
@@ -404,10 +409,6 @@
     flex: 0 0 35% !important;
     max-width: 35% !important;
   }
-}
-
-// ── Right panel styling ───────────────────────────────────────
-@media (min-width: 992px) {
   .ss-theme #product_details {
     background: #fff;
     border-radius: 35px;
@@ -416,18 +417,11 @@
   }
 }
 
-// ── Hide cross-sells on mobile ────────────────────────────────
 @media (max-width: 991px) {
   .ss-crosssells-section {
     display: none !important;
   }
-}
-
-@media (max-width: 991px) {
   #ss_product_accordion_section {
     display: none !important;
   }
 }
-
-
-
