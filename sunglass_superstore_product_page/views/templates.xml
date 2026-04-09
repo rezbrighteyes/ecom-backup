@@ -98,7 +98,7 @@
               name="SS: Accordion Below Image"
               inherit_id="website_sale.product"
               priority="30">
-        <xpath expr="//t[@t-call='website_sale.shop_product_images']" position="after">
+        <xpath expr="//div[@id='product_details']" position="after">
             <div id="ss_product_accordion_section" class="ss-left-accordion mt-3">
                 <div id="product_accordion" class="accordion accordion-flush">
                     <div class="accordion-item">
