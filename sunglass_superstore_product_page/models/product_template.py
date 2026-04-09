@@ -92,4 +92,6 @@ class ProductTemplateSS(models.Model):
                 if len(similar) >= limit:
                     return similar[:limit]
                 return in_stock[:limit]
+            if products:
+                return products[:limit]
         return self.env['product.template']
