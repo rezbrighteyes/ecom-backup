@@ -93,5 +93,9 @@ class ProductTemplateSS(models.Model):
                     return similar[:limit]
                 return in_stock[:limit]
             if products:
+                price = self.list_price
+                similar = products.filtered(lambda p: price * 0.3 <= p.list_price <= price * 3)
+                if similar:
+                    return similar[:limit]
                 return products[:limit]
         return self.env['product.template']

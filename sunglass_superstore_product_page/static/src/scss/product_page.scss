@@ -325,3 +325,53 @@
   background: #f6f6f6;
   aspect-ratio: 1;
 }
+
+// ── Cross-sells grid ──────────────────────────────────────────
+.ss-crosssells-title {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #111;
+  text-transform: uppercase;
+}
+
+.ss-crosssell-card {
+  color: inherit;
+}
+
+.ss-crosssell-card:hover .ss-crosssell-name {
+  color: #111;
+}
+
+.ss-crosssell-img-wrap {
+  background: #f8f8f8;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.ss-crosssell-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.ss-crosssell-card:hover .ss-crosssell-img-wrap img {
+  transform: scale(1.04);
+}
+
+.ss-crosssell-name {
+  font-size: 0.78rem;
+  color: #444;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s;
+}
+
+.ss-crosssell-price {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #111;
+}

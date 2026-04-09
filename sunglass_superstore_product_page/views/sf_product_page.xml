@@ -59,51 +59,49 @@
         </xpath>
     </template>
 
-    <!-- Cross-sells injected after the full-width accordion section -->
     <template id="ss_product_description_crosssells"
               inherit_id="sunglass_superstore_product_page.product_fullwidth_accordion"
-              name="SS: Cross-Sells Below Accordion"
+              name="SS: Cross-Sells Grid"
               priority="25">
-        <xpath expr="//div[@id='product_accordion']" position="after">
+        <xpath expr="//div[@id='ss_product_accordion_section']" position="after">
             <t t-set="cross_sells" t-value="product._sf_get_cross_sells(4)"/>
             <t t-if="cross_sells">
-                <section class="sf-crosssells-section container my-4">
-                    <div class="sf-details-grid">
-                        <div/>
-                        <aside class="sf-sidebar" id="sf_sidebar">
-                            <h3 class="sf-sidebar-title">You might also like</h3>
-                            <div class="sf-related-list">
-                                <t t-foreach="cross_sells" t-as="item">
-                                    <t t-set="first_variant" t-value="item.product_variant_ids[:1]"/>
-                                    <t t-if="first_variant">
-                                        <div class="sf-related-item"
-                                             t-att-data-product-id="first_variant.id"
-                                             t-att-data-name="item.name"
-                                             t-att-data-price="'$%.2f' % item.list_price">
-                                            <a t-att-href="item.website_url" class="sf-related-link">
-                                                <img t-att-src="'/web/image/product.template/%s/image_128' % item.id"
-                                                     class="sf-related-thumb"
-                                                     t-att-alt="item.name"
-                                                     loading="lazy"/>
-                                                <div class="sf-related-info">
-                                                    <div class="sf-related-name" t-esc="item.name"/>
-                                                    <div class="sf-related-price" t-if="item.list_price">
-                                                        $<t t-esc="'%.2f' % item.list_price"/>
-                                                    </div>
-                                                </div>
-                                            </a>
-                                            <button type="button" class="sf-add-cart"
-                                                    t-att-data-variant-id="first_variant.id"
-                                                    title="Add to cart">
-                                                <i class="fa fa-shopping-cart"/>
-                                            </button>
+                <div class="ss-crosssells-section">
+                    <h3 class="ss-crosssells-title">You might also like</h3>
+                    <div class="row g-3">
+                        <t t-foreach="cross_sells" t-as="item">
+                            <t t-set="item_in_stock" t-value="item._sf_is_available()"/>
+                            <div class="col-6 col-md-3">
+                                <div class="ss-crosssell-card">
+                                    <a t-att-href="item.website_url" class="text-decoration-none">
+                                        <div class="ss-crosssell-img-wrap">
+                                            <img t-att-src="'/web/image/product.template/%s/image_512' % item.id"
+                                                 t-att-alt="item.name"
+                                                 loading="lazy"/>
                                         </div>
-                                    </t>
-                                </t>
+                                        <div class="ss-crosssell-body">
+                                            <div class="ss-crosssell-name" t-esc="item.name"/>
+                                            <div class="ss-crosssell-price">
+                                                $<t t-esc="'%.2f' % item.list_price"/>
+                                            </div>
+                                            <div class="ss-crosssell-stock">
+                                                <t t-if="item_in_stock">
+                                                    <span style="color:#1D9E75; font-size:11px;">&#10003; In stock</span>
+                                                </t>
+                                                <t t-else="">
+                                                    <span style="color:#999; font-size:11px;">Out of stock</span>
+                                                </t>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <a t-att-href="item.website_url" class="ss-crosssell-btn">
+                                        Add to bag
+                                    </a>
+                                </div>
                             </div>
-                        </aside>
+                        </t>
                     </div>
-                </section>
+                </div>
             </t>
         </xpath>
     </template>

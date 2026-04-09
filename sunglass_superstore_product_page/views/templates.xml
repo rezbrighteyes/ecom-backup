@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- 0. Add SS scope class to product page -->
     <template id="product_ss_scope"
               name="SS: Scope Class"
               inherit_id="website_sale.product"
@@ -11,7 +10,6 @@
         </xpath>
     </template>
 
-    <!-- 1. Collection label above product name -->
     <template id="product_collection_label"
               name="SS: Collection Label"
               inherit_id="website_sale.product"
@@ -25,7 +23,6 @@
         </xpath>
     </template>
 
-    <!-- 2. Discount % OFF badge -->
     <template id="product_price_badge"
               name="SS: Discount Badge"
               inherit_id="website_sale.product"
@@ -45,7 +42,6 @@
         </xpath>
     </template>
 
-    <!-- 3. Payment methods -->
     <template id="product_payment_methods"
               name="SS: Payment Methods"
               inherit_id="website_sale.product"
@@ -73,32 +69,27 @@
         </xpath>
     </template>
 
-    <!-- 4. Remove accordion from right column -->
     <template id="product_accordion_custom"
               name="SS: Remove Accordion From Right Column"
               inherit_id="website_sale.product"
               priority="20">
         <xpath expr="//t[@t-call='website_sale.product_accordion']" position="replace">
-            <!-- accordion moved to left column below image -->
         </xpath>
     </template>
 
-    <!-- 5. Hide inline description -->
     <template id="product_hide_inline_description"
               name="SS: Hide Inline Description"
               inherit_id="website_sale.product"
               priority="20">
         <xpath expr="//div[@t-field='product.description_ecommerce']" position="replace">
-            <!-- shown in accordion below image -->
         </xpath>
     </template>
 
-    <!-- 6. Accordion below image in left column -->
     <template id="product_fullwidth_accordion"
               name="SS: Accordion Below Image"
               inherit_id="website_sale.product"
               priority="30">
-        <xpath expr="//div[@id='product_details']" position="after">
+        <xpath expr="//t[@t-call='website_sale.shop_product_images']" position="after">
             <div id="ss_product_accordion_section" class="ss-left-accordion mt-3">
                 <div id="product_accordion" class="accordion accordion-flush">
                     <div class="accordion-item">
@@ -149,17 +140,57 @@
                                 <span class="ss-accordion-label">Material &amp; Care</span>
                             </button>
                         </h2>
-                        <div id="ss_collapse_material" class="accordion-collapse collapse">
+                        <div id="ss_collapse_collapse_material" class="accordion-collapse collapse">
                             <div class="accordion-body oe_structure"
                                  id="oe_structure_ss_material"/>
                         </div>
                     </div>
                 </div>
+
+                <!-- Cross-sells directly inside left column -->
+                <t t-set="cross_sells" t-value="product._sf_get_cross_sells(4)"/>
+                <t t-if="cross_sells">
+                    <div class="ss-crosssells-section">
+                        <h3 class="ss-crosssells-title">You might also like</h3>
+                        <div class="row g-3">
+                            <t t-foreach="cross_sells" t-as="item">
+                                <t t-set="item_in_stock" t-value="item._sf_is_available()"/>
+                                <div class="col-6 col-md-6">
+                                    <div class="ss-crosssell-card">
+                                        <a t-att-href="item.website_url" class="text-decoration-none">
+                                            <div class="ss-crosssell-img-wrap">
+                                                <img t-att-src="'/web/image/product.template/%s/image_512' % item.id"
+                                                     t-att-alt="item.name"
+                                                     loading="lazy"/>
+                                            </div>
+                                            <div class="ss-crosssell-body">
+                                                <div class="ss-crosssell-name" t-esc="item.name"/>
+                                                <div class="ss-crosssell-price">
+                                                    $<t t-esc="'%.2f' % item.list_price"/>
+                                                </div>
+                                                <div class="ss-crosssell-stock">
+                                                    <t t-if="item_in_stock">
+                                                        <span style="color:#1D9E75; font-size:11px;">&#10003; In stock</span>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span style="color:#999; font-size:11px;">Out of stock</span>
+                                                    </t>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <a t-att-href="item.website_url" class="ss-crosssell-btn">
+                                            Add to bag
+                                        </a>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </t>
             </div>
         </xpath>
     </template>
 
-    <!-- 7. SS image layout — only on Sunglass Superstore, fallback for others -->
     <template id="shop_product_ss_grid"
               name="SS: Hero + Grid Image Layout"
               inherit_id="website_sale.shop_product_images"
