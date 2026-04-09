@@ -58,11 +58,12 @@
             </div>
         </xpath>
     </template>
+
     <template id="ss_mobile_accordion"
               inherit_id="website_sale.product"
               name="SS: Mobile Accordion"
               priority="30">
-        <xpath expr="//div[@id='product_details']" position="after">
+        <xpath expr="//div[@id='o_product_terms_and_share']" position="after">
             <div id="ss_mobile_accordion_section" class="ss-mobile-accordion d-lg-none mt-3">
                 <div class="accordion accordion-flush">
                     <div class="accordion-item">
@@ -118,7 +119,5 @@
             </div>
         </xpath>
     </template>
+
 </odoo>
-
-
-    
