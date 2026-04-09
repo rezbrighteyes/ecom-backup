@@ -58,9 +58,6 @@
             </div>
         </xpath>
     </template>
-
-</odoo>
-
     <template id="ss_mobile_accordion"
               inherit_id="website_sale.product"
               name="SS: Mobile Accordion"
@@ -122,3 +119,6 @@
         </xpath>
     </template>
 </odoo>
+
+
+    
