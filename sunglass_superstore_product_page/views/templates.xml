@@ -140,54 +140,61 @@
                                 <span class="ss-accordion-label">Material &amp; Care</span>
                             </button>
                         </h2>
-                        <div id="ss_collapse_collapse_material" class="accordion-collapse collapse">
+                        <div id="ss_collapse_material" class="accordion-collapse collapse">
                             <div class="accordion-body oe_structure"
                                  id="oe_structure_ss_material"/>
                         </div>
                     </div>
                 </div>
-
-                <!-- Cross-sells directly inside left column -->
-                <t t-set="cross_sells" t-value="product._sf_get_cross_sells(4)"/>
-                <t t-if="cross_sells">
-                    <div class="ss-crosssells-section">
-                        <h3 class="ss-crosssells-title">You might also like</h3>
-                        <div class="row g-3">
-                            <t t-foreach="cross_sells" t-as="item">
-                                <t t-set="item_in_stock" t-value="item._sf_is_available()"/>
-                                <div class="col-3">
-                                    <div class="ss-crosssell-card">
-                                        <a t-att-href="item.website_url" class="text-decoration-none">
-                                            <div class="ss-crosssell-img-wrap">
-                                                <img t-att-src="'/web/image/product.template/%s/image_512' % item.id"
-                                                     t-att-alt="item.name"
-                                                     loading="lazy"/>
-                                            </div>
-                                            <div class="ss-crosssell-body">
-                                                <div class="ss-crosssell-name" t-esc="item.name"/>
-                                                <div class="ss-crosssell-price">
-                                                    $<t t-esc="'%.2f' % item.list_price"/>
-                                                </div>
-                                                <div class="ss-crosssell-stock">
-                                                    <t t-if="item_in_stock">
-                                                        <span style="color:#1D9E75; font-size:11px;">&#10003; In stock</span>
-                                                    </t>
-                                                    <t t-else="">
-                                                        <span style="color:#999; font-size:11px;">Out of stock</span>
-                                                    </t>
-                                                </div>
-                                            </div>
-                                        </a>
-                                        <a t-att-href="item.website_url" class="ss-crosssell-btn">
-                                            Add to bag
-                                        </a>
-                                    </div>
-                                </div>
-                            </t>
-                        </div>
-                    </div>
-                </t>
             </div>
+        </xpath>
+    </template>
+
+    <!-- Cross-sells full width below entire product section -->
+    <template id="ss_product_description_crosssells"
+              inherit_id="website_sale.product"
+              name="SS: Cross-Sells Grid"
+              priority="99">
+        <xpath expr="//div[@id='product_detail_main']" position="after">
+            <t t-set="cross_sells" t-value="product._sf_get_cross_sells(4)"/>
+            <t t-if="cross_sells">
+                <div class="ss-crosssells-section container-fluid px-0 mt-5 pt-4 border-top">
+                    <h3 class="ss-crosssells-title mb-4">You might also like</h3>
+                    <div class="row g-3">
+                        <t t-foreach="cross_sells" t-as="item">
+                            <t t-set="item_in_stock" t-value="item._sf_is_available()"/>
+                            <div class="col-6 col-md-3">
+                                <div class="ss-crosssell-card">
+                                    <a t-att-href="item.website_url" class="text-decoration-none">
+                                        <div class="ss-crosssell-img-wrap">
+                                            <img t-att-src="'/web/image/product.template/%s/image_512' % item.id"
+                                                 t-att-alt="item.name"
+                                                 loading="lazy"/>
+                                        </div>
+                                        <div class="ss-crosssell-body">
+                                            <div class="ss-crosssell-name" t-esc="item.name"/>
+                                            <div class="ss-crosssell-price">
+                                                $<t t-esc="'%.2f' % item.list_price"/>
+                                            </div>
+                                            <div class="ss-crosssell-stock">
+                                                <t t-if="item_in_stock">
+                                                    <span style="color:#1D9E75; font-size:11px;">&#10003; In stock</span>
+                                                </t>
+                                                <t t-else="">
+                                                    <span style="color:#999; font-size:11px;">Out of stock</span>
+                                                </t>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <a t-att-href="item.website_url" class="ss-crosssell-btn">
+                                        Add to bag
+                                    </a>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </t>
         </xpath>
     </template>
 
@@ -211,7 +218,7 @@
                     <t t-if="len(product_images) > 1">
                         <div class="row g-2">
                             <t t-foreach="product_images[1:]" t-as="pimage">
-                                <div class="col-3">
+                                <div class="col-6">
                                     <img t-attf-src="/web/image/{{ pimage._name }}/{{ pimage.id }}/image_1024"
                                          class="w-100 ss-grid-img"
                                          t-att-alt="product.name"
