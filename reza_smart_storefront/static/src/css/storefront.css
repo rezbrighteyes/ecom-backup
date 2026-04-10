@@ -154,7 +154,7 @@
 .sf-trust-row-item small { font-size: 11px; color: #6b7280; }
 @media (max-width: 991px) {
     .sf-details-grid { grid-template-columns: 1fr; gap: 32px; }
-    .sf-sidebar { position: static; }
+    .sf-sidebar { position: static; width: 100%; }
 }
 @media (max-width: 767px) {
     .sf-product-details { padding: 32px 0 48px; }
