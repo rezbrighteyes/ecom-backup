@@ -19,7 +19,6 @@ class ProductTemplateSF(models.Model):
             today += timedelta(days=2)
         elif today.weekday() == 6:
             today += timedelta(days=1)
-
         business_days = 0
         delivery = today
         while business_days < days:
@@ -79,23 +78,47 @@ class ProductTemplateSF(models.Model):
     def _sf_get_cross_sells(self, limit=4):
         self.ensure_one()
 
+        # Get current website to filter products
+        try:
+            website = self.env['website'].get_current_website()
+        except Exception:
+            website = None
+
         domain = [
             ('website_published', '=', True),
             ('sale_ok', '=', True),
             ('id', '!=', self.id),
         ]
 
-        # Same public category only
-        if self.public_categ_ids:
-            cat_domain = domain + [('public_categ_ids', 'in', self.public_categ_ids.ids)]
-            products = self.env['product.template'].sudo().search(cat_domain, limit=limit * 5)
-            in_stock = products.filtered(lambda p: p._sf_is_available())
-            if in_stock:
-                price = self.list_price
-                similar = in_stock.filtered(lambda p: price * 0.3 <= p.list_price <= price * 3)
-                if len(similar) >= limit:
-                    return similar[:limit]
-                return in_stock[:limit]
+        if not self.public_categ_ids:
+            return self.env['product.template']
 
-        # No category or no results — return empty, template shows trust badges
+        cat_domain = domain + [('public_categ_ids', 'in', self.public_categ_ids.ids)]
+        products = self.env['product.template'].sudo().search(cat_domain, limit=limit * 10)
+
+        # Filter to products accessible on current website
+        if website:
+            products = products.filtered(
+                lambda p: p.website_url and not p.website_url.startswith('#')
+            )
+            # Check product is actually reachable on this website
+            try:
+                accessible = self.env['product.template'].with_context(
+                    website_id=website.id
+                ).sudo().search([
+                    ('id', 'in', products.ids),
+                    ('website_published', '=', True),
+                ])
+                products = accessible
+            except Exception:
+                pass
+
+        in_stock = products.filtered(lambda p: p._sf_is_available())
+        if in_stock:
+            price = self.list_price
+            similar = in_stock.filtered(lambda p: price * 0.3 <= p.list_price <= price * 3)
+            if len(similar) >= limit:
+                return similar[:limit]
+            return in_stock[:limit]
+
         return self.env['product.template']
