@@ -78,11 +78,12 @@ class ProductTemplateSF(models.Model):
     def _sf_get_cross_sells(self, limit=4):
         self.ensure_one()
 
-        # Get current website to filter products
+        # Get current website
         try:
             website = self.env['website'].get_current_website()
+            website_id = website.id
         except Exception:
-            website = None
+            website_id = False
 
         domain = [
             ('website_published', '=', True),
@@ -93,25 +94,28 @@ class ProductTemplateSF(models.Model):
         if not self.public_categ_ids:
             return self.env['product.template']
 
-        cat_domain = domain + [('public_categ_ids', 'in', self.public_categ_ids.ids)]
+        # Filter categories to current website only
+        if website_id:
+            website_cat_ids = self.public_categ_ids.filtered(
+                lambda c: not c.website_id or c.website_id.id == website_id
+            ).ids
+        else:
+            website_cat_ids = self.public_categ_ids.ids
+
+        if not website_cat_ids:
+            return self.env['product.template']
+
+        cat_domain = domain + [('public_categ_ids', 'in', website_cat_ids)]
         products = self.env['product.template'].sudo().search(cat_domain, limit=limit * 10)
 
-        # Filter to products accessible on current website
-        if website:
+        # Further filter — only products whose categories match current website
+        if website_id:
             products = products.filtered(
-                lambda p: p.website_url and not p.website_url.startswith('#')
+                lambda p: any(
+                    not c.website_id or c.website_id.id == website_id
+                    for c in p.public_categ_ids
+                )
             )
-            # Check product is actually reachable on this website
-            try:
-                accessible = self.env['product.template'].with_context(
-                    website_id=website.id
-                ).sudo().search([
-                    ('id', 'in', products.ids),
-                    ('website_published', '=', True),
-                ])
-                products = accessible
-            except Exception:
-                pass
 
         in_stock = products.filtered(lambda p: p._sf_is_available())
         if in_stock:
