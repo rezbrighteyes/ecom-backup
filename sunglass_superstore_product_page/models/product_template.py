@@ -77,25 +77,60 @@ class ProductTemplateSS(models.Model):
 
     def _sf_get_cross_sells(self, limit=4):
         self.ensure_one()
+
+        # Get current website
+        try:
+            website = self.env['website'].get_current_website()
+            website_id = website.id
+        except Exception:
+            website_id = False
+
         domain = [
             ('website_published', '=', True),
             ('sale_ok', '=', True),
             ('id', '!=', self.id),
         ]
-        if self.public_categ_ids:
-            cat_domain = domain + [('public_categ_ids', 'in', self.public_categ_ids.ids)]
-            products = self.env['product.template'].sudo().search(cat_domain, limit=limit * 5)
-            in_stock = products.filtered(lambda p: p._sf_is_available())
-            if in_stock:
-                price = self.list_price
-                similar = in_stock.filtered(lambda p: price * 0.3 <= p.list_price <= price * 3)
-                if len(similar) >= limit:
-                    return similar[:limit]
-                return in_stock[:limit]
-            if products:
-                price = self.list_price
-                similar = products.filtered(lambda p: price * 0.3 <= p.list_price <= price * 3)
-                if similar:
-                    return similar[:limit]
-                return products[:limit]
+
+        if not self.public_categ_ids:
+            return self.env['product.template']
+
+        # Filter categories to current website only
+        if website_id:
+            website_cat_ids = self.public_categ_ids.filtered(
+                lambda c: not c.website_id or c.website_id.id == website_id
+            ).ids
+        else:
+            website_cat_ids = self.public_categ_ids.ids
+
+        if not website_cat_ids:
+            return self.env['product.template']
+
+        cat_domain = domain + [('public_categ_ids', 'in', website_cat_ids)]
+        products = self.env['product.template'].sudo().search(cat_domain, limit=limit * 10)
+
+        # Further filter to website-specific products
+        if website_id:
+            products = products.filtered(
+                lambda p: any(
+                    not c.website_id or c.website_id.id == website_id
+                    for c in p.public_categ_ids
+                )
+            )
+
+        in_stock = products.filtered(lambda p: p._sf_is_available())
+        if in_stock:
+            price = self.list_price
+            similar = in_stock.filtered(lambda p: price * 0.3 <= p.list_price <= price * 3)
+            if len(similar) >= limit:
+                return similar[:limit]
+            return in_stock[:limit]
+
+        # Fallback — no stock data
+        if products:
+            price = self.list_price
+            similar = products.filtered(lambda p: price * 0.3 <= p.list_price <= price * 3)
+            if similar:
+                return similar[:limit]
+            return products[:limit]
+
         return self.env['product.template']
