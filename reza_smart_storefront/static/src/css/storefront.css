@@ -153,7 +153,8 @@
 .sf-trust-row-item strong { display: block; font-size: 13px; color: #0F1720; margin-bottom: 1px; }
 .sf-trust-row-item small { font-size: 11px; color: #6b7280; }
 @media (max-width: 991px) {
-    .sf-details-grid { grid-template-columns: 1fr; gap: 32px; }
+    .sf-details-grid { grid-template-columns: 1fr; gap: 32px; width: 100%; max-width: 100%; }
+    .sf-sidebar { width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
     .sf-sidebar { position: static; width: 100%; }
 }
 @media (max-width: 767px) {
