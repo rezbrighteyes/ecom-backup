@@ -1,10 +1,11 @@
-.dk-page { background: #0a0a0a; color: #fff; }
+.dk-page { background: #fff; color: #0a0a0a; }
 
+/* HERO — dark */
 .dk-hero {
     min-height: 90vh;
     display: flex;
     align-items: center;
-    background: linear-gradient(135deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%);
+    background: #0a0a0a;
     border-bottom: 1px solid rgba(212,175,55,0.2);
     padding: 80px 0;
 }
@@ -46,10 +47,7 @@
     gap: 32px;
     margin: 0 0 40px;
 }
-.dk-stat {
-    display: flex;
-    flex-direction: column;
-}
+.dk-stat { display: flex; flex-direction: column; }
 .dk-stat-val {
     font-size: 2.8rem;
     font-weight: 900;
@@ -86,15 +84,17 @@
     transform: translateY(-2px);
     color: #000 !important;
 }
+
 .dk-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 40px;
 }
 
+/* FEATURES — light grey */
 .dk-features-section {
     padding: 100px 0;
-    background: #111;
+    background: #f7f7f7;
 }
 .dk-section-title {
     font-size: 2.4rem;
@@ -107,24 +107,27 @@
 .dk-section-title.dk-light { color: #fff; }
 .dk-section-sub {
     text-align: center;
-    color: rgba(255,255,255,0.55);
+    color: rgba(10,10,10,0.5);
     font-size: 1rem;
     margin: -40px 0 60px;
 }
-.dk-features-section .dk-section-title { color: #fff; }
+.dk-section-sub.dk-light { color: rgba(255,255,255,0.55); }
 .dk-features-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
 }
 .dk-feature {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(212,175,55,0.15);
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.07);
     border-radius: 8px;
     padding: 32px 28px;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
-.dk-feature:hover { border-color: rgba(212,175,55,0.4); }
+.dk-feature:hover {
+    border-color: #D4AF37;
+    box-shadow: 0 4px 20px rgba(212,175,55,0.1);
+}
 .dk-feature-icon {
     font-size: 2rem;
     margin: 0 0 16px;
@@ -132,19 +135,21 @@
 .dk-feature h3 {
     font-size: 1.05rem;
     font-weight: 700;
-    color: #fff;
+    color: #0a0a0a;
     margin: 0 0 10px;
 }
 .dk-feature p {
     font-size: 0.9rem;
-    color: rgba(255,255,255,0.55);
+    color: rgba(10,10,10,0.55);
     line-height: 1.6;
     margin: 0;
 }
 
+/* EDITIONS — white */
 .dk-editions-section {
     padding: 100px 0;
-    background: #0a0a0a;
+    background: #fff;
+    border-top: 1px solid rgba(0,0,0,0.06);
 }
 .dk-editions-grid {
     display: grid;
@@ -152,16 +157,17 @@
     gap: 16px;
 }
 .dk-edition {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.08);
     border-radius: 8px;
     padding: 20px 16px;
     text-align: center;
-    transition: border-color 0.2s, transform 0.2s;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 .dk-edition:hover {
-    border-color: rgba(212,175,55,0.4);
+    border-color: #D4AF37;
     transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
 }
 .dk-edition-img {
     width: 100%;
@@ -169,12 +175,12 @@
     object-fit: cover;
     border-radius: 6px;
     margin: 0 0 14px;
-    background: #1a1a1a;
+    background: #f7f7f7;
 }
 .dk-edition-name {
     font-size: 0.85rem;
     font-weight: 700;
-    color: #fff;
+    color: #0a0a0a;
     margin: 0 0 6px;
 }
 .dk-edition-price {
@@ -185,9 +191,9 @@
 }
 .dk-edition-btn {
     display: block;
-    background: transparent;
-    border: 1px solid #D4AF37;
-    color: #D4AF37 !important;
+    background: #0a0a0a;
+    border: 1px solid #0a0a0a;
+    color: #fff !important;
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -199,14 +205,15 @@
 }
 .dk-edition-btn:hover {
     background: #D4AF37;
+    border-color: #D4AF37;
     color: #000 !important;
 }
 
+/* TRUST — light grey */
 .dk-trust-section {
     padding: 60px 0;
-    background: #111;
-    border-top: 1px solid rgba(212,175,55,0.15);
-    border-bottom: 1px solid rgba(212,175,55,0.15);
+    background: #f7f7f7;
+    border-top: 1px solid rgba(0,0,0,0.06);
 }
 .dk-trust-grid {
     display: grid;
@@ -223,14 +230,15 @@
 .dk-trust-icon { font-size: 2rem; }
 .dk-trust-item strong {
     font-size: 0.95rem;
-    color: #fff;
+    color: #0a0a0a;
     font-weight: 700;
 }
 .dk-trust-item span {
     font-size: 0.82rem;
-    color: rgba(255,255,255,0.5);
+    color: rgba(10,10,10,0.5);
 }
 
+/* FINAL CTA — dark */
 .dk-final-cta {
     padding: 120px 0;
     background: #0a0a0a;
