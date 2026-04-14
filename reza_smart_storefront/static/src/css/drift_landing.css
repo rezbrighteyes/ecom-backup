@@ -282,3 +282,29 @@
 .dk-speedometer-wrap canvas {
     filter: drop-shadow(0 0 20px rgba(212,175,55,0.3));
 }
+
+.dk-model-hint {
+    text-align: center;
+    color: rgba(255,255,255,0.4);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    animation: dk-pulse 2s ease-in-out infinite;
+}
+.dk-model-hint-icon {
+    font-size: 1.1rem;
+    display: inline-block;
+    animation: dk-spin 3s linear infinite;
+}
+@keyframes dk-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+@keyframes dk-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.9; }
+}

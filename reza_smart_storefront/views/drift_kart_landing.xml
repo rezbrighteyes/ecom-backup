@@ -36,6 +36,10 @@
                             <a href="/shop/drift-kart-pro-66892" class="dk-cta-primary">Shop Now — $549.99</a>
                         </div>
                         <div class="dk-hero-model">
+                            <div class="dk-model-hint">
+                                <span class="dk-model-hint-icon">&#8635;</span>
+                                Drag to rotate · Pinch to zoom
+                            </div>
                             <model-viewer
                                 src="/web/content/382599?download=false"
                                 alt="Drift Kart Pro 3D Model"
