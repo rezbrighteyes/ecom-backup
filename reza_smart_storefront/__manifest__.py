@@ -18,6 +18,7 @@
             'reza_smart_storefront/static/src/css/drift_landing.css',
             'reza_smart_storefront/static/src/js/cross_sell_cart.js',
             'reza_smart_storefront/static/src/js/drift_banner_position.js',
+            'reza_smart_storefront/static/src/js/drift_landing.js',
         ],
     },
     'post_init_hook': 'post_init_hook',
