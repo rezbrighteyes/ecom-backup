@@ -2,6 +2,9 @@
 <odoo>
     <template id="drift_kart_landing_page" name="Drift Kart Pro Landing Page">
         <t t-call="website.layout">
+            <t t-set="head">
+                <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+            </t>
             <t t-set="pageName" t-value="'drift-kart'"/>
             <div id="wrap" class="dk-page">
 
