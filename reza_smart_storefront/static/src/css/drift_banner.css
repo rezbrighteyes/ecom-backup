@@ -1,5 +1,5 @@
 .wyn-drift-banner {
-    background: #0a0a0a url('/web/image/382581-0db05d4b/freepik_electric-drift-kart-on-th_2778403748.png') right center / cover no-repeat;
+    background: #0a0a0a url('/web/image/382581-0db05d4b/freepik_electric-drift-kart-on-th_2778403748.png') 65% center / cover no-repeat;
     min-height: 500px;
     display: flex;
     align-items: center;
@@ -9,7 +9,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to right, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 55%, rgba(0,0,0,0.1) 100%);
+    background: linear-gradient(to right, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.05) 100%);
 }
 .wyn-drift-inner {
     position: relative;
@@ -63,11 +63,11 @@
     color: #000000 !important;
 }
 @media (max-width: 991px) {
-    .wyn-drift-banner { min-height: 420px; background-position: 75% center; }
+    .wyn-drift-banner { min-height: 420px; background-position: 70% center; }
     .wyn-drift-headline { font-size: 3rem; }
 }
 @media (max-width: 767px) {
-    .wyn-drift-banner { min-height: 360px; background-position: 80% center; }
+    .wyn-drift-banner { min-height: 360px; background-position: 75% center; }
     .wyn-drift-headline { font-size: 2.2rem; }
     .wyn-drift-inner { padding: 48px 24px; }
     .wyn-drift-sub { font-size: 0.85rem; }

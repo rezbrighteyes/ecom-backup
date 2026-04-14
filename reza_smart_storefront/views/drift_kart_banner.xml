@@ -4,7 +4,7 @@
               name="WYN: Drift Kart Hero Banner"
               inherit_id="website.layout"
               priority="10">
-        <xpath expr="//div[@id='wrapwrap']/main" position="before">
+        <xpath expr="//section[@class='wp-features']" position="after">
             <t t-if="website.name == 'WhatYouNeed' and request.httprequest.path == '/'">
                 <section class="wyn-drift-banner">
                     <div class="wyn-drift-inner">
