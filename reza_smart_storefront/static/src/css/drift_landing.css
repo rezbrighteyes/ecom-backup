@@ -274,3 +274,11 @@
     .dk-trust-grid { grid-template-columns: repeat(2, 1fr); }
     .dk-stat-val { font-size: 2rem; }
 }
+
+/* Speedometer */
+.dk-speedometer-wrap {
+    width: 220px;
+}
+.dk-speedometer-wrap canvas {
+    filter: drop-shadow(0 0 20px rgba(212,175,55,0.3));
+}

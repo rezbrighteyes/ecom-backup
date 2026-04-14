@@ -15,6 +15,7 @@
                             <p class="dk-label">Electric · 360° Drifting · 5 Editions</p>
                             <h1 class="dk-hero-headline">Drift Kart Pro</h1>
                             <p class="dk-hero-sub">25–30 km/h of pure adrenaline. Spin, slide and dominate with Bluetooth speakers, LED lights and 360° drifting capability.</p>
+                            <div class="dk-speedometer-wrap" style="margin:0 0 32px;"></div>
                             <div class="dk-hero-stats">
                                 <div class="dk-stat">
                                     <span class="dk-stat-val">30</span>
