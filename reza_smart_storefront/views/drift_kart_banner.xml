@@ -4,18 +4,20 @@
               name="WYN: Drift Kart Hero Banner"
               inherit_id="website.layout"
               priority="10">
-        <xpath expr="//section[@class='wp-features']" position="after">
+        <xpath expr="//div[@id='wrapwrap']/main" position="before">
             <t t-if="website.name == 'WhatYouNeed' and request.httprequest.path == '/'">
-                <section class="wyn-drift-banner">
-                    <div class="wyn-drift-inner">
-                        <div class="wyn-drift-content">
-                            <p class="wyn-drift-label">New · Limited Editions</p>
-                            <h2 class="wyn-drift-headline">Drift. Slide.<br/>Dominate.</h2>
-                            <p class="wyn-drift-sub">25–30 km/h · 360° Drifting · Bluetooth + LED · 5 Editions</p>
-                            <a href="/shop/drift-kart-pro-66892" class="wyn-drift-cta">Shop Now — $549.99</a>
+                <div class="wyn-drift-banner-wrap">
+                    <section class="wyn-drift-banner">
+                        <div class="wyn-drift-inner">
+                            <div class="wyn-drift-content">
+                                <p class="wyn-drift-label">New · Limited Editions</p>
+                                <h2 class="wyn-drift-headline">Drift. Slide.<br/>Dominate.</h2>
+                                <p class="wyn-drift-sub">25–30 km/h · 360° Drifting · Bluetooth + LED · 5 Editions</p>
+                                <a href="/shop/drift-kart-pro-66892" class="wyn-drift-cta">Shop Now — $549.99</a>
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                </div>
             </t>
         </xpath>
     </template>
