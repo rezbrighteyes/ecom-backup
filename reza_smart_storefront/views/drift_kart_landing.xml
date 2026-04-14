@@ -35,20 +35,77 @@
                             </div>
                             <a href="/shop/drift-kart-pro-66892" class="dk-cta-primary">Shop Now — $549.99</a>
                         </div>
+
                         <div class="dk-hero-model">
                             <div class="dk-model-hint">
                                 <span class="dk-model-hint-icon">&#8635;</span>
                                 Drag to rotate · Pinch to zoom
                             </div>
+
                             <model-viewer
+                                id="dkModelViewer"
                                 src="/web/content/382418?download=false"
                                 alt="Drift Kart Pro 3D Model"
                                 auto-rotate="true"
                                 camera-controls="true"
                                 shadow-intensity="1"
                                 exposure="0.8"
-                                style="width:100%;height:500px;background:transparent;">
+                                camera-orbit="45deg 75deg 2.8m"
+                                field-of-view="30deg"
+                                style="width:100%;height:560px;background:transparent;">
                             </model-viewer>
+
+                            <div class="dk-model-controls">
+                                <button type="button" class="dk-part-btn is-active"
+                                        data-part="overview"
+                                        data-orbit="45deg 75deg 2.8m"
+                                        data-target="0m 0.2m 0m"
+                                        data-title="Full Kart View"
+                                        data-copy="See the full Drift Kart Pro in its assembled form. Built for speed, control and premium ride feel.">
+                                    Overview
+                                </button>
+
+                                <button type="button" class="dk-part-btn"
+                                        data-part="seat"
+                                        data-orbit="90deg 70deg 2.1m"
+                                        data-target="0m 0.45m 0m"
+                                        data-title="Comfort Seat"
+                                        data-copy="Supportive seat design built for control, comfort and longer ride sessions.">
+                                    Seat
+                                </button>
+
+                                <button type="button" class="dk-part-btn"
+                                        data-part="handlebar"
+                                        data-orbit="25deg 65deg 1.9m"
+                                        data-target="0m 0.55m 0.35m"
+                                        data-title="Responsive Steering"
+                                        data-copy="Handlebar layout gives riders precise steering input and confident control while drifting.">
+                                    Handlebar
+                                </button>
+
+                                <button type="button" class="dk-part-btn"
+                                        data-part="frontweel"
+                                        data-orbit="145deg 78deg 2.2m"
+                                        data-target="0m 0.1m 0.6m"
+                                        data-title="Drift Wheel Setup"
+                                        data-copy="Wheel setup designed for slides, spins and stable drifting performance on smooth surfaces.">
+                                    Drift Wheels
+                                </button>
+
+                                <button type="button" class="dk-part-btn"
+                                        data-part="body"
+                                        data-orbit="-20deg 72deg 2.2m"
+                                        data-target="0m 0.2m 0m"
+                                        data-title="Reinforced Body"
+                                        data-copy="Strong frame and body construction built for play, performance and durability.">
+                                    Body
+                                </button>
+                            </div>
+
+                            <div class="dk-model-feature-copy">
+                                <h3 id="dkFeatureTitle">Full Kart View</h3>
+                                <p id="dkFeatureCopy">See the full Drift Kart Pro in its assembled form. Built for speed, control and premium ride feel.</p>
+                            </div>
                         </div>
                     </div>
                 </section>
