@@ -208,12 +208,14 @@
                     <t t-if="len(product_images) > 1">
                         <div class="row g-2">
                             <t t-foreach="product_images[1:]" t-as="pimage">
-                                <div class="col-6">
-                                    <img t-attf-src="/web/image/{{ pimage._name }}/{{ pimage.id }}/image_1024"
-                                         class="w-100 ss-grid-img"
-                                         t-att-alt="product.name"
-                                         loading="lazy"/>
-                                </div>
+                                <t t-if="pimage and pimage.id">
+                                    <div class="col-6">
+                                        <img t-attf-src="/web/image/{{ pimage._name }}/{{ pimage.id }}/image_1024"
+                                             class="w-100 ss-grid-img"
+                                             t-att-alt="product.name"
+                                             loading="lazy"/>
+                                    </div>
+                                </t>
                             </t>
                         </div>
                     </t>
