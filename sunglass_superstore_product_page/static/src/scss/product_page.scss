@@ -296,15 +296,17 @@
 .ss-hero-img {
   border-radius: 8px 8px 0 0;
   object-fit: contain;
-  background: #f6f6f6;
+  background: #fff;
   min-height: 400px;
+  display: block;
 }
 
 .ss-grid-img {
   border-radius: 4px;
   object-fit: contain;
-  background: #f6f6f6;
+  background: #fff;
   aspect-ratio: 1;
+  display: block;
 }
 
 .ss-crosssells-title {
