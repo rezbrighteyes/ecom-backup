@@ -33,7 +33,12 @@
                                     <span class="dk-stat-lbl">Playtime</span>
                                 </div>
                             </div>
-                            <a href="/shop/drift-kart-pro-66892" class="dk-cta-primary">Shop Now — $549.99</a>
+                            <div class="dk-hero-price">
+                                <span class="dk-price-was">$549.99</span>
+                                <span class="dk-price-now">$412.49</span>
+                                <span class="dk-price-badge">25% OFF</span>
+                            </div>
+                            <a href="/shop/drift-kart-pro-66892" class="dk-cta-primary">Shop Now</a>
                         </div>
 
                         <div class="dk-hero-model">
@@ -158,31 +163,31 @@
                             <div class="dk-edition">
                                 <img src="/web/image/product.product/81708/image_512" alt="Shadow Storm" class="dk-edition-img"/>
                                 <h3 class="dk-edition-name">Shadow Storm</h3>
-                                <p class="dk-edition-price">$549.99</p>
+                                <p class="dk-edition-price"><s class="dk-edition-was">$549.99</s>$412.49</p>
                                 <a href="/shop/drift-kart-pro-66892#attribute_values=18350" class="dk-edition-btn">Shop Now</a>
                             </div>
                             <div class="dk-edition">
                                 <img src="/web/image/product.product/81709/image_512" alt="Pink Crystal" class="dk-edition-img"/>
                                 <h3 class="dk-edition-name">Pink Crystal</h3>
-                                <p class="dk-edition-price">$549.99</p>
+                                <p class="dk-edition-price"><s class="dk-edition-was">$549.99</s>$412.49</p>
                                 <a href="/shop/drift-kart-pro-66892#attribute_values=18351" class="dk-edition-btn">Shop Now</a>
                             </div>
                             <div class="dk-edition">
                                 <img src="/web/image/product.product/81710/image_512" alt="Inferno Line" class="dk-edition-img"/>
                                 <h3 class="dk-edition-name">Inferno Line</h3>
-                                <p class="dk-edition-price">$549.99</p>
+                                <p class="dk-edition-price"><s class="dk-edition-was">$549.99</s>$412.49</p>
                                 <a href="/shop/drift-kart-pro-66892#attribute_values=18352" class="dk-edition-btn">Shop Now</a>
                             </div>
                             <div class="dk-edition">
                                 <img src="/web/image/product.product/81711/image_512" alt="Ice &amp; Fire" class="dk-edition-img"/>
                                 <h3 class="dk-edition-name">Ice &amp; Fire</h3>
-                                <p class="dk-edition-price">$549.99</p>
+                                <p class="dk-edition-price"><s class="dk-edition-was">$549.99</s>$412.49</p>
                                 <a href="/shop/drift-kart-pro-66892#attribute_values=18353" class="dk-edition-btn">Shop Now</a>
                             </div>
                             <div class="dk-edition">
                                 <img src="/web/image/product.product/81712/image_512" alt="Urban Rebel" class="dk-edition-img"/>
                                 <h3 class="dk-edition-name">Urban Rebel</h3>
-                                <p class="dk-edition-price">$549.99</p>
+                                <p class="dk-edition-price"><s class="dk-edition-was">$549.99</s>$412.49</p>
                                 <a href="/shop/drift-kart-pro-66892#attribute_values=18354" class="dk-edition-btn">Shop Now</a>
                             </div>
                         </div>
@@ -221,8 +226,8 @@
                 <section class="dk-final-cta">
                     <div class="dk-container">
                         <h2>Ready to Drift?</h2>
-                        <p>5 editions available now. Free shipping over $150.</p>
-                        <a href="/shop/drift-kart-pro-66892" class="dk-cta-primary">Shop Drift Kart Pro</a>
+                        <p>5 editions. 25% off. Free shipping over $150.</p>
+                        <a href="/shop/drift-kart-pro-66892" class="dk-cta-primary">Shop Now — 25% Off</a>
                     </div>
                 </section>
 
