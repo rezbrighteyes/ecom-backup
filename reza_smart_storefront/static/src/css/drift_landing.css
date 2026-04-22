@@ -66,6 +66,41 @@
     letter-spacing: 0.1em;
     margin-top: 4px;
 }
+.dk-hero-price {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 24px;
+}
+.dk-price-was {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.4);
+    text-decoration: line-through;
+    font-weight: 600;
+}
+.dk-price-now {
+    font-size: 1.7rem;
+    color: #D4AF37;
+    font-weight: 900;
+}
+.dk-price-badge {
+    background: #D4AF37;
+    color: #000;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    padding: 4px 10px;
+    border-radius: 2px;
+}
+.dk-edition-was {
+    display: block;
+    font-size: 0.78rem;
+    color: rgba(10,10,10,0.38);
+    text-decoration: line-through;
+    font-weight: 500;
+    margin: 0 0 2px;
+}
+
 .dk-cta-primary {
     display: inline-block;
     background: #D4AF37;
