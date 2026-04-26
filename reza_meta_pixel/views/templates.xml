@@ -23,17 +23,8 @@
     <template id="advanced_matching_data" inherit_id="website.layout">
         <xpath expr="//head" position="inside">
             <t t-if="request.env.user and not request.env.user._is_public()">
-                <script type="text/javascript">
-                    window._fbAdvancedMatch = {
-                        em: '<t t-esc="request.env.user.email or &quot;&quot;"/>',
-                        fn: '<t t-esc="request.env.user.partner_id.name.split()[0] if request.env.user.partner_id.name else &quot;&quot;"/>',
-                        ln: '<t t-esc="&quot; &quot;.join(request.env.user.partner_id.name.split()[1:]) if request.env.user.partner_id.name else &quot;&quot;"/>',
-                        ph: '<t t-esc="request.env.user.partner_id.phone or &quot;&quot;"/>',
-                        ct: '<t t-esc="request.env.user.partner_id.city or &quot;&quot;"/>',
-                        st: '<t t-esc="request.env.user.partner_id.state_id.name or &quot;&quot;"/>',
-                        zp: '<t t-esc="request.env.user.partner_id.zip or &quot;&quot;"/>',
-                        country: '<t t-esc="request.env.user.partner_id.country_id.code or &quot;&quot;"/>'
-                    };
+                <script type="application/json" id="fb_advanced_match_data">
+                    <t t-raw="request.env.user.partner_id.get_fb_advanced_match()"/>
                 </script>
             </t>
         </xpath>

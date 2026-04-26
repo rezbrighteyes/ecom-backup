@@ -12,20 +12,22 @@
     }
 
     function applyAdvancedMatching() {
-        if (typeof fbq !== 'undefined' && window._fbAdvancedMatch) {
-            const m = window._fbAdvancedMatch;
-            if (m.em || m.ph) {
-                fbq('init', '26179616351732613', {
-                    em: m.em || '',
-                    fn: m.fn || '',
-                    ln: m.ln || '',
-                    ph: m.ph ? m.ph.replace(/[^0-9]/g, '') : '',
-                    ct: m.ct || '',
-                    st: m.st || '',
-                    zp: m.zp || '',
-                    country: m.country || ''
-                });
-            }
+        if (typeof fbq === 'undefined') return;
+        const el = document.getElementById('fb_advanced_match_data');
+        if (!el) return;
+        let m;
+        try { m = JSON.parse(el.textContent); } catch (e) { return; }
+        if (m.em || m.ph) {
+            fbq('init', '26179616351732613', {
+                em: m.em || '',
+                fn: m.fn || '',
+                ln: m.ln || '',
+                ph: m.ph ? m.ph.replace(/[^0-9]/g, '') : '',
+                ct: m.ct || '',
+                st: m.st || '',
+                zp: m.zp || '',
+                country: m.country || ''
+            });
         }
     }
 
