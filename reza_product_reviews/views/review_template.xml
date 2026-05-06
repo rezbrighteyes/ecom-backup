@@ -18,4 +18,24 @@
         </field>
     </record>
 
+    <!-- Inject review data into page for JS -->
+    <template id="product_review_data"
+              inherit_id="website_sale.product"
+              name="SS: Review Data">
+        <xpath expr="//section[@id='product_detail']" position="before">
+            <t t-set="user_review" t-value="env['rating.rating'].sudo().search([
+                ('res_model', '=', 'product.template'),
+                ('res_id', '=', product.id),
+                ('partner_id.user_ids', 'in', [uid]),
+            ], limit=1) if uid else None"/>
+            <script type="text/javascript">
+                window.__rezaReviewData = {
+                    productId: <t t-out="product.id"/>,
+                    uid: <t t-out="uid or 0"/>,
+                    alreadyReviewed: <t t-out="'true' if user_review else 'false'"/>
+                };
+            </script>
+        </xpath>
+    </template>
+
 </odoo>

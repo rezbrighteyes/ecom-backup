@@ -1,5 +1,6 @@
 # -- coding: utf-8 --
 from odoo import api, fields, models
+from odoo.tools import html_escape
 
 NOTIFY_USER_IDS = [6, 7, 90]  # Luke, April, Reza
 
@@ -51,15 +52,38 @@ class ProductReview(models.Model):
         product = self.env['product.template'].sudo().browse(self.res_id)
         users = self.env['res.users'].sudo().browse(NOTIFY_USER_IDS).exists()
         partner_ids = users.mapped('partner_id').ids
-        body = (
-            f'New review submitted for <b>{product.name}</b> '
-            f'by {self.partner_id.name or "Anonymous"} '
-            f'&#8212; Rating: {int(self.rating)}/5<br/>'
-            f'"{self.feedback}"'
+
+        # Get correct website URL
+        website = self.env['website'].sudo().search([
+            ('id', '=', product.website_id.id)
+        ], limit=1) if product.website_id else self.env['website'].sudo().browse(4)
+        base_url = website.domain or self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+
+        product_url = '%s%s' % (base_url.rstrip('/'), product.website_url)
+
+        body = """
+<p>A new review has been submitted and is waiting for your approval.</p>
+<ul>
+    <li><strong>Product:</strong> %s</li>
+    <li><strong>Customer:</strong> %s</li>
+    <li><strong>Rating:</strong> %s/5</li>
+    <li><strong>Review:</strong> %s</li>
+</ul>
+<p>Please go to the <strong>eCommerce &rarr; Reviews</strong> section to approve or reject this review.</p>
+<p><a href="%s">View Product</a></p>
+""" % (
+            html_escape(product.name),
+            html_escape(self.partner_id.name or 'Anonymous'),
+            int(self.rating),
+            html_escape(self.feedback or ''),
+            product_url,
         )
+
         product.sudo().message_notify(
             partner_ids=partner_ids,
             body=body,
-            subject=f'New Review: {product.name}',
+            subject='New Review: %s' % product.name,
             author_id=self.env.ref('base.partner_root').id,
+            email_layout_xmlid=False,
+            force_send=False,
         )

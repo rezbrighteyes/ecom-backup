@@ -8,6 +8,7 @@
     'depends': [
         'website_sale',
         'mail',
+        'portal_rating',
     ],
     'data': [
         'security/ir.model.access.csv',
@@ -16,6 +17,11 @@
         'views/review_template.xml',
         'views/menu.xml',
     ],
+    'assets': {
+        'web.assets_frontend': [
+            'reza_product_reviews/static/src/js/review_frontend.js',
+        ],
+    },
     'installable': True,
     'auto_install': False,
     'application': False,
