@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="channel_product_reviews" model="mail.channel">
+        <field name="name">Product Reviews</field>
+        <field name="channel_type">channel</field>
+        <field name="description">Notifications for new product reviews requiring approval</field>
+    </record>
+</odoo>
