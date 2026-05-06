@@ -6,6 +6,8 @@
         var reviewToggle = document.querySelector('.o_product_page_reviews_title');
         if (reviewContent) {
             reviewContent.classList.add('show');
+            reviewContent.classList.remove('collapse');
+            reviewContent.style.display = '';
             if (reviewToggle) {
                 reviewToggle.setAttribute('aria-expanded', 'true');
                 reviewToggle.classList.remove('collapsed');
@@ -33,12 +35,15 @@
         composer.parentNode.insertBefore(msg, composer);
     }
 
-    // Run on DOMContentLoaded
+    // Open review section on DOMContentLoaded and again after Bootstrap
     document.addEventListener('DOMContentLoaded', function () {
         openReviewSection();
+        setTimeout(openReviewSection, 100);
+        setTimeout(openReviewSection, 500);
+        setTimeout(openReviewSection, 1000);
     });
 
-    // Poll for shadow DOM — start after 500ms, check every 200ms for up to 15s
+    // Poll for shadow DOM
     setTimeout(function () {
         var attempts = 0;
         var poll = setInterval(function () {

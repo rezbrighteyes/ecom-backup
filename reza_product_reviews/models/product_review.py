@@ -52,17 +52,26 @@ class ProductReview(models.Model):
         product = self.env['product.template'].sudo().browse(self.res_id)
         users = self.env['res.users'].sudo().browse(NOTIFY_USER_IDS).exists()
 
-        note = '<p>New review submitted for <b>%s</b> by <b>%s</b> — Rating: %s/5</p><p>"%s"</p><p>Go to <b>eCommerce → Reviews</b> to approve or reject.</p>' % (
+        # Build URL to Reviews backend page (not product frontend)
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        review_url = '%s/odoo/website/reviews' % base_url.rstrip('/')
+
+        message = 'New review for "%s" by %s — %s/5: "%s". <a href="%s">Go to Reviews</a> to approve or reject.' % (
             html_escape(product.name),
             html_escape(self.partner_id.name or 'Anonymous'),
             int(self.rating),
             html_escape(self.feedback or ''),
+            review_url,
         )
 
         for user in users:
-            product.sudo().activity_schedule(
-                'mail.mail_activity_data_todo',
-                summary='New Review: %s' % product.name,
-                note=note,
-                user_id=user.id,
+            self.env['bus.bus'].sudo()._sendone(
+                user.partner_id,
+                'simple_notification',
+                {
+                    'title': 'New Product Review',
+                    'message': message,
+                    'sticky': True,
+                    'type': 'warning',
+                }
             )
