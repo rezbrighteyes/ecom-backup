@@ -1,32 +1,29 @@
 (function () {
     'use strict';
 
-    function openReviewSection() {
-        var reviewContent = document.getElementById('o_product_page_reviews_content');
-        var reviewToggle = document.querySelector('.o_product_page_reviews_title');
-        if (!reviewContent) return;
+    function forceOpenReviews() {
+        var el = document.getElementById('o_product_page_reviews_content');
+        var toggle = document.querySelector('.o_product_page_reviews_title');
+        if (!el) return;
 
-        // Remove Bootstrap collapse classes and force open
-        reviewContent.classList.remove('collapse');
-        reviewContent.classList.add('show');
-        reviewContent.style.display = 'block';
-        reviewContent.style.visibility = 'visible';
-        reviewContent.style.height = 'auto';
-        reviewContent.style.overflow = 'visible';
+        // Force open
+        el.classList.add('show');
+        el.style.display = 'block';
 
-        if (reviewToggle) {
-            reviewToggle.setAttribute('aria-expanded', 'true');
-            reviewToggle.classList.remove('collapsed');
-        }
+        // Prevent Bootstrap from closing it
+        el.addEventListener('hidden.bs.collapse', function () {
+            el.classList.add('show');
+            el.style.display = 'block';
+        });
 
-        // Kill Bootstrap collapse instance if it exists
-        if (window.bootstrap && window.bootstrap.Collapse) {
-            try {
-                var instance = window.bootstrap.Collapse.getInstance(reviewContent);
-                if (instance) instance.dispose();
-                // Recreate as shown
-                new window.bootstrap.Collapse(reviewContent, { toggle: false });
-            } catch(e) {}
+        el.addEventListener('hide.bs.collapse', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', 'true');
+            toggle.classList.remove('collapsed');
         }
     }
 
@@ -51,10 +48,10 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        openReviewSection();
-        setTimeout(openReviewSection, 200);
-        setTimeout(openReviewSection, 600);
-        setTimeout(openReviewSection, 1500);
+        forceOpenReviews();
+        setTimeout(forceOpenReviews, 300);
+        setTimeout(forceOpenReviews, 800);
+        setTimeout(forceOpenReviews, 1500);
     });
 
     // Poll for shadow DOM
