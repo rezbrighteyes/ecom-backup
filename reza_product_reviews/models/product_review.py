@@ -51,20 +51,22 @@ class ProductReview(models.Model):
         self.ensure_one()
         product = self.env['product.template'].sudo().browse(self.res_id)
         users = self.env['res.users'].sudo().browse(NOTIFY_USER_IDS).exists()
-        partner_ids = users.mapped('partner_id').ids
+        partner_ids = [(4, uid) for uid in users.mapped('partner_id').ids]
 
-        body = '''<p>New review submitted for <b>%s</b> by <b>%s</b> — %s/5</p>
-<p style="color:#555">"%s"</p>
-<p><a href="/odoo/website/reviews" style="background:#875A7B;color:#fff;padding:8px 16px;border-radius:4px;text-decoration:none;">Go to Reviews</a></p>''' % (
+        body = '<p>New review for <b>%s</b> by <b>%s</b> &mdash; %s/5</p><p>"%s"</p><p><a href="/odoo/website/reviews">Go to Reviews &rarr;</a> to approve or reject.</p>' % (
             html_escape(product.name),
             html_escape(self.partner_id.name or 'Anonymous'),
             int(self.rating),
             html_escape(self.feedback or ''),
         )
 
-        product.sudo().message_notify(
-            partner_ids=partner_ids,
-            body=body,
-            subject='New Review: %s' % product.name,
-            author_id=self.env.ref('base.partner_root').id,
-        )
+        self.env['mail.message'].sudo().create({
+            'message_type': 'notification',
+            'subtype_id': self.env.ref('mail.mt_comment').id,
+            'body': body,
+            'subject': 'New Review: %s' % product.name,
+            'partner_ids': partner_ids,
+            'author_id': self.env.ref('base.partner_root').id,
+            'model': False,
+            'res_id': False,
+        })
