@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_product_review_list" model="ir.ui.view">
+        <field name="name">rating.rating.list.reviews</field>
+        <field name="model">rating.rating</field>
+        <field name="arch" type="xml">
+            <list string="Product Reviews" decoration-success="is_approved == True" decoration-warning="is_approved == False">
+                <field name="create_date" string="Date"/>
+                <field name="partner_id" string="Customer"/>
+                <field name="res_name" string="Product"/>
+                <field name="rating" string="Stars"/>
+                <field name="feedback" string="Review"/>
+                <field name="is_verified_buyer" string="Verified Buyer"/>
+                <field name="is_approved" string="Approved"/>
+                <button name="action_approve" string="Approve" type="object" class="btn-success" invisible="is_approved == True"/>
+                <button name="action_reject" string="Reject" type="object" class="btn-danger"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_product_review_form" model="ir.ui.view">
+        <field name="name">rating.rating.form.reviews</field>
+        <field name="model">rating.rating</field>
+        <field name="arch" type="xml">
+            <form string="Product Review">
+                <header>
+                    <button name="action_approve" string="Approve" type="object" class="btn-primary" invisible="is_approved == True"/>
+                    <button name="action_reject" string="Reject &amp; Delete" type="object" class="btn-danger"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="partner_id" string="Customer"/>
+                        <field name="res_name" string="Product"/>
+                        <field name="rating" string="Rating"/>
+                        <field name="is_verified_buyer" string="Verified Buyer"/>
+                        <field name="is_approved" string="Approved"/>
+                        <field name="create_date" string="Submitted"/>
+                    </group>
+                    <group string="Review">
+                        <field name="feedback" string="Feedback" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_product_review_search" model="ir.ui.view">
+        <field name="name">rating.rating.search.reviews</field>
+        <field name="model">rating.rating</field>
+        <field name="arch" type="xml">
+            <search string="Search Reviews">
+                <field name="partner_id" string="Customer"/>
+                <field name="res_name" string="Product"/>
+                <filter name="pending" string="Pending Approval" domain="[('is_approved', '=', False)]"/>
+                <filter name="approved" string="Approved" domain="[('is_approved', '=', True)]"/>
+                <filter name="verified" string="Verified Buyers" domain="[('is_verified_buyer', '=', True)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_product_reviews" model="ir.actions.act_window">
+        <field name="name">Product Reviews</field>
+        <field name="res_model">rating.rating</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('res_model', '=', 'product.template')]</field>
+        <field name="context">{'search_default_pending': 1}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_product_review_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_product_review_form')}),
+        ]"/>
+    </record>
+
+    <!-- Add Send Review Request button to sale order -->
+    <record id="view_sale_order_review_button" model="ir.ui.view">
+        <field name="name">sale.order.review.button</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_send_review_request"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-star"
+                        invisible="review_email_sent == True">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Request Review</span>
+                    </div>
+                </button>
+                <button name="action_send_review_request"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-star"
+                        invisible="review_email_sent == False"
+                        string="Review Sent"
+                        disabled="1">
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
