@@ -18,33 +18,56 @@
             }
         }
 
-        // 2. Already reviewed message — use MutationObserver to wait for chatter
+        // 2. Already reviewed message — check Shadow DOM
         var data = window.__rezaReviewData;
         if (!data || !data.alreadyReviewed) return;
 
-        var target = document.getElementById('o_product_page_reviews_content') || document.body;
+        var chatterRoot = document.getElementById('chatterRoot');
+        if (!chatterRoot) return;
 
-        var observer = new MutationObserver(function () {
-            var writeForm = document.querySelector('.o_portal_chatter_composer') ||
-                            document.querySelector('.o_wrating_publisher_container');
+        function hideComposerAndShowMessage() {
+            var shadowRoot = chatterRoot.shadowRoot;
+            if (!shadowRoot) return false;
 
-            if (!writeForm) return;
-            if (document.querySelector('.reza-already-reviewed')) {
-                observer.disconnect();
-                return;
-            }
+            var composer = shadowRoot.querySelector('.o-mail-Composer');
+            if (!composer) return false;
+
+            if (shadowRoot.querySelector('.reza-already-reviewed')) return true;
 
             var msg = document.createElement('div');
             msg.className = 'alert alert-info mt-3 reza-already-reviewed';
-            msg.innerHTML = '<i class="fa fa-check-circle me-2"></i> You have already submitted a review for this product. Thank you!';
-            writeForm.style.display = 'none';
-            writeForm.parentNode.insertBefore(msg, writeForm);
-            observer.disconnect();
+            msg.style.cssText = 'padding:12px 16px; border-radius:8px; background:#d1ecf1; border:1px solid #bee5eb; color:#0c5460; margin:12px 0;';
+            msg.innerHTML = '<i class="fa fa-check-circle" style="margin-right:8px;"></i> You have already submitted a review for this product. Thank you!';
+
+            composer.style.display = 'none';
+            composer.parentNode.insertBefore(msg, composer);
+            return true;
+        }
+
+        // Try immediately
+        if (hideComposerAndShowMessage()) return;
+
+        // Otherwise observe shadow root changes
+        var observer = new MutationObserver(function () {
+            if (hideComposerAndShowMessage()) {
+                observer.disconnect();
+            }
         });
 
-        observer.observe(target, { childList: true, subtree: true });
+        // Observe chatterRoot for shadow DOM attachment
+        observer.observe(chatterRoot, { childList: true, subtree: true });
 
-        // Stop observing after 10 seconds
-        setTimeout(function () { observer.disconnect(); }, 10000);
+        // Also try polling since MutationObserver doesn't observe shadow DOM changes
+        var poll = setInterval(function () {
+            if (hideComposerAndShowMessage()) {
+                clearInterval(poll);
+                observer.disconnect();
+            }
+        }, 300);
+
+        setTimeout(function () {
+            clearInterval(poll);
+            observer.disconnect();
+        }, 10000);
     });
 })();

@@ -51,39 +51,18 @@ class ProductReview(models.Model):
         self.ensure_one()
         product = self.env['product.template'].sudo().browse(self.res_id)
         users = self.env['res.users'].sudo().browse(NOTIFY_USER_IDS).exists()
-        partner_ids = users.mapped('partner_id').ids
 
-        # Get correct website URL
-        website = self.env['website'].sudo().search([
-            ('id', '=', product.website_id.id)
-        ], limit=1) if product.website_id else self.env['website'].sudo().browse(4)
-        base_url = website.domain or self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-
-        product_url = '%s%s' % (base_url.rstrip('/'), product.website_url)
-
-        body = """
-<p>A new review has been submitted and is waiting for your approval.</p>
-<ul>
-    <li><strong>Product:</strong> %s</li>
-    <li><strong>Customer:</strong> %s</li>
-    <li><strong>Rating:</strong> %s/5</li>
-    <li><strong>Review:</strong> %s</li>
-</ul>
-<p>Please go to the <strong>eCommerce &rarr; Reviews</strong> section to approve or reject this review.</p>
-<p><a href="%s">View Product</a></p>
-""" % (
+        note = '<p>New review submitted for <b>%s</b> by <b>%s</b> — Rating: %s/5</p><p>"%s"</p><p>Go to <b>eCommerce → Reviews</b> to approve or reject.</p>' % (
             html_escape(product.name),
             html_escape(self.partner_id.name or 'Anonymous'),
             int(self.rating),
             html_escape(self.feedback or ''),
-            product_url,
         )
 
-        product.sudo().message_notify(
-            partner_ids=partner_ids,
-            body=body,
-            subject='New Review: %s' % product.name,
-            author_id=self.env.ref('base.partner_root').id,
-            email_layout_xmlid=False,
-            force_send=False,
-        )
+        for user in users:
+            product.sudo().activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary='New Review: %s' % product.name,
+                note=note,
+                user_id=user.id,
+            )
