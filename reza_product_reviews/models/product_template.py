@@ -31,6 +31,7 @@ class ProductTemplate(models.Model):
             ],
         }
 
+    @api.depends('rating_ids', 'rating_ids.rating', 'rating_ids.consumed', 'rating_ids.is_approved')
     def _compute_rating_stats(self):
         """Override to only count approved reviews."""
         domain = expression.AND([

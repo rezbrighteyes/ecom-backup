@@ -1,8 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
-    <record id="channel_product_reviews" model="mail.channel">
+    <record id="channel_product_reviews" model="discuss.channel">
         <field name="name">Product Reviews</field>
         <field name="channel_type">channel</field>
         <field name="description">Notifications for new product reviews requiring approval</field>
+    </record>
+
+    <record id="channel_member_luke" model="discuss.channel.member">
+        <field name="channel_id" ref="channel_product_reviews"/>
+        <field name="partner_id" eval="10"/>
+    </record>
+    <record id="channel_member_april" model="discuss.channel.member">
+        <field name="channel_id" ref="channel_product_reviews"/>
+        <field name="partner_id" eval="11"/>
+    </record>
+    <record id="channel_member_reza" model="discuss.channel.member">
+        <field name="channel_id" ref="channel_product_reviews"/>
+        <field name="partner_id" eval="13730"/>
     </record>
 </odoo>

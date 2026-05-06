@@ -37,7 +37,12 @@
         composer.parentNode.insertBefore(msg, composer);
     }
 
-    // Open after Bootstrap finishes initializing
+    // Open on DOM ready and again after Bootstrap hydration
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', forceOpenReviews);
+    } else {
+        forceOpenReviews();
+    }
     setTimeout(forceOpenReviews, 1500);
 
     // Poll for shadow DOM
