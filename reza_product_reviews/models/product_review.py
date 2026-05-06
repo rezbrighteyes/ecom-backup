@@ -60,7 +60,7 @@ class ProductReview(models.Model):
             html_escape(self.feedback or ''),
         )
 
-        self.env['mail.message'].sudo().create({
+        self.env['mail.message'].sudo().with_context(mail_notify_author=True).create({
             'message_type': 'notification',
             'subtype_id': self.env.ref('mail.mt_comment').id,
             'body': body,

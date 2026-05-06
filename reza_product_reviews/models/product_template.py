@@ -1,5 +1,6 @@
 # -- coding: utf-8 --
-from odoo import fields, models
+from odoo import api, fields, models
+from odoo.osv import expression
 
 
 class ProductTemplate(models.Model):
@@ -29,3 +30,20 @@ class ProductTemplate(models.Model):
                 ('res_id', '=', self.id),
             ],
         }
+
+    def _compute_rating_stats(self):
+        """Override to only count approved reviews."""
+        domain = expression.AND([
+            self._rating_domain(),
+            [('rating', '>=', 1), ('is_approved', '=', True)],
+        ])
+        read_group_res = self.env['rating.rating']._read_group(
+            domain, ['res_id'], aggregates=['__count', 'rating:avg']
+        )
+        mapping = {
+            res_id: {'rating_count': count, 'rating_avg': rating_avg}
+            for res_id, count, rating_avg in read_group_res
+        }
+        for record in self:
+            record.rating_count = mapping.get(record.id, {}).get('rating_count', 0)
+            record.rating_avg = mapping.get(record.id, {}).get('rating_avg', 0)
