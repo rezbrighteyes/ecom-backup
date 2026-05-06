@@ -4,14 +4,29 @@
     function openReviewSection() {
         var reviewContent = document.getElementById('o_product_page_reviews_content');
         var reviewToggle = document.querySelector('.o_product_page_reviews_title');
-        if (reviewContent) {
-            reviewContent.classList.add('show');
-            reviewContent.classList.remove('collapse');
-            reviewContent.style.display = '';
-            if (reviewToggle) {
-                reviewToggle.setAttribute('aria-expanded', 'true');
-                reviewToggle.classList.remove('collapsed');
-            }
+        if (!reviewContent) return;
+
+        // Remove Bootstrap collapse classes and force open
+        reviewContent.classList.remove('collapse');
+        reviewContent.classList.add('show');
+        reviewContent.style.display = 'block';
+        reviewContent.style.visibility = 'visible';
+        reviewContent.style.height = 'auto';
+        reviewContent.style.overflow = 'visible';
+
+        if (reviewToggle) {
+            reviewToggle.setAttribute('aria-expanded', 'true');
+            reviewToggle.classList.remove('collapsed');
+        }
+
+        // Kill Bootstrap collapse instance if it exists
+        if (window.bootstrap && window.bootstrap.Collapse) {
+            try {
+                var instance = window.bootstrap.Collapse.getInstance(reviewContent);
+                if (instance) instance.dispose();
+                // Recreate as shown
+                new window.bootstrap.Collapse(reviewContent, { toggle: false });
+            } catch(e) {}
         }
     }
 
@@ -35,12 +50,11 @@
         composer.parentNode.insertBefore(msg, composer);
     }
 
-    // Open review section on DOMContentLoaded and again after Bootstrap
     document.addEventListener('DOMContentLoaded', function () {
         openReviewSection();
-        setTimeout(openReviewSection, 100);
-        setTimeout(openReviewSection, 500);
-        setTimeout(openReviewSection, 1000);
+        setTimeout(openReviewSection, 200);
+        setTimeout(openReviewSection, 600);
+        setTimeout(openReviewSection, 1500);
     });
 
     // Poll for shadow DOM
