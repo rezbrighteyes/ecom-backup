@@ -51,27 +51,20 @@ class ProductReview(models.Model):
         self.ensure_one()
         product = self.env['product.template'].sudo().browse(self.res_id)
         users = self.env['res.users'].sudo().browse(NOTIFY_USER_IDS).exists()
+        partner_ids = users.mapped('partner_id').ids
 
-        # Build URL to Reviews backend page (not product frontend)
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        review_url = '%s/odoo/website/reviews' % base_url.rstrip('/')
-
-        message = 'New review for "%s" by %s — %s/5: "%s". <a href="%s">Go to Reviews</a> to approve or reject.' % (
+        body = '''<p>New review submitted for <b>%s</b> by <b>%s</b> — %s/5</p>
+<p style="color:#555">"%s"</p>
+<p><a href="/odoo/website/reviews" style="background:#875A7B;color:#fff;padding:8px 16px;border-radius:4px;text-decoration:none;">Go to Reviews</a></p>''' % (
             html_escape(product.name),
             html_escape(self.partner_id.name or 'Anonymous'),
             int(self.rating),
             html_escape(self.feedback or ''),
-            review_url,
         )
 
-        for user in users:
-            self.env['bus.bus'].sudo()._sendone(
-                user.partner_id,
-                'simple_notification',
-                {
-                    'title': 'New Product Review',
-                    'message': message,
-                    'sticky': True,
-                    'type': 'warning',
-                }
-            )
+        product.sudo().message_notify(
+            partner_ids=partner_ids,
+            body=body,
+            subject='New Review: %s' % product.name,
+            author_id=self.env.ref('base.partner_root').id,
+        )
