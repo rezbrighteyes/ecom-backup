@@ -2,25 +2,15 @@
     'use strict';
 
     function forceOpenReviews() {
-        var el = document.getElementById('o_product_page_reviews_content');
         var toggle = document.querySelector('.o_product_page_reviews_title');
+        if (toggle) {
+            toggle.removeAttribute('data-bs-toggle');
+            toggle.removeAttribute('data-bs-target');
+        }
+        var el = document.getElementById('o_product_page_reviews_content');
         if (!el) return;
-
-        // Force open
         el.classList.add('show');
         el.style.display = 'block';
-
-        // Prevent Bootstrap from closing it
-        el.addEventListener('hidden.bs.collapse', function () {
-            el.classList.add('show');
-            el.style.display = 'block';
-        });
-
-        el.addEventListener('hide.bs.collapse', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-        });
-
         if (toggle) {
             toggle.setAttribute('aria-expanded', 'true');
             toggle.classList.remove('collapsed');
@@ -47,12 +37,8 @@
         composer.parentNode.insertBefore(msg, composer);
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        forceOpenReviews();
-        setTimeout(forceOpenReviews, 300);
-        setTimeout(forceOpenReviews, 800);
-        setTimeout(forceOpenReviews, 1500);
-    });
+    // Open after Bootstrap finishes initializing
+    setTimeout(forceOpenReviews, 1500);
 
     // Poll for shadow DOM
     setTimeout(function () {
