@@ -62,7 +62,7 @@ class ProductReview(models.Model):
         body = Markup(
             '<p>New review for <b>%s</b> by <b>%s</b> — %s/5</p>'
             '<p>”%s”</p>'
-            '<p><a href=”%s”>Go to Reviews →</a> to approve or reject.</p>'
+            '<p><a href="%s">Go to Reviews →</a> to approve or reject.</p>'
         ) % (
             product.name,
             self.partner_id.name or 'Anonymous',
