@@ -56,16 +56,19 @@ class ProductReview(models.Model):
         self.ensure_one()
         product = self.env['product.template'].sudo().browse(self.res_id)
 
+        action = self.env.ref('reza_product_reviews.action_product_reviews', raise_if_not_found=False)
+        action_url = '/odoo/action-%d' % action.id if action else '/odoo'
+
         body = Markup(
             '<p>New review for <b>%s</b> by <b>%s</b> — %s/5</p>'
-            '<p>“%s”</p>'
-            '<p><a href="/odoo/website/reviews">Go to Reviews →</a>'
-            ' to approve or reject.</p>'
+            '<p>”%s”</p>'
+            '<p><a href=”%s”>Go to Reviews →</a> to approve or reject.</p>'
         ) % (
             product.name,
             self.partner_id.name or 'Anonymous',
             int(self.rating),
             self.feedback or '',
+            action_url,
         )
 
         channel = self.env.ref(
