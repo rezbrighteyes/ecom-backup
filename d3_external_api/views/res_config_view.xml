@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_stock" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="stock.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='stock']" position="inside">
+                <block title="External API" name="external_api">
+                    <!-- API -->
+                    <setting help="Activate External API">
+                        <field name="external_api" />
+                    </setting>
+                    <setting />
+                    <setting help="Database URL" invisible="not external_api">
+                        <field name="external_api_url" required="external_api" />
+                    </setting>
+                    <setting help="Database name" invisible="not external_api">
+                        <field name="external_api_db" required="external_api" />
+                    </setting>
+                    <setting help="Username" invisible="not external_api">
+                        <field name="external_api_username" required="external_api" />
+                    </setting>
+                    <setting help="Password" invisible="not external_api">
+                        <field name="external_api_password" required="external_api" password="True" />
+                    </setting>
+                    <!-- Product -->
+                    <setting help="Sync Products" invisible="not external_api">
+                        <field name="external_api_product" />
+                    </setting>
+                    <setting />
+                    <!-- Purchase -->
+                    <setting help="Sync Purchase" invisible="not external_api">
+                        <field name="external_api_purchase" />
+                    </setting>
+                    <setting help="Purchase Partner" invisible="not external_api or not external_api_purchase" required="external_api_purchase" >
+                        <field name="external_api_purchase_partner" />
+                    </setting>
+                    <!-- Quants -->
+                    <setting help="Sync Quants" invisible="not external_api">
+                        <field name="external_api_quant" />
+                    </setting>
+                    <setting help="Location" invisible="not external_api or not external_api_quant">
+                        <field name="external_api_location_id" domain="[('usage','=','internal')]" />
+                    </setting>
+                    <setting help="Product Owner" invisible="not external_api or not external_api_quant">
+                        <field name="external_api_partner_id" />
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

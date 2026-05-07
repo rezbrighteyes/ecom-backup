@@ -1,0 +1,13 @@
+<odoo>
+    <record id="view_order_form_sale" model="ir.ui.view">
+        <field name="name">sale.order.view.form.inherit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_unlock']" position="after">
+                <widget name="signature" string="Sign" highlight="1"
+                    invisible="is_signed" full_name="partner_id" />
+            </xpath>
+        </field>
+    </record>
+</odoo>

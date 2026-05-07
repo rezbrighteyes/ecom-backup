@@ -1,0 +1,114 @@
+<odoo>
+	
+	<record id="res_config_settings_view_form" model="ir.ui.view">
+		<field name="name">res.config.settings.view.form.inherit.d3system</field>
+		<field name="model">res.config.settings</field>
+		<field name="priority" eval="90"/>
+		<field name="inherit_id" ref="base.res_config_settings_view_form"/>
+		<field name="arch" type="xml">
+			<xpath expr="//form" position="inside">
+				<app name="d3_system_code" string="D3 System Settings" icon="/d3_system_code/static/description/icon.png">
+					<block title="Account" name="account_settings">
+						<setting id="module_d3_customer_statement" string="Install Customer Statement" help="Automatically sends customer account statements monthly through a scheduled action.">
+							<field name="module_d3_customer_statement" />
+						</setting>
+						<setting id="module_d3_partner_statement" string="Install D3 Partner Statement" help="This module enables the sending of customer and vendor statements by email within Invoicing">
+							<field name="module_d3_partner_statement" />
+						</setting>
+						<setting id="module_partner_statement" string="Install Partner Statement" help="This module extends the functionality of Invoicing to support the printing of customer and vendor statements. There are three types of statements: Activity, Detailed Activity, and Outstanding.">
+							<field name="module_partner_statement" />
+						</setting>
+						<setting id="module_setu_cash_flow_forecasting" string="Cash Flow Forecasting" help="Forecast and analyze future cash flow based on cash in/out and opening balances.">
+						    <field name="module_setu_cash_flow_forecasting"/>
+						</setting>
+					</block>
+					<block title="Accounting" name="accounting_settings">
+						<setting id="module_d3_credit_control" string="Install D3 Credit Control" help="Blocks sales orders and invoices if the customer exceeds their credit limit or has overdue invoices.">
+    						<field name="module_d3_credit_control"/>
+						</setting>
+
+						<setting id="module_date_range" string="Install Date range" help="Manage all kind of date range">
+							<field name="module_date_range" />
+						</setting>
+						<setting id="module_report_xlsx" string="Install Report xlsx" help=" This module provides a basic report class to generate xlsx report. ">
+							<field name="module_report_xlsx" />
+						</setting>
+						<setting id="module_report_xlsx_helper" string="Install Report xlsx helper" help=" This module provides a set of tools to facilitate the creation of excel reports with format xlsx.">
+							<field name="module_report_xlsx_helper" />
+						</setting>
+					</block>
+					<block title="Helpdesk" name="helpdesk_settings">
+						<setting id="module_helpdesk_user" string="Install Helpdesk User" help="Modifies the Helpdesk module to allow logging time on a ticket by linking it to a task.">
+							<field name="module_helpdesk_user" />
+						</setting>
+					</block>
+					<block title="MRP" name="mrp_settings">
+						<setting id="module_d3_mrp_cost-cost" string="Install MRP Cost" help="Creates accounting entries for the additional operation costs in manufacturing orders.">
+							<field name="module_d3_mrp_cost" />
+						</setting>
+					</block>
+					<block title="Sale" name="sale_settings">
+						<setting id="module_d3_product_image" string="Install Product Image" help="Adds product images to sales PDFs and customer portal views. " >
+							<field name="module_d3_product_image" />
+						</setting>
+						<setting id="module_odoo_quote_sale_revision_number" string="Install Quote/Sale Revision Tracking" help="Enables revision tracking for quotations and sale orders, keeping a history of all changes made." >
+						    <field name="module_odoo_quote_sale_revision_number"/>
+						</setting>
+						<setting id="module_pragmatic_odoo_xero_connector" string="Install Pragmatic odoo xero connector" help="Xero Connector with REST API Xero Odoo Integration App xero accounting odoo xero connector odoo xero integration odoo xero accounting integration accounting app" >
+							<field name="module_pragmatic_odoo_xero_connector" />
+						</setting>
+						<setting id="module_sale_order_line_sequence" string="Install Sale order line sequence" help="Propagates SO line sequence to invoices and stock picking. " >
+							<field name="module_sale_order_line_sequence" />
+						</setting>
+						<setting id="module_salesperson_stop_follower" string="Disable Salesperson Follower on Invoice" help="This module disables the salesperson on the sales order as a follower on the related invoice.">
+						    <field name="module_salesperson_stop_follower"/>
+						</setting>
+					</block>				
+					<block title="Project" name="project_settings">
+						<setting id="module_project_user" string="Install Project User" help="Allows viewing and editing of a specific user's personal task view.">
+							<field name="module_project_user" />
+						</setting>
+						<setting id="module_timesheet_user" string="Install Timesheet User" help=" It allows you to generate and send to the client a weekly report with all the hours reported on a project during the week.">
+							<field name="module_timesheet_user"  />
+						</setting>
+					</block>
+					<block title="Website " name="website_settings">
+						<setting id="module_d3_website_price" string="Install Website Price" help="Hide the sale price of specific products in the website interface.">
+							<field name="module_d3_website_price" />
+						</setting>
+						<setting id="module_d3_wesbite_rebranding" string="Install Website Rebranding" help="Replacing the default branding with a custom brand on the website and email templates" >
+							<field name="module_d3_wesbite_rebranding" />
+						</setting>
+						<setting id="module_d3_website_quotation" string="Install Website Quotation" help="Modify description on website button" >
+							<field name="module_d3_website_quotation" />
+						</setting>
+						<setting id="module_website_ask_login" string="Restrict Website Access" help="Website access control: only logged-in users can navigate beyond the homepage.">
+    						<field name="module_website_ask_login"/>
+						</setting>
+						<setting id="module_website_sale_hide_price" string="Install Website sale hide price" help="Hide product prices on the shop" >
+							<field name="module_website_sale_hide_price" />
+						</setting>
+					</block>
+					<block title="Extra tools" name="extra_tools_settings">
+						<setting id="module_ondao_flexible_chatter" string="Install Flexible Chatter" help="Allows manual control of the chatter width and lets you change its position on the form view.">
+    						<field name="module_ondao_flexible_chatter"/>
+						</setting>
+						<setting id="module_product_image_import" string="Install Product Image Import" help="Import a ZIP file of product images in bulk using product internal reference numbers from the backend.">
+						    <field name="module_product_image_import"/>
+						</setting>
+						<setting id="module_partner_contact_access_link" string="Install Partner contact access link" help="Adds a button in the company form to directly open the full form of its contacts.">
+							<field name="module_partner_contact_access_link" />
+						</setting>
+						<setting id="module_d3_reporting" string="Install Reporting" help="Customization over some Odoo Rports">
+						    <field name="module_d3_reporting"/>
+						</setting>
+						<setting id="module_web_remember_tree_column_width" string="Install Web remember tree column width" help="Remember the tree columns' widths across sessions">
+							<field name="module_web_remember_tree_column_width" />
+						</setting>
+					</block>
+				</app>
+				
+			</xpath>
+		</field>
+	</record>
+</odoo>

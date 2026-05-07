@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="external_api_view_form" model="ir.ui.view">
+        <field name="name">external.api.view.form</field>
+        <field name="model">external.api</field>
+        <field name="arch" type="xml">
+            <form string="External API">
+                <sheet>
+                    <div invisible="state != 'check'">
+                        <h2>Conection Checked</h2>
+                        <p>Please select a Company</p>
+                    </div>
+                    <div invisible="state != 'check' and not memory_error">
+                        <h2>Please executed again</h2>
+                    </div>
+                    <group>
+                        <group string="Origin Company" invisible="state != 'check'">
+                            <field name="company" />
+                            <field name="companies" readonly="True" />
+                        </group>
+                        <group string="Destination Company">
+                            <field name="state" invisible="True" />
+                            <field name="memory_error" invisible="True" />
+                            <field name="company_id" groups="base.group_multi_company" />
+                        </group>
+                    </group>
+
+                </sheet>
+                <footer>
+                    <button string="Check Conection" name="action_external_check" type="object"
+                        class="btn-primary" invisible="state == 'check'" />
+                    <button string="Create Products" name="action_product_create" type="object"
+                        class="btn-primary" invisible="state != 'check'" />
+                    <button string="Update Products" name="action_product_write" type="object"
+                        class="btn-primary" invisible="state != 'check'" />
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="external_api_action" model="ir.actions.act_window">
+        <field name="name">External API</field>
+        <field name="res_model">external.api</field>
+        <field name="view_mode">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem
+        id="external_api_parent_menu"
+        name="External API"
+        parent="stock.menu_stock_config_settings"
+        sequence="100" />
+
+    <menuitem
+        id="external_api_menu"
+        action="external_api_action"
+        parent="external_api_parent_menu"
+        sequence="10" />
+</odoo>

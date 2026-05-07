@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="warehouse_external_api" model="stock.warehouse">
+        <field name="partner_id" ref="base.main_partner"/>
+        <field name="code">External API</field>
+        <field name="code">EA</field>
+    </record>
+</odoo>
