@@ -1,6 +1,6 @@
 # -- coding: utf-8 --
+from markupsafe import Markup
 from odoo import api, fields, models
-from odoo.tools import html_escape
 
 NOTIFY_USER_IDS = [6, 7, 90]  # Luke, April, Reza
 
@@ -36,29 +36,38 @@ class ProductReview(models.Model):
                 if record.message_id:
                     record.message_id.sudo().write({'is_internal': True})
                 record._notify_review_team()
+                self.env['product.template'].browse(record.res_id)._compute_rating_stats()
         return records
 
     def action_approve(self):
         self.is_approved = True
         if self.message_id:
             self.message_id.sudo().write({'is_internal': False})
+        if self.res_model == 'product.template':
+            self.env['product.template'].browse(self.res_id)._compute_rating_stats()
 
     def action_reject(self):
-        self.is_approved = False
+        product_id = self.res_id if self.res_model == 'product.template' else None
         self.unlink()
+        if product_id:
+            self.env['product.template'].browse(product_id)._compute_rating_stats()
 
     def _notify_review_team(self):
         self.ensure_one()
         product = self.env['product.template'].sudo().browse(self.res_id)
 
-        body = '<p>New review for <b>%s</b> by <b>%s</b> &mdash; %s/5</p><p>"%s"</p><p><a href="/odoo/website/reviews">Go to Reviews &rarr;</a> to approve or reject.</p>' % (
-            html_escape(product.name),
-            html_escape(self.partner_id.name or 'Anonymous'),
+        body = Markup(
+            '<p>New review for <b>%s</b> by <b>%s</b> — %s/5</p>'
+            '<p>“%s”</p>'
+            '<p><a href="/odoo/website/reviews">Go to Reviews →</a>'
+            ' to approve or reject.</p>'
+        ) % (
+            product.name,
+            self.partner_id.name or 'Anonymous',
             int(self.rating),
-            html_escape(self.feedback or ''),
+            self.feedback or '',
         )
 
-        # Post to dedicated Product Reviews channel
         channel = self.env.ref(
             'reza_product_reviews.channel_product_reviews',
             raise_if_not_found=False
@@ -70,7 +79,6 @@ class ProductReview(models.Model):
                 subtype_xmlid='mail.mt_comment',
             )
         else:
-            # Fallback — notify directly
             users = self.env['res.users'].sudo().browse(NOTIFY_USER_IDS).exists()
             partner_ids = [(4, uid) for uid in users.mapped('partner_id').ids]
             self.env['mail.message'].sudo().with_context(mail_notify_author=True).create({
