@@ -7,37 +7,94 @@
         <field name="email_from">{{ object.company_id.email }}</field>
         <field name="email_to">{{ object.partner_id.email }}</field>
         <field name="body_html" type="html">
-<div style="font-family:Arial,sans-serif; max-width:600px; margin:0 auto;">
+<div style="font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width:640px; margin:0 auto; background:#F5F5F5;">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
-      <td style="background:#1A1A1A; padding:32px; text-align:center;">
-        <h1 style="color:#C9A84A; font-size:24px; margin:0;">How did we do?</h1>
-        <p style="color:#BBBBBB; font-size:14px; margin:8px 0 0;">We hope you love your recent purchase.</p>
+      <td style="background:linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%); padding:48px 32px; text-align:center;">
+        <h1 style="color:#C9A84A; font-size:28px; margin:0; font-weight:600; letter-spacing:-0.5px;">How did we do?</h1>
+        <p style="color:#BBBBBB; font-size:15px; margin:12px 0 0; line-height:1.5; max-width:400px; display:inline-block;">Your opinion matters. Help us improve and help others choose.</p>
       </td>
     </tr>
+  </table>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
-      <td style="background:#ffffff; padding:32px;">
-        <p style="color:#333; font-size:15px;">Hi <strong><t t-out="object.partner_id.name"/></strong>,</p>
-        <p style="color:#555; font-size:14px; line-height:1.7;">Thank you for your recent order from <t t-out="object.company_id.name"/>. We would love to hear what you think.</p>
-        <p style="font-size:13px; color:#777; font-weight:600; text-transform:uppercase; letter-spacing:1px;">Your order</p>
-        <t t-foreach="object.order_line" t-as="line">
-          <t t-if="line.product_id.type != 'service'">
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px; border-radius:8px; border:1px solid #eee;">
-              <tr>
-                <td style="padding:12px; font-size:14px; font-weight:600; color:#1A1A1A;"><t t-out="line.product_id.name"/></td>
-                <td style="padding:12px; text-align:right;">
-                  <a t-attf-href="{{ line.product_id.product_tmpl_id.website_url }}" style="display:inline-block; background:#C9A84A; color:#fff; padding:8px 16px; border-radius:100px; text-decoration:none; font-size:12px; font-weight:600;">Leave a Review</a>
-                </td>
-              </tr>
-            </table>
-          </t>
-        </t>
-        <p style="color:#888; font-size:12px; margin-top:24px;">If you leave a review we will send you a 10% discount code for your next order.</p>
+      <td style="padding:40px 32px 24px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; border-radius:16px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <tr>
+            <td style="padding:40px 32px 32px;">
+              <p style="color:#1A1A1A; font-size:16px; margin:0 0 8px;">Hi <strong style="font-weight:600;"><t t-out="object.partner_id.name">Customer</t></strong>,</p>
+              <p style="color:#555555; font-size:15px; line-height:1.7; margin:0 0 32px;">Thank you for your recent order from <strong style="color:#1A1A1A; font-weight:600;"><t t-out="object.company_id.name">Our Store</t></strong>. We hope you're enjoying your purchase. We'd love to hear what you think.</p>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                  <td style="border-bottom:2px solid #F0F0F0; padding-bottom:12px;">
+                    <span style="font-size:12px; color:#888888; font-weight:700; text-transform:uppercase; letter-spacing:1.5px;">Your Order</span>
+                  </td>
+                </tr>
+              </table>
+              <t t-foreach="object.order_line" t-as="line">
+                <t t-if="line.product_id.type != 'service'">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px; background:#FAFAFA; border-radius:12px; border:1px solid #F0F0F0;">
+                    <tr>
+                      <td style="padding:16px;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                          <tr>
+                            <td width="64" style="vertical-align:top; padding-right:16px;">
+                              <t t-if="line.product_id.image_128">
+                                <img t-attf-src="{{ object.company_id.website }}/web/image/product.product/{{ line.product_id.id }}/image_128" style="width:64px; height:64px; object-fit:cover; border-radius:10px; display:block; border:1px solid #EEEEEE;" alt="Product"/>
+                              </t>
+                              <t t-else="">
+                                <div style="width:64px; height:64px; background:#EEEEEE; border-radius:10px; display:block;"></div>
+                              </t>
+                            </td>
+                            <td style="vertical-align:middle;">
+                              <p style="margin:0 0 4px; font-size:15px; font-weight:600; color:#1A1A1A; line-height:1.4;"><t t-out="line.product_id.name">Product Name</t></p>
+                              <p style="margin:0; font-size:13px; color:#888888;">Qty: <t t-out="line.product_uom_qty">1</t></p>
+                            </td>
+                            <td width="140" style="vertical-align:middle; text-align:right; padding-left:12px;">
+                              <a t-attf-href="{{ line.product_id.product_tmpl_id.website_url }}" style="display:inline-block; background:#C9A84A; color:#FFFFFF; padding:10px 20px; border-radius:100px; text-decoration:none; font-size:13px; font-weight:600;">Leave a Review</a>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </t>
+              </t>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0;">
+                <tr><td style="border-top:1px solid #F0F0F0;"></td></tr>
+              </table>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="text-align:center; padding:0 0 8px;">
+                    <p style="margin:0 0 16px; font-size:14px; color:#555555;">Have feedback about your overall experience?</p>
+                    <a t-attf-href="{{ object.company_id.website }}/contactus" style="display:inline-block; background:transparent; color:#1A1A1A; padding:12px 28px; border-radius:100px; text-decoration:none; font-size:14px; font-weight:600; border:2px solid #1A1A1A;">Contact Us</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
+  </table>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
-      <td style="background:#1A1A1A; padding:24px; text-align:center;">
-        <p style="color:#777; font-size:11px; margin:0;"><t t-out="object.company_id.name"/> &#160;&#183;&#160; <t t-out="object.company_id.website"/></p>
+      <td style="padding:0 32px 40px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align:center;">
+          <tr>
+            <td style="padding-bottom:16px;">
+              <p style="color:#999999; font-size:13px; margin:0; line-height:1.6;">
+                <strong style="color:#555555;"><t t-out="object.company_id.name">Company</t></strong><br/>
+                <a t-attf-href="{{ object.company_id.website }}" style="color:#C9A84A; text-decoration:none; font-weight:500;"><t t-out="object.company_id.website">www.example.com</t></a>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <p style="color:#BBBBBB; font-size:11px; margin:0;">You're receiving this because you recently made a purchase.</p>
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
   </table>

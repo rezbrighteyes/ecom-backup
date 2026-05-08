@@ -1,6 +1,6 @@
 # -- coding: utf-8 --
 from odoo import fields, models
-
+from datetime import datetime
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
@@ -16,13 +16,17 @@ class SaleOrder(models.Model):
         self.review_email_sent = True
 
     def _send_review_request_auto(self):
-        """Called by cron — sends review request 7 days after delivery."""
+        """Called by cron — sends review request 7 days after order, WhatYouNeed only."""
         cutoff = fields.Datetime.subtract(fields.Datetime.now(), days=7)
+        # Only orders placed from today onwards (after cron was set up)
+        start_date = datetime(2026, 5, 8, 0, 0, 0)
+
         orders = self.search([
             ('state', 'in', ['sale', 'done']),
             ('review_email_sent', '=', False),
             ('date_order', '<=', cutoff),
-            ('website_id', '!=', False),
+            ('date_order', '>=', start_date),
+            ('website_id', '=', 4),  # WhatYouNeed only
         ])
         for order in orders:
             try:

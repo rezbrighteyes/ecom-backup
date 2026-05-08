@@ -1,6 +1,6 @@
 {
     'name': 'Reza Product Reviews',
-    'version': '18.0.1.3.0',
+    'version': '18.0.1.4.0',
     'category': 'Website/eCommerce',
     'summary': 'Product review management with moderation, notifications and post-purchase requests',
     'author': 'Reza D Shiraz',
