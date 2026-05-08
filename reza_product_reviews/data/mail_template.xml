@@ -50,7 +50,7 @@
                               <p style="margin:0 0 4px; font-size:15px; font-weight:600; color:#1A1A1A; line-height:1.4;"><t t-out="line.product_id.name">Product Name</t></p>
                               <p style="margin:0; font-size:13px; color:#888888;">Qty: <t t-out="line.product_uom_qty">1</t></p>
                             </td>
-                            <td width="140" style="vertical-align:middle; text-align:right; padding-left:12px;">
+                            <td width="140" style="vertical-align:middle; text-align:right; padding-left:12px; white-space:nowrap;">
                               <a t-attf-href="{{ line.product_id.product_tmpl_id.website_url }}" style="display:inline-block; background:#C9A84A; color:#FFFFFF; padding:10px 20px; border-radius:100px; text-decoration:none; font-size:13px; font-weight:600;">Leave a Review</a>
                             </td>
                           </tr>
