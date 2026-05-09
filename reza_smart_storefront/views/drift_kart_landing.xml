@@ -49,7 +49,7 @@
 
                             <model-viewer
                                 id="dkModelViewer"
-                                src="/web/content/382599?download=false"
+                                src="/web/content/382418?download=false"
                                 alt="Drift Kart Pro 3D Model"
                                 auto-rotate="true"
                                 camera-controls="true"
