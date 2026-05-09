@@ -417,3 +417,9 @@
         justify-content: center;
     }
 }
+
+@media (max-width: 767px) {
+    .dk-speedometer-wrap {
+        width: 100%;
+    }
+}
