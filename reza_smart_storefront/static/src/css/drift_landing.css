@@ -410,3 +410,10 @@
         grid-template-columns: 1fr;
     }
 }
+
+@media (max-width: 767px) {
+    .dk-speedometer-wrap {
+        display: flex;
+        justify-content: center;
+    }
+}
