@@ -311,6 +311,27 @@ class ProductTemplate(models.Model):
                     }
                 }
             }
+
+            # Add aggregateRating if approved reviews exist
+            try:
+                approved = self.env['rating.rating'].sudo().search([
+                    ('res_model', '=', 'product.template'),
+                    ('res_id', '=', self.id),
+                    ('is_approved', '=', True),
+                    ('rating', '>=', 1),
+                ])
+                if approved:
+                    avg = sum(approved.mapped('rating')) / len(approved)
+                    data['aggregateRating'] = {
+                        '@type': 'AggregateRating',
+                        'ratingValue': '%.1f' % avg,
+                        'reviewCount': len(approved),
+                        'bestRating': '5',
+                        'worstRating': '1',
+                    }
+            except Exception:
+                pass
+
             return Markup(json.dumps(data, ensure_ascii=False, indent=2))
         except Exception as e:
             _logger.error('Schema JSON-LD error for product %s (id=%s): %s', self.name, self.id, e)
