@@ -27,7 +27,6 @@
     .wp-features__grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
 
-/* ── Mobile marquee ── */
 @media (max-width: 520px) {
     .wp-features {
         padding: 10px 0;
@@ -86,7 +85,6 @@
     }
 }
 
-/* ── Card base ── */
 .wp-feature {
     position: relative;
     display: flex;
@@ -123,7 +121,6 @@
 }
 .wp-feature:hover::after { opacity: 1; transform: translateX(140%) skewX(-12deg); }
 
-/* ── Icons ── */
 .wp-feature__icon {
     width: 44px;
     height: 44px;
@@ -180,7 +177,6 @@
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
 }
 
-/* ── Text ── */
 .wp-feature__text {
     min-width: 0;
     display: flex;
@@ -207,7 +203,6 @@
     color: rgba(17,17,17,.66);
 }
 
-/* ── Touch / reduced motion ── */
 @media (hover: none) {
     .wp-feature:hover { transform: none; box-shadow: none; }
     .wp-feature:hover::after { opacity: 0; }
@@ -224,5 +219,85 @@
 
 
 /* ═══════════════════════════════════════════════════
-   DRIFT KART BANNER  — keep your existing CSS below
+   DRIFT KART BANNER  (.wyn-drift-banner)
    ═══════════════════════════════════════════════════ */
+
+.wyn-drift-banner {
+    background: #0a0a0a url('/web/image/382420-193e36b8/freepik_electric-drift-kart-on-th_2778403748.webp') 65% center / cover no-repeat;
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+.wyn-drift-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.1) 100%);
+}
+.wyn-drift-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 80px 60px 80px 20px;
+    width: 100%;
+}
+.wyn-drift-content {
+    max-width: 460px;
+}
+.wyn-drift-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #D4AF37;
+    font-weight: 700;
+    margin: 0 0 14px;
+    text-align: left;
+}
+.wyn-drift-headline {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1.0;
+    color: #ffffff;
+    margin: 0 0 20px;
+    letter-spacing: -0.02em;
+    text-align: left;
+}
+.wyn-drift-sub {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.7);
+    margin: 0 0 36px;
+    letter-spacing: 0.03em;
+    text-align: left;
+    white-space: nowrap;
+}
+.wyn-drift-cta {
+    display: inline-block;
+    background: #D4AF37;
+    color: #000000 !important;
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 16px 40px;
+    border-radius: 2px;
+    text-decoration: none !important;
+    transition: background 0.2s, transform 0.15s;
+}
+.wyn-drift-cta:hover {
+    background: #c9a227;
+    transform: translateY(-2px);
+    color: #000000 !important;
+}
+@media (max-width: 991px) {
+    .wyn-drift-banner { min-height: 420px; background-position: 70% center; }
+    .wyn-drift-headline { font-size: 3rem; }
+    .wyn-drift-sub { white-space: normal; }
+}
+@media (max-width: 767px) {
+    .wyn-drift-banner { min-height: 360px; background-position: 80% center; }
+    .wyn-drift-headline { font-size: 2.2rem; }
+    .wyn-drift-inner { padding: 48px 24px; }
+    .wyn-drift-sub { font-size: 0.85rem; white-space: normal; }
+}
