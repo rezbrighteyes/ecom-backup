@@ -1,0 +1,48 @@
+/* Sale Block — WhatYouNeed product detail page */
+.reza-sale-badge-wrap {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.reza-sale-badge {
+    display: inline-block;
+    background-color: #C8102E;
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 3px;
+}
+
+.reza-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.reza-sale-price {
+    font-size: 30px;
+    font-weight: 800;
+    color: #1A1A1A;
+    line-height: 1;
+}
+
+.reza-original-price {
+    font-size: 18px;
+    font-weight: 400;
+    color: #9CA3AF;
+    text-decoration: line-through;
+}
+
+@media (max-width: 576px) {
+    .reza-price-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+    .reza-sale-price {
+        font-size: 26px;
+    }
+}

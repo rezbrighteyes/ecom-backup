@@ -132,4 +132,36 @@
         </xpath>
     </template>
 
+    <!-- Sale Block — WhatYouNeed (website_id=4) product detail page -->
+    <template id="reza_sale_badge" name="Smart Storefront - Sale Block"
+              inherit_id="website_sale.product">
+        <xpath expr="//t[@t-call='website_sale.product_price']" position="replace">
+            <t t-if="request.website.id == 4 and combination_info.get('has_discounted_price') and (combination_info['list_price'] - combination_info['price']) &gt; 0">
+                <t t-set="reza_saving" t-value="combination_info['list_price'] - combination_info['price']"/>
+                <t t-set="reza_pct" t-value="round(reza_saving / combination_info['list_price'] * 100) if combination_info['list_price'] else 0"/>
+                <div class="reza-sale-block mt-2 mb-3">
+                    <div class="reza-sale-badge-wrap mb-2">
+                        <span class="reza-sale-badge">
+                            <t t-if="reza_saving &gt;= 20.0">SAVE $<t t-esc="'%.0f' % reza_saving"/></t>
+                            <t t-else="">SAVE <t t-esc="reza_pct"/>%</t>
+                        </span>
+                    </div>
+                    <div class="reza-price-row">
+                        <span class="reza-sale-price"
+                              t-esc="combination_info['price']"
+                              t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
+                        <del class="reza-original-price ms-2"
+                             t-esc="combination_info['list_price']"
+                             t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
+                    </div>
+                    <span itemprop="price" style="display:none;" t-esc="combination_info['price']"/>
+                    <span itemprop="priceCurrency" style="display:none;" t-esc="website.currency_id.name"/>
+                </div>
+            </t>
+            <t t-else="">
+                <t t-call="website_sale.product_price"/>
+            </t>
+        </xpath>
+    </template>
+
 </odoo>

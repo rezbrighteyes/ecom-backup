@@ -16,6 +16,7 @@
             'reza_smart_storefront/static/src/css/storefront.css',
             'reza_smart_storefront/static/src/css/drift_banner.css',
             'reza_smart_storefront/static/src/css/drift_landing.css',
+            'reza_smart_storefront/static/src/css/sale_badge.css',
             'reza_smart_storefront/static/src/js/cross_sell_cart.js',
             'reza_smart_storefront/static/src/js/drift_banner_position.js',
             'reza_smart_storefront/static/src/js/drift_landing.js',
