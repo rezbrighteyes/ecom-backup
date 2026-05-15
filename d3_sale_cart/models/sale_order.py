@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from urllib.parse import quote
+
 from odoo import _, fields, models
 
 
@@ -54,3 +56,18 @@ class SaleOrder(models.Model):
         History.create(history_vals)
 
         return coupon.code
+
+    def action_generate_coupon_cart_recovery_url(self):
+        self.ensure_one()
+
+        code = self.action_generate_coupon()
+        if not code:
+            return self.get_portal_url()
+
+        access_token = self.access_token or self._portal_ensure_token()
+        return "%s/d3_sale_cart/recover/%s/%s/%s" % (
+            self.get_base_url(),
+            self.id,
+            quote(access_token, safe=""),
+            quote(code, safe=""),
+        )
