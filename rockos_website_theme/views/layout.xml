@@ -34,15 +34,79 @@
                         <a href="/" class="rockos-logo">
                             <img src="/rockos_website_theme/static/src/img/rockos_symbol_logo.png" alt="Rockos"/>
                         </a>
-                        <nav class="rockos-nav d-none d-xl-flex">
-                            <a href="/shop">Thongs</a>
-                            <a href="/shop">Hats</a>
-                            <a href="/shop">Sunnies</a>
-                            <a href="/shop">Technology</a>
-                            <a href="/shop">Toys</a>
-                            <a href="/shop">Outdoor</a>
-                            <a href="/shop">Games</a>
-                            <a href="/shop">Your Pad</a>
+                        <nav class="rockos-nav d-none d-xl-flex" aria-label="Product categories">
+                            <div class="rockos-nav-item">
+                                <a href="/shop?search=thongs">Thongs <i class="fa fa-caret-down"/></a>
+                                <div class="rockos-submenu">
+                                    <a href="/shop?search=double+pluggers">Double Pluggers</a>
+                                    <a href="/shop?search=nobby+thongs">Nobby Thongs</a>
+                                    <a href="/shop?search=tread+thongs">Tread Thongs</a>
+                                    <a href="/shop?search=kids+thongs">Kids Thongs</a>
+                                    <a href="/shop?search=slides">Slides</a>
+                                </div>
+                            </div>
+                            <div class="rockos-nav-item">
+                                <a href="/shop?search=hats">Hats <i class="fa fa-caret-down"/></a>
+                                <div class="rockos-submenu">
+                                    <a href="/shop?search=caps">Caps</a>
+                                    <a href="/shop?search=trucker+cap">Trucker Caps</a>
+                                    <a href="/shop?search=bucket+hat">Bucket Hats</a>
+                                    <a href="/shop?search=straw+hat">Straw Hats</a>
+                                    <a href="/shop?search=beanie">Beanies</a>
+                                </div>
+                            </div>
+                            <div class="rockos-nav-item">
+                                <a href="/shop?search=sunglasses">Sunnies <i class="fa fa-caret-down"/></a>
+                                <div class="rockos-submenu">
+                                    <a href="/shop?search=polarised">Polarised Sunglasses</a>
+                                    <a href="/shop?search=safety+glasses">Safety Glasses</a>
+                                    <a href="/shop?search=readers">Readers</a>
+                                </div>
+                            </div>
+                            <div class="rockos-nav-item">
+                                <a href="/shop?search=technology">Technology <i class="fa fa-caret-down"/></a>
+                                <div class="rockos-submenu">
+                                    <a href="/shop?search=audio">Audio</a>
+                                    <a href="/shop?search=cables">Cables &amp; Chargers</a>
+                                    <a href="/shop?search=power+bank">Power Banks</a>
+                                    <a href="/shop?search=phone">Phone Accessories</a>
+                                </div>
+                            </div>
+                            <div class="rockos-nav-item">
+                                <a href="/shop?search=toys">Toys <i class="fa fa-caret-down"/></a>
+                                <div class="rockos-submenu">
+                                    <a href="/shop?search=die+cast">Die Cast</a>
+                                    <a href="/shop?search=mini+mates">Mini Mates</a>
+                                    <a href="/shop?search=nature+tubes">Nature Tubes</a>
+                                    <a href="/shop?search=party+games">Party Games</a>
+                                </div>
+                            </div>
+                            <div class="rockos-nav-item">
+                                <a href="/shop?search=outdoor">Outdoor <i class="fa fa-caret-down"/></a>
+                                <div class="rockos-submenu">
+                                    <a href="/shop?search=beach">Beach</a>
+                                    <a href="/shop?search=fishing">Fishing</a>
+                                    <a href="/shop?search=goggles">Goggles</a>
+                                    <a href="/shop?search=outdoor+games">Outdoor Games</a>
+                                </div>
+                            </div>
+                            <div class="rockos-nav-item">
+                                <a href="/shop?search=games">Games <i class="fa fa-caret-down"/></a>
+                                <div class="rockos-submenu">
+                                    <a href="/shop?search=indoor+games">Indoor Games</a>
+                                    <a href="/shop?search=party+games">Party Games</a>
+                                    <a href="/shop?search=puzzle">Puzzles</a>
+                                </div>
+                            </div>
+                            <div class="rockos-nav-item">
+                                <a href="/shop?search=home">Your Pad <i class="fa fa-caret-down"/></a>
+                                <div class="rockos-submenu rockos-submenu-right">
+                                    <a href="/shop?search=drinking">Drinking</a>
+                                    <a href="/shop?search=kitchen">Kitchen</a>
+                                    <a href="/shop?search=party">Party</a>
+                                    <a href="/shop?search=personal+care">Personal Care</a>
+                                </div>
+                            </div>
                         </nav>
                         <div class="rockos-tools ms-auto d-flex align-items-center gap-2">
                             <form action="/shop" method="get" class="rockos-search d-none d-lg-flex">
@@ -55,7 +119,14 @@
                         </div>
                     </div>
                     <div class="rockos-mobile-nav container d-xl-none">
-                        <a href="/shop">Shop</a>
+                        <a href="/shop?search=thongs">Thongs</a>
+                        <a href="/shop?search=hats">Hats</a>
+                        <a href="/shop?search=sunglasses">Sunnies</a>
+                        <a href="/shop?search=technology">Technology</a>
+                        <a href="/shop?search=toys">Toys</a>
+                        <a href="/shop?search=outdoor">Outdoor</a>
+                        <a href="/shop?search=games">Games</a>
+                        <a href="/shop?search=home">Your Pad</a>
                         <a href="/returns">Returns</a>
                         <a href="/contactus">Contact Us</a>
                     </div>
@@ -71,7 +142,7 @@
                     <div class="container text-center">
                         <h2>Sign Up To Rockos Newsletter</h2>
                         <p>Stay up to date with any new product releases, special offers and more!</p>
-                        <div class="oe_structure" id="rockos_newsletter_editable"/>
+                        <div class="oe_structure" id="rockos_newsletter_editable"></div>
                     </div>
                 </section>
                 <div class="container rockos-footer-grid">

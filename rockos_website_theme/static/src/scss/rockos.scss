@@ -44,6 +44,25 @@
 .rockos-nav { gap: 19px; }
 .rockos-nav a { color: #202328; font-size: 14px; font-weight: 700; text-transform: uppercase; }
 .rockos-nav a:hover { color: var(--rockos-yellow); }
+.rockos-nav-item { position: relative; padding: 38px 0; }
+.rockos-nav-item > a i { margin-left: 3px; color: #999; }
+.rockos-submenu {
+    position: absolute;
+    z-index: 50;
+    top: calc(100% - 1px);
+    left: -18px;
+    display: none;
+    width: 210px;
+    padding: 10px 0;
+    background: #fff;
+    border-top: 3px solid var(--rockos-yellow);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, .16);
+
+    a { display: block; padding: 11px 22px; color: #333; font-weight: 500; text-transform: none; }
+    a:hover { background: #f7f7f7; color: var(--rockos-yellow); }
+}
+.rockos-submenu-right { right: -18px; left: auto; }
+.rockos-nav-item:hover .rockos-submenu, .rockos-nav-item:focus-within .rockos-submenu { display: block; }
 
 .rockos-search {
     width: 220px;
@@ -117,12 +136,14 @@
 
 .rockos-newsletter { padding: 55px 0; background: #f5b828; }
 .rockos-newsletter h2 { margin-bottom: 10px; }
-.rockos-footer {
+.rockos-site footer.rockos-footer {
+    display: block !important;
+    min-height: 360px;
     background: var(--rockos-charcoal) url("/rockos_website_theme/static/src/img/bg-footer.png") center/cover;
     color: #fff;
     a { color: #fff; }
 }
-.rockos-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 50px; padding-top: 60px; padding-bottom: 60px; }
+.rockos-footer-grid { display: grid !important; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 50px; padding-top: 60px; padding-bottom: 60px; }
 .rockos-footer-grid > div { display: flex; flex-direction: column; gap: 10px; }
 .rockos-footer-grid h3 { color: var(--rockos-yellow); font-size: 17px; text-transform: uppercase; }
 .rockos-footer-logo { width: 180px; max-height: 100px; object-fit: contain; object-position: left center; filter: brightness(0) invert(1); }

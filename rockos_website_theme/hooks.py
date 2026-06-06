@@ -88,17 +88,6 @@ def _configure_rockos_website(env, website):
             values["logo"] = base64.b64encode(logo_file.read())
     website.write(values)
 
-    homepage_view = env.ref(
-        "rockos_website_theme.rockos_homepage",
-        raise_if_not_found=False,
-    )
-    homepage_page = env["website.page"].sudo().search([
-        ("website_id", "=", website.id),
-        ("url", "=", "/"),
-    ], limit=1)
-    if homepage_view and homepage_page:
-        homepage_page.view_id = homepage_view.id
-
     root_menu = env["website.menu"].sudo().search([
         ("website_id", "=", website.id),
         ("parent_id", "=", False),
