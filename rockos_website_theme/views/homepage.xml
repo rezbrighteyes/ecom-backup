@@ -1,56 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="rockos_homepage" inherit_id="website.layout" name="Rockos: Homepage">
-        <xpath expr="//main" position="before">
-            <t t-if="request.httprequest.path == '/'">
-                <main class="rockos-home">
-                    <section class="rockos-hero">
-                        <div class="oe_structure" id="rockos_hero_editable">
-                            <img class="rockos-hero-image"
-                                 src="/rockos_website_theme/static/src/img/Rockos-Double-Pluggers-Black-7.png"
-                                 alt="Rockos hero banner"/>
-                            <div class="rockos-hero-content container">
-                                <p class="rockos-eyebrow">Australian owned and operated</p>
-                                <h1>Rocko's Essentials</h1>
-                                <p>Footwear, headwear, sunnies, technology, toys and outdoor gear.</p>
-                                <a href="/shop" class="btn rockos-btn">Shop Rockos</a>
-                            </div>
+    <template id="rockos_homepage" inherit_id="website.homepage" name="Rockos: Homepage">
+        <xpath expr="//div[@id='wrap']" position="replace">
+            <div id="wrap" class="rockos-home">
+                <section class="rockos-hero">
+                    <div class="oe_structure" id="rockos_hero_editable">
+                        <img class="rockos-hero-image"
+                             src="/rockos_website_theme/static/src/img/Rockos-Double-Pluggers-Black-7.png"
+                             alt="Rockos hero banner"/>
+                        <div class="rockos-hero-content rockos-container">
+                            <p class="rockos-eyebrow">Australian owned and operated</p>
+                            <h1>Rocko's Essentials</h1>
+                            <p>Footwear, headwear, sunnies, technology, toys and outdoor gear.</p>
+                            <a href="/shop" class="rockos-btn">Shop Rockos</a>
                         </div>
-                    </section>
-                    <section class="rockos-category-section container">
-                        <div class="oe_structure" id="rockos_categories_editable">
-                            <h2>Welcome to Rocko's</h2>
-                            <div class="rockos-category-grid">
-                                <a href="/shop" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/footwear.jpg" alt="Footwear"/><span>Thongs</span></a>
-                                <a href="/shop" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/headwear.jpg" alt="Headwear"/><span>Hats</span></a>
-                                <a href="/shop" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/eyewear.jpg" alt="Eyewear"/><span>Sunnies</span></a>
-                                <a href="/shop" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/technology.jpg" alt="Technology"/><span>Technology</span></a>
-                                <a href="/shop" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/toys.jpg" alt="Toys"/><span>Toys</span></a>
-                                <a href="/shop" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/Rockos-Double-Pluggers-Black-7.png" alt="Rockos"/><span>Rockos</span></a>
-                            </div>
+                    </div>
+                </section>
+                <section class="rockos-category-section rockos-container">
+                    <div class="oe_structure" id="rockos_categories_editable">
+                        <h2>Welcome to Rocko's</h2>
+                        <div class="rockos-category-grid">
+                            <a href="/shop" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/footwear.jpg" alt="Footwear"/><span>Thongs</span></a>
+                            <a href="/shop" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/headwear.jpg" alt="Headwear"/><span>Hats</span></a>
+                            <a href="/shop" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/eyewear.jpg" alt="Eyewear"/><span>Sunnies</span></a>
+                            <a href="/shop" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/technology.jpg" alt="Technology"/><span>Technology</span></a>
+                            <a href="/shop" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/toys.jpg" alt="Toys"/><span>Toys</span></a>
+                            <a href="/shop" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/Rockos-Double-Pluggers-Black-7.png" alt="Rockos"/><span>Rockos</span></a>
                         </div>
-                    </section>
-                    <section class="rockos-benefits">
-                        <div class="container rockos-benefit-grid">
-                            <div><i class="fa fa-truck"/><strong>Free Shipping</strong><span t-out="website.rockos_free_shipping_text"/></div>
-                            <div><i class="fa fa-thumbs-up"/><strong>100% Satisfaction</strong><span>Guaranteed</span></div>
-                            <div><i class="fa fa-life-ring"/><strong>Excellent</strong><span>Customer Support</span></div>
-                            <div><i class="fa fa-lock"/><strong>100% Secure</strong><span>Payment System</span></div>
-                        </div>
-                    </section>
-                    <section class="container rockos-home-content">
-                        <div class="oe_structure" id="rockos_home_products_editable">
-                            <h2>Best Sellers</h2>
-                            <p class="text-center">Use the Odoo website editor to add a Dynamic Products block here.</p>
-                            <h2>New Arrivals</h2>
-                            <p class="text-center">Use the Odoo website editor to add another Dynamic Products block here.</p>
-                        </div>
-                    </section>
-                </main>
-            </t>
-        </xpath>
-        <xpath expr="//main" position="attributes">
-            <attribute name="t-if">request.httprequest.path != '/'</attribute>
+                    </div>
+                </section>
+                <section class="rockos-benefits">
+                    <div class="rockos-container rockos-benefit-grid">
+                        <div><i class="fa fa-truck"/><strong>Free Shipping</strong><span t-out="website.rockos_free_shipping_text"/></div>
+                        <div><i class="fa fa-thumbs-up"/><strong>100% Satisfaction</strong><span>Guaranteed</span></div>
+                        <div><i class="fa fa-life-ring"/><strong>Excellent</strong><span>Customer Support</span></div>
+                        <div><i class="fa fa-lock"/><strong>100% Secure</strong><span>Payment System</span></div>
+                    </div>
+                </section>
+                <section class="rockos-container rockos-home-content">
+                    <div class="oe_structure" id="rockos_home_products_editable">
+                        <h2>Best Sellers</h2>
+                        <p class="rockos-center">Use the Odoo website editor to add a Dynamic Products block here.</p>
+                        <h2>New Arrivals</h2>
+                        <p class="rockos-center">Use the Odoo website editor to add another Dynamic Products block here.</p>
+                    </div>
+                </section>
+            </div>
         </xpath>
     </template>
 </odoo>

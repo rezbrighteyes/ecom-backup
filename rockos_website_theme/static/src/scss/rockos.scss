@@ -9,7 +9,20 @@
 
     a { text-decoration: none; }
     h1, h2, h3 { font-weight: 700; }
+    *, *::before, *::after { box-sizing: border-box; }
+    .container { width: calc(100% - 32px); max-width: 1400px; margin-left: auto; margin-right: auto; }
+    .d-flex { display: flex; }
+    .align-items-center { align-items: center; }
+    .justify-content-between { justify-content: space-between; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 16px; }
+    .gap-4 { gap: 24px; }
+    .ms-auto { margin-left: auto; }
+    .text-center { text-align: center; }
 }
+
+.rockos-container { width: calc(100% - 32px); max-width: 1400px; margin-left: auto; margin-right: auto; }
+.rockos-center { text-align: center; }
 
 .rockos-topbar {
     padding: 10px 0;
@@ -28,7 +41,7 @@
     border-bottom: 1px solid #ececec;
 }
 
-.rockos-mainbar > .container { min-height: 96px; }
+.rockos-mainbar > .container, .rockos-mainbar > .rockos-container { min-height: 96px; }
 .rockos-logo img { width: 130px; height: auto; }
 .rockos-nav { gap: 19px; }
 .rockos-nav a { color: #202328; font-size: 14px; font-weight: 700; text-transform: uppercase; }
@@ -124,11 +137,12 @@
 .rockos-product-trust i { color: var(--rockos-yellow); display: block; margin-bottom: 5px; font-size: 18px; }
 
 @media (max-width: 991px) {
-    .rockos-mainbar > .container { min-height: 78px; }
+    .rockos-mainbar > .container, .rockos-mainbar > .rockos-container { min-height: 78px; }
     .rockos-logo img { width: 105px; }
     .rockos-category-grid { grid-template-columns: repeat(2, 1fr); }
     .rockos-benefit-grid { grid-template-columns: repeat(2, 1fr); }
     .rockos-footer-grid { grid-template-columns: repeat(2, 1fr); }
+    .rockos-site .d-lg-flex { display: none; }
 }
 
 @media (max-width: 575px) {
@@ -137,4 +151,14 @@
     .rockos-hero-content h1 { font-size: 52px; }
     .rockos-category-grid, .rockos-benefit-grid, .rockos-footer-grid { grid-template-columns: 1fr; }
     .rockos-product-trust { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 992px) {
+    .rockos-site .d-lg-flex { display: flex; }
+    .rockos-site .d-lg-none { display: none; }
+}
+
+@media (min-width: 1200px) {
+    .rockos-site .d-xl-flex { display: flex; }
+    .rockos-site .d-xl-none { display: none; }
 }
