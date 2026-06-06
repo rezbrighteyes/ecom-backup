@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="rockos_website_form" model="ir.ui.view">
+        <field name="name">website.form.rockos.settings</field>
+        <field name="model">website</field>
+        <field name="inherit_id" ref="website.view_website_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Rockos Storefront" invisible="name != 'Rockos'">
+                    <field name="rockos_facebook_url"/>
+                    <field name="rockos_instagram_url"/>
+                    <field name="rockos_phone"/>
+                    <field name="rockos_free_shipping_text"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

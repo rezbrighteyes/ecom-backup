@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="rockos_product_scope" inherit_id="website_sale.product" name="Rockos: Product Scope">
+        <xpath expr="//section[@id='product_detail']" position="attributes">
+            <attribute name="class" add="rockos-product-detail" separator=" "/>
+        </xpath>
+    </template>
+
+    <template id="rockos_product_trust" inherit_id="website_sale.product" name="Rockos: Product Trust">
+        <xpath expr="//div[@id='o_wsale_cta_wrapper']" position="after">
+            <div class="rockos-product-trust">
+                <span><i class="fa fa-truck"/> Fast dispatch</span>
+                <span><i class="fa fa-refresh"/> Easy returns</span>
+                <span><i class="fa fa-lock"/> Secure checkout</span>
+            </div>
+        </xpath>
+    </template>
+</odoo>

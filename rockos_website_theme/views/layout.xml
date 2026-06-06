@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="rockos_layout_class" inherit_id="website.layout" name="Rockos: Layout Scope">
+        <xpath expr="//div[@id='wrapwrap']" position="attributes">
+            <attribute name="class" add="rockos-site" separator=" "/>
+        </xpath>
+    </template>
+
+    <template id="rockos_header" inherit_id="website.layout" name="Rockos: Header">
+        <xpath expr="//header" position="replace">
+            <header class="rockos-header">
+                <div class="rockos-topbar">
+                    <div class="container d-flex justify-content-between align-items-center">
+                        <div class="d-flex gap-3 align-items-center">
+                            <a t-att-href="website.rockos_facebook_url" target="_blank" aria-label="Rockos Facebook"><i class="fa fa-facebook"/></a>
+                            <a t-att-href="website.rockos_instagram_url" target="_blank" aria-label="Rockos Instagram"><i class="fa fa-instagram"/></a>
+                            <a href="/contactus">Expression of interest</a>
+                        </div>
+                        <div class="d-none d-lg-flex gap-4">
+                            <a href="/about-us">About Us</a>
+                            <a href="/footwear-sizing-chart">Footwear Sizing Chart</a>
+                            <a href="/contactus">Contact Us</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="rockos-mainbar">
+                    <div class="container d-flex align-items-center gap-3">
+                        <a href="/" class="rockos-logo">
+                            <img src="/rockos_website_theme/static/src/img/rockos_symbol_logo.png" alt="Rockos"/>
+                        </a>
+                        <nav class="rockos-nav d-none d-xl-flex">
+                            <a href="/shop">Thongs</a>
+                            <a href="/shop">Hats</a>
+                            <a href="/shop">Sunnies</a>
+                            <a href="/shop">Technology</a>
+                            <a href="/shop">Toys</a>
+                            <a href="/shop">Outdoor</a>
+                            <a href="/shop">Games</a>
+                            <a href="/shop">Your Pad</a>
+                        </nav>
+                        <div class="rockos-tools ms-auto d-flex align-items-center gap-2">
+                            <form action="/shop" method="get" class="rockos-search d-none d-lg-flex">
+                                <input name="search" type="search" placeholder="Enter your keyword"/>
+                                <button type="submit" aria-label="Search"><i class="fa fa-search"/></button>
+                            </form>
+                            <a href="/web/login" class="rockos-tool"><i class="fa fa-user"/><span>Account</span></a>
+                            <a href="/shop/cart" class="rockos-tool"><i class="fa fa-shopping-cart"/><span>Cart</span></a>
+                            <button class="rockos-menu-toggle d-xl-none" type="button" aria-label="Toggle menu"><i class="fa fa-bars"/></button>
+                        </div>
+                    </div>
+                    <div class="rockos-mobile-nav container d-xl-none">
+                        <a href="/shop">Shop</a>
+                        <a href="/returns">Returns</a>
+                        <a href="/contactus">Contact Us</a>
+                    </div>
+                </div>
+            </header>
+        </xpath>
+    </template>
+
+    <template id="rockos_footer" inherit_id="website.layout" name="Rockos: Footer">
+        <xpath expr="//footer" position="replace">
+            <footer class="rockos-footer">
+                <section class="rockos-newsletter">
+                    <div class="container text-center">
+                        <h2>Sign Up To Rockos Newsletter</h2>
+                        <p>Stay up to date with any new product releases, special offers and more!</p>
+                        <div class="oe_structure" id="rockos_newsletter_editable"/>
+                    </div>
+                </section>
+                <div class="container rockos-footer-grid">
+                    <div>
+                        <img class="rockos-footer-logo" src="/rockos_website_theme/static/src/img/website_logo.png" alt="Rockos"/>
+                        <p>Australian owned and operated, bringing Rockos and other well-known brands to stores across Australia.</p>
+                    </div>
+                    <div>
+                        <h3>Shop</h3>
+                        <a href="/shop">All Products</a>
+                        <a href="/shop">New Arrivals</a>
+                        <a href="/shop">Best Sellers</a>
+                    </div>
+                    <div>
+                        <h3>Information</h3>
+                        <a href="/about-us">About Us</a>
+                        <a href="/returns">Returns</a>
+                        <a href="/contactus">Contact Us</a>
+                    </div>
+                    <div>
+                        <h3>Contact Us</h3>
+                        <a t-att-href="'tel:%s' % website.rockos_phone"><t t-out="website.rockos_phone"/></a>
+                        <div class="d-flex gap-3 mt-3">
+                            <a t-att-href="website.rockos_facebook_url" target="_blank"><i class="fa fa-facebook"/></a>
+                            <a t-att-href="website.rockos_instagram_url" target="_blank"><i class="fa fa-instagram"/></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="rockos-copyright text-center">Copyright © Rockos Australia. All rights reserved.</div>
+            </footer>
+        </xpath>
+    </template>
+</odoo>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="rockos_shop_scope" inherit_id="website_sale.products" name="Rockos: Shop Scope">
+        <xpath expr="//div[@id='wrap']" position="attributes">
+            <attribute name="class" add="rockos-shop" separator=" "/>
+        </xpath>
+    </template>
+
+    <template id="rockos_product_card" inherit_id="website_sale.products_item" name="Rockos: Product Card">
+        <xpath expr="//form" position="attributes">
+            <attribute name="class" add="rockos-product-card" separator=" "/>
+        </xpath>
+    </template>
+</odoo>

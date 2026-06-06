@@ -1,0 +1,32 @@
+{
+    "name": "Rockos Website Theme",
+    "version": "18.0.1.0.0",
+    "summary": "Isolated Rockos storefront for Odoo multi-website",
+    "author": "Reza",
+    "category": "Website/Website",
+    "license": "OPL-1",
+    "depends": [
+        "website_sale",
+        "website_sale_stock",
+        "website_sale_wishlist",
+        "sh_product_multi_website",
+    ],
+    "data": [
+        "views/website_views.xml",
+        "views/layout.xml",
+        "views/homepage.xml",
+        "views/shop.xml",
+        "views/product.xml",
+    ],
+    "assets": {
+        "web.assets_frontend": [
+            "rockos_website_theme/static/src/scss/rockos.scss",
+            "rockos_website_theme/static/src/js/rockos.js",
+        ],
+    },
+    "post_init_hook": "post_init_hook",
+    "post_update_hook": "post_update_hook",
+    "installable": True,
+    "auto_install": False,
+    "application": False,
+}
