@@ -11,6 +11,16 @@ ROCKOS_BRANCH_NAME = "Rockos"
 ROCKOS_PARENT_COMPANY_NAME = "ECOM SUPERSTORE PTY LTD"
 ROCKOS_VIEW_PREFIX = "rockos_website_theme."
 ROCKOS_MENU_VERSION = "2"
+ROCKOS_PAGES = [
+    ("About Us", "/about-us", "rockos_website_theme.rockos_about_us"),
+    ("Returns Policy", "/returns-policy", "rockos_website_theme.rockos_returns_policy"),
+    ("Shipping Policy", "/shipping", "rockos_website_theme.rockos_shipping_policy"),
+    ("Privacy Policy", "/privacy-policy", "rockos_website_theme.rockos_privacy_policy"),
+    ("Security Policy", "/security-policy", "rockos_website_theme.rockos_security_policy"),
+    ("Expression of Interest", "/form/expression-of-interest", "rockos_website_theme.rockos_expression_interest"),
+    ("Footwear Sizing Chart", "/footwear-sizing-chart", "rockos_website_theme.rockos_footwear_sizing"),
+    ("Australian Melanoma Research Foundation", "/amrf", "rockos_website_theme.rockos_amrf"),
+]
 ROCKOS_MENU_TREE = [
     ("Thongs", "/shop?search=thongs", [
         ("Double Pluggers", "/shop?search=double+pluggers"),
@@ -174,11 +184,37 @@ def _seed_rockos_menu(env, website):
     parameter.set_param(seed_key, ROCKOS_MENU_VERSION)
 
 
+def _setup_rockos_pages(env, website):
+    Page = env["website.page"].sudo()
+    for name, url, xmlid in ROCKOS_PAGES:
+        view = env.ref(xmlid, raise_if_not_found=False)
+        if not view:
+            continue
+        if view.website_id != website:
+            view.website_id = website.id
+        page = Page.search([
+            ("website_id", "=", website.id),
+            ("url", "=", url),
+        ], limit=1)
+        values = {
+            "name": name,
+            "url": url,
+            "view_id": view.id,
+            "website_id": website.id,
+            "website_published": True,
+        }
+        if page:
+            page.write(values)
+        else:
+            Page.create(values)
+
+
 def _setup(env):
     branch = _get_or_create_rockos_branch(env)
     website = _get_or_create_rockos_website(env, branch)
     _scope_views_to_rockos(env, website)
     _configure_rockos_website(env, website)
+    _setup_rockos_pages(env, website)
 
 
 def post_init_hook(env):

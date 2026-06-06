@@ -1,6 +1,6 @@
 {
     "name": "Rockos Website Theme",
-    "version": "18.0.1.0.4",
+    "version": "18.0.1.1.0",
     "summary": "Isolated Rockos storefront for Odoo multi-website",
     "author": "Reza",
     "category": "Website/Website",
@@ -17,6 +17,7 @@
         "views/homepage.xml",
         "views/shop.xml",
         "views/product.xml",
+        "views/information_pages.xml",
         "data/rockos_setup.xml",
     ],
     "post_init_hook": "post_init_hook",

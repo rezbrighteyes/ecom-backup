@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="rockos_about_us" name="Rockos About Us">
+        <t t-call="website.layout">
+            <div id="wrap" class="rockos-info-page">
+                <section class="rockos-page-hero"><div class="rockos-container"><h1>About Us</h1></div></section>
+                <section class="rockos-container rockos-page-content oe_structure">
+                    <h2>Welcome to Liaise International</h2>
+                    <p>Born from the creativity and innovation of genuine Aussies, Liaise International proudly presents the iconic Rocko's line alongside other brands that have become part of Australian culture.</p>
+                    <h2>Our Story</h2>
+                    <p>We began with a simple vision: create durable, authentic products that suit the Australian lifestyle, from demanding workdays to relaxed afternoons at the beach.</p>
+                    <h2>Rocko's: Built for Australia</h2>
+                    <p>Rocko's products are designed for resilience, reliability and everyday comfort. Our legendary Double Pluggers, sunnies, hats, caps and accessories are made to handle the Australian outdoors.</p>
+                    <h2>More Than Rocko's</h2>
+                    <p>Liaise International also represents brands including Mangrove Jacks and Smartcell, offering outdoor, fishing and technology products for customers across Australia.</p>
+                    <h2>Become a Stockist</h2>
+                    <p>Interested in stocking Rocko's in your store? Submit an <a href="/form/expression-of-interest">Expression of Interest</a> and our team will contact you.</p>
+                    <h2>Our Commitment</h2>
+                    <p>We are committed to quality, sustainable practices and supporting the local communities that support us.</p>
+                </section>
+            </div>
+        </t>
+    </template>
+
+    <template id="rockos_returns_policy" name="Rockos Returns Policy">
+        <t t-call="website.layout">
+            <div id="wrap" class="rockos-info-page">
+                <section class="rockos-page-hero"><div class="rockos-container"><h1>Returns Policy</h1></div></section>
+                <section class="rockos-container rockos-page-content oe_structure">
+                    <h2>Return and Exchange Conditions</h2>
+                    <p>We offer returns within 30 days of purchase. Products may be returned for a credit, exchange or refund to the original payment method. Customers are responsible for return shipping unless the item is faulty or damaged.</p>
+                    <p>Before returning an item, contact Customer Care to obtain a Return Authorisation number.</p>
+                    <h2>Contact Information</h2>
+                    <ul><li>Phone: 07 5499 1191</li><li>Email: support@rockos.com.au</li><li><a href="/contactus">Contact Us form</a></li></ul>
+                    <h2>Eligibility</h2>
+                    <ul><li>Returns must be requested within 30 days of purchase.</li><li>Items must be unused, with original swing tags and packaging intact.</li><li>Items showing signs of wear or use may be returned to the customer without refund or credit.</li></ul>
+                    <h2>Faulty or Damaged Products</h2>
+                    <p>Email support@rockos.com.au with your order number and photographs of the item's condition. Approved faulty or damaged returns will have return shipping covered.</p>
+                    <h2>Processing Time</h2>
+                    <p>Approved refunds, exchanges and store credits are normally processed within two business days after inspection. Original shipping fees are non-refundable.</p>
+                </section>
+            </div>
+        </t>
+    </template>
+
+    <template id="rockos_shipping_policy" name="Rockos Shipping Policy">
+        <t t-call="website.layout">
+            <div id="wrap" class="rockos-info-page">
+                <section class="rockos-page-hero"><div class="rockos-container"><h1>Shipping Policy</h1></div></section>
+                <section class="rockos-container rockos-page-content oe_structure">
+                    <p>We deliver within Australia. Orders are processed within one to three business days after payment and an order confirmation. Tracking details are emailed after dispatch.</p>
+                    <h2>Domestic Shipping Rates</h2>
+                    <ul><li>Retail orders over $50 qualify for free shipping.</li><li>Retail orders under $50 are charged a flat rate of $12.50.</li><li>Most orders are shipped via Australia Post Standard Delivery.</li></ul>
+                    <h2>Dispatch Times</h2>
+                    <ul><li>Orders received before 10am Monday to Friday are typically dispatched the same day.</li><li>Orders received after 10am, on weekends or public holidays are dispatched the next business day.</li></ul>
+                    <h2>Delivery Times</h2>
+                    <p>Standard delivery is generally one to five business days. Rural deliveries may take longer. We do not dispatch on weekends or public holidays.</p>
+                    <h2>Tracking and P.O. Boxes</h2>
+                    <p>Please allow up to 48 hours for tracking to become available. We ship to P.O. Boxes and Parcel Lockers within Australia.</p>
+                    <p>If your order has not arrived within 14 business days of its shipping confirmation, contact support@rockos.com.au with your name and order number.</p>
+                </section>
+            </div>
+        </t>
+    </template>
+
+    <template id="rockos_privacy_policy" name="Rockos Privacy Policy">
+        <t t-call="website.layout">
+            <div id="wrap" class="rockos-info-page">
+                <section class="rockos-page-hero"><div class="rockos-container"><h1>Privacy Policy</h1></div></section>
+                <section class="rockos-container rockos-page-content oe_structure">
+                    <p>Liaise International respects your privacy and handles personal information in accordance with applicable Australian privacy laws.</p>
+                    <h2>Information We Collect</h2>
+                    <p>We may collect information you provide when placing an order, creating an account, contacting us, subscribing to communications or submitting a form.</p>
+                    <h2>How We Use Information</h2>
+                    <ul><li>To process orders, payments, deliveries, returns and customer support.</li><li>To operate and improve our website and services.</li><li>To send marketing communications where consent has been provided.</li></ul>
+                    <h2>Sharing and Storage</h2>
+                    <p>Information may be shared with trusted service providers where required to fulfil orders and operate our business. We take reasonable steps to protect personal information from misuse, loss and unauthorised access.</p>
+                    <h2>Your Choices</h2>
+                    <p>To request access, correction or deletion of your personal information, contact support@rockos.com.au.</p>
+                </section>
+            </div>
+        </t>
+    </template>
+
+    <template id="rockos_security_policy" name="Rockos Security Policy">
+        <t t-call="website.layout">
+            <div id="wrap" class="rockos-info-page">
+                <section class="rockos-page-hero"><div class="rockos-container"><h1>Security Policy</h1></div></section>
+                <section class="rockos-container rockos-page-content oe_structure">
+                    <p>Rockos and Liaise International take reasonable technical and organisational measures to protect customer information and online transactions.</p>
+                    <h2>Secure Payments</h2>
+                    <p>Payments are processed through approved payment providers. Rockos does not intentionally store complete payment card details.</p>
+                    <h2>Account Security</h2>
+                    <p>Keep your password confidential and contact us immediately if you suspect unauthorised account activity.</p>
+                    <h2>Reporting a Security Concern</h2>
+                    <p>Please report suspected security issues to support@rockos.com.au with enough detail for our team to investigate.</p>
+                </section>
+            </div>
+        </t>
+    </template>
+
+    <template id="rockos_expression_interest" name="Rockos Expression of Interest">
+        <t t-call="website.layout">
+            <div id="wrap" class="rockos-info-page">
+                <section class="rockos-page-hero"><div class="rockos-container"><h1>Expression of Interest</h1></div></section>
+                <section class="rockos-container rockos-page-content oe_structure">
+                    <h2>Work With Liaise International</h2>
+                    <p>Thank you for your interest in Liaise International. We welcome enquiries from potential stockists, partners, customers and collaborators who share our passion for durable, high-quality Australian products.</p>
+                    <p>Please provide as much detail as possible about your store, organisation and requirements. Our team will review your information and contact you to discuss the next steps.</p>
+                    <div class="rockos-contact-card">
+                        <h2>Submit Your Interest</h2>
+                        <p>Include your full name, store name, contact phone number, email address and any questions.</p>
+                        <a class="rockos-btn" href="/contactus">Open Contact Form</a>
+                    </div>
+                </section>
+            </div>
+        </t>
+    </template>
+
+    <template id="rockos_footwear_sizing" name="Rockos Footwear Sizing Chart">
+        <t t-call="website.layout">
+            <div id="wrap" class="rockos-info-page">
+                <section class="rockos-page-hero"><div class="rockos-container"><h1>Footwear Sizing Chart</h1></div></section>
+                <section class="rockos-container rockos-page-content oe_structure">
+                    <p>Measurements are in centimetres and are provided as a guide.</p>
+                    <h2>Rocko's Double Pluggers</h2>
+                    <table class="rockos-size-table"><thead><tr><th>Size</th><th>Length</th><th>Plug to Top</th><th>Width</th></tr></thead><tbody>
+                        <tr><td>5</td><td>24.5</td><td>4.5</td><td>10</td></tr><tr><td>6</td><td>25</td><td>4.5</td><td>10</td></tr><tr><td>7</td><td>25.5</td><td>4.5</td><td>10</td></tr><tr><td>8</td><td>26</td><td>4.5</td><td>10</td></tr><tr><td>9</td><td>27</td><td>4.5</td><td>10.5</td></tr><tr><td>10</td><td>28</td><td>5</td><td>11</td></tr><tr><td>11</td><td>29</td><td>5</td><td>11.5</td></tr><tr><td>12</td><td>30</td><td>5</td><td>11.5</td></tr><tr><td>13</td><td>30.5</td><td>5</td><td>11.5</td></tr><tr><td>14</td><td>31</td><td>5.5</td><td>12</td></tr><tr><td>15</td><td>33</td><td>6</td><td>12.5</td></tr>
+                    </tbody></table>
+                    <h2>Rocko's Nobby Thongs</h2>
+                    <table class="rockos-size-table"><thead><tr><th>Size</th><th>Length</th><th>Plug to Top</th><th>Width</th></tr></thead><tbody>
+                        <tr><td>5</td><td>23.5</td><td>4</td><td>9</td></tr><tr><td>7</td><td>25.5</td><td>4.5</td><td>10</td></tr><tr><td>9</td><td>27.5</td><td>5</td><td>11</td></tr><tr><td>11</td><td>29</td><td>5</td><td>11</td></tr><tr><td>13</td><td>30.5</td><td>5</td><td>12</td></tr><tr><td>15</td><td>33</td><td>6</td><td>12.5</td></tr>
+                    </tbody></table>
+                    <h2>Rocko's Treads</h2>
+                    <table class="rockos-size-table"><thead><tr><th>Size</th><th>Length</th><th>Plug to Top</th><th>Width</th></tr></thead><tbody>
+                        <tr><td>7</td><td>25.75</td><td>4.5</td><td>11</td></tr><tr><td>8</td><td>26</td><td>4.5</td><td>10.5</td></tr><tr><td>9</td><td>27.5</td><td>5</td><td>11</td></tr><tr><td>10</td><td>28</td><td>4.5</td><td>11</td></tr><tr><td>12</td><td>29.5</td><td>4.5</td><td>11.2</td></tr><tr><td>14</td><td>31</td><td>5</td><td>12</td></tr>
+                    </tbody></table>
+                </section>
+            </div>
+        </t>
+    </template>
+
+    <template id="rockos_amrf" name="Rockos AMRF">
+        <t t-call="website.layout">
+            <div id="wrap" class="rockos-info-page">
+                <section class="rockos-page-hero"><div class="rockos-container"><h1>Australian Melanoma Research Foundation</h1></div></section>
+                <section class="rockos-container rockos-page-content oe_structure">
+                    <h2>Liaise International Proudly Supports the AMRF</h2>
+                    <p>Liaise International and Rockos are proud to support the Australian Melanoma Research Foundation, helping raise awareness and essential funds for melanoma research.</p>
+                    <p>A percentage of sales from selected AMRF-endorsed Rockos, Mangrove Jacks, MJ Kids and Stiletto polarised sunglasses is directed to the foundation.</p>
+                    <h2>How You Can Help</h2>
+                    <p>Support the cause by purchasing AMRF-endorsed sunglasses from participating stockists, including selected IGA stores, fishing and boating stores, newsagents, service stations, general stores, roadhouses and pharmacies.</p>
+                    <h2>Together, We Can Make a Difference</h2>
+                    <p>By choosing AMRF-endorsed sunglasses, you are protecting your eyes with quality eyewear while contributing to vital melanoma research.</p>
+                </section>
+            </div>
+        </t>
+    </template>
+</odoo>

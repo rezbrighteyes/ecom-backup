@@ -3,9 +3,9 @@
     <template id="rockos_layout_class" inherit_id="website.layout" name="Rockos: Layout Scope">
         <xpath expr="//head" position="inside">
             <link rel="stylesheet" type="text/css"
-                  href="/rockos_website_theme/static/src/css/rockos.css"/>
+                  href="/rockos_website_theme/static/src/css/rockos.css?v=180110"/>
             <script defer="defer" type="text/javascript"
-                    src="/rockos_website_theme/static/src/js/rockos.js"/>
+                    src="/rockos_website_theme/static/src/js/rockos.js?v=180110"/>
         </xpath>
         <xpath expr="//div[@id='wrapwrap']" position="attributes">
             <attribute name="class" add="rockos-site" separator=" "/>
@@ -20,7 +20,7 @@
                         <div class="d-flex gap-3 align-items-center">
                             <a t-att-href="website.rockos_facebook_url" target="_blank" aria-label="Rockos Facebook"><i class="fa fa-facebook"/></a>
                             <a t-att-href="website.rockos_instagram_url" target="_blank" aria-label="Rockos Instagram"><i class="fa fa-instagram"/></a>
-                            <a href="/contactus">Expression of interest</a>
+                            <a href="/form/expression-of-interest">Expression of interest</a>
                         </div>
                         <div class="d-none d-lg-flex gap-4">
                             <a href="/about-us">About Us</a>
@@ -102,12 +102,14 @@
                     <div>
                         <h3>Information</h3>
                         <a href="/about-us">About Us</a>
-                        <a href="/returns">Returns Policy</a>
+                        <a href="/returns-policy">Returns Policy</a>
                         <a href="/contactus">Contact Us</a>
-                        <a href="/shipping-policy">Shipping Policy</a>
+                        <a href="/shipping">Shipping Policy</a>
                         <a href="/privacy-policy">Privacy Policy</a>
-                        <a href="/contactus">Expression of Interest</a>
+                        <a href="/security-policy">Security Policy</a>
+                        <a href="/form/expression-of-interest">Expression of Interest</a>
                         <a href="/footwear-sizing-chart">Footwear Sizing Chart</a>
+                        <a href="/amrf">AMRF</a>
                     </div>
                     <div>
                         <h3>Contact Us</h3>

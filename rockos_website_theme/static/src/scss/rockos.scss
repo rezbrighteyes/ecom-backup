@@ -153,6 +153,16 @@
 .rockos-footer-logo { width: 180px; max-height: 100px; object-fit: contain; object-position: left center; }
 .rockos-copyright { padding: 18px; border-top: 1px solid #e4e4e4; background: #fff; color: #777; font-size: 13px; }
 
+.rockos-page-hero { padding: 55px 0; background: #f5b828; }
+.rockos-page-hero h1 { margin: 0; color: #222; text-align: center; text-transform: uppercase; }
+.rockos-page-content { max-width: 1000px; padding-top: 55px; padding-bottom: 70px; line-height: 1.7; }
+.rockos-page-content h2 { margin-top: 32px; margin-bottom: 12px; font-size: 24px; }
+.rockos-page-content a { color: #805470; font-weight: 600; }
+.rockos-contact-card { margin-top: 40px; padding: 30px; background: #f5f5f5; }
+.rockos-size-table { width: 100%; margin-bottom: 38px; border-collapse: collapse; }
+.rockos-size-table th, .rockos-size-table td { padding: 10px 12px; border: 1px solid #ddd; text-align: left; }
+.rockos-size-table th { background: #303030; color: #fff; }
+
 .rockos-product-card { transition: transform .2s ease, box-shadow .2s ease; }
 .rockos-product-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,.08); }
 .rockos-product-trust { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 20px 0; }
