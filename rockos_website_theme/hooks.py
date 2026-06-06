@@ -10,6 +10,56 @@ ROCKOS_WEBSITE_NAME = "Rockos"
 ROCKOS_BRANCH_NAME = "Rockos"
 ROCKOS_PARENT_COMPANY_NAME = "ECOM SUPERSTORE PTY LTD"
 ROCKOS_VIEW_PREFIX = "rockos_website_theme."
+ROCKOS_MENU_TREE = [
+    ("Thongs", "/shop?search=thongs", [
+        ("Double Pluggers", "/shop?search=double+pluggers"),
+        ("Nobby Thongs", "/shop?search=nobby+thongs"),
+        ("Tread Thongs", "/shop?search=tread+thongs"),
+        ("Kids Thongs", "/shop?search=kids+thongs"),
+        ("Slides", "/shop?search=slides"),
+    ]),
+    ("Hats", "/shop?search=hats", [
+        ("Caps", "/shop?search=caps"),
+        ("Trucker Caps", "/shop?search=trucker+cap"),
+        ("Bucket Hats", "/shop?search=bucket+hat"),
+        ("Straw Hats", "/shop?search=straw+hat"),
+        ("Beanies", "/shop?search=beanie"),
+    ]),
+    ("Sunnies", "/shop?search=sunglasses", [
+        ("Polarised Sunglasses", "/shop?search=polarised"),
+        ("Safety Glasses", "/shop?search=safety+glasses"),
+        ("Readers", "/shop?search=readers"),
+    ]),
+    ("Technology", "/shop?search=technology", [
+        ("Audio", "/shop?search=audio"),
+        ("Cables & Chargers", "/shop?search=cables"),
+        ("Power Banks", "/shop?search=power+bank"),
+        ("Phone Accessories", "/shop?search=phone"),
+    ]),
+    ("Toys", "/shop?search=toys", [
+        ("Die Cast", "/shop?search=die+cast"),
+        ("Mini Mates", "/shop?search=mini+mates"),
+        ("Nature Tubes", "/shop?search=nature+tubes"),
+        ("Party Games", "/shop?search=party+games"),
+    ]),
+    ("Outdoor", "/shop?search=outdoor", [
+        ("Beach", "/shop?search=beach"),
+        ("Fishing", "/shop?search=fishing"),
+        ("Goggles", "/shop?search=goggles"),
+        ("Outdoor Games", "/shop?search=outdoor+games"),
+    ]),
+    ("Games", "/shop?search=games", [
+        ("Indoor Games", "/shop?search=indoor+games"),
+        ("Party Games", "/shop?search=party+games"),
+        ("Puzzles", "/shop?search=puzzle"),
+    ]),
+    ("Your Pad", "/shop?search=home", [
+        ("Drinking", "/shop?search=drinking"),
+        ("Kitchen", "/shop?search=kitchen"),
+        ("Party", "/shop?search=party"),
+        ("Personal Care", "/shop?search=personal+care"),
+    ]),
+]
 
 
 def _get_or_create_rockos_branch(env):
@@ -88,32 +138,39 @@ def _configure_rockos_website(env, website):
             values["logo"] = base64.b64encode(logo_file.read())
     website.write(values)
 
-    root_menu = env["website.menu"].sudo().search([
-        ("website_id", "=", website.id),
-        ("parent_id", "=", False),
-    ], limit=1)
-    if root_menu:
-        existing = env["website.menu"].sudo().search([
-            ("website_id", "=", website.id),
-            ("parent_id", "=", root_menu.id),
-        ])
-        wanted = [
-            ("Shop", "/shop"),
-            ("Returns", "/returns"),
-            ("Contact Us", "/contactus"),
-        ]
-        for sequence, (name, url) in enumerate(wanted, start=10):
-            menu = existing.filtered(lambda item: item.url == url)[:1]
-            if menu:
-                menu.write({"name": name, "sequence": sequence})
-            else:
-                env["website.menu"].sudo().create({
-                    "name": name,
-                    "url": url,
-                    "parent_id": root_menu.id,
-                    "website_id": website.id,
-                    "sequence": sequence,
-                })
+    _seed_rockos_menu(env, website)
+
+
+def _seed_rockos_menu(env, website):
+    parameter = env["ir.config_parameter"].sudo()
+    seed_key = f"rockos_website_theme.menu_seeded.{website.id}"
+    if parameter.get_param(seed_key):
+        return
+
+    root_menu = website.menu_id.sudo()
+    if not root_menu:
+        return
+
+    # The initial tree is seeded once. Future changes belong to Odoo's menu editor.
+    root_menu.child_id.unlink()
+    Menu = env["website.menu"].sudo()
+    for sequence, (name, url, children) in enumerate(ROCKOS_MENU_TREE, start=10):
+        parent = Menu.create({
+            "name": name,
+            "url": url,
+            "parent_id": root_menu.id,
+            "website_id": website.id,
+            "sequence": sequence,
+        })
+        for child_sequence, (child_name, child_url) in enumerate(children, start=10):
+            Menu.create({
+                "name": child_name,
+                "url": child_url,
+                "parent_id": parent.id,
+                "website_id": website.id,
+                "sequence": child_sequence,
+            })
+    parameter.set_param(seed_key, "1")
 
 
 def _setup(env):

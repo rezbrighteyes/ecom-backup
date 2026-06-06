@@ -51,7 +51,7 @@
     z-index: 50;
     top: calc(100% - 1px);
     left: -18px;
-    display: none;
+    display: none !important;
     width: 210px;
     padding: 10px 0;
     background: #fff;
@@ -62,7 +62,7 @@
     a:hover { background: #f7f7f7; color: var(--rockos-yellow); }
 }
 .rockos-submenu-right { right: -18px; left: auto; }
-.rockos-nav-item:hover .rockos-submenu, .rockos-nav-item:focus-within .rockos-submenu { display: block; }
+.rockos-nav-item:hover > .rockos-submenu, .rockos-nav-item:focus-within > .rockos-submenu { display: block !important; }
 
 .rockos-search {
     width: 220px;
