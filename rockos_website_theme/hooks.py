@@ -10,6 +10,7 @@ ROCKOS_WEBSITE_NAME = "Rockos"
 ROCKOS_BRANCH_NAME = "Rockos"
 ROCKOS_PARENT_COMPANY_NAME = "ECOM SUPERSTORE PTY LTD"
 ROCKOS_VIEW_PREFIX = "rockos_website_theme."
+ROCKOS_MENU_VERSION = "2"
 ROCKOS_MENU_TREE = [
     ("Thongs", "/shop?search=thongs", [
         ("Double Pluggers", "/shop?search=double+pluggers"),
@@ -144,7 +145,7 @@ def _configure_rockos_website(env, website):
 def _seed_rockos_menu(env, website):
     parameter = env["ir.config_parameter"].sudo()
     seed_key = f"rockos_website_theme.menu_seeded.{website.id}"
-    if parameter.get_param(seed_key):
+    if parameter.get_param(seed_key) == ROCKOS_MENU_VERSION:
         return
 
     root_menu = website.menu_id.sudo()
@@ -170,7 +171,7 @@ def _seed_rockos_menu(env, website):
                 "website_id": website.id,
                 "sequence": child_sequence,
             })
-    parameter.set_param(seed_key, "1")
+    parameter.set_param(seed_key, ROCKOS_MENU_VERSION)
 
 
 def _setup(env):

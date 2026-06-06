@@ -8,3 +8,11 @@ class Website(models.Model):
     rockos_instagram_url = fields.Char(string="Rockos Instagram URL")
     rockos_phone = fields.Char(string="Rockos Phone")
     rockos_free_shipping_text = fields.Char(string="Rockos Free Shipping Text")
+
+    def _rockos_setup_menu(self):
+        from ..hooks import _seed_rockos_menu
+
+        website = self.sudo().search([("name", "=", "Rockos")], limit=1)
+        if website:
+            _seed_rockos_menu(self.env, website)
+        return True

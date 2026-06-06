@@ -134,20 +134,24 @@
 .rockos-benefit-grid strong { font-size: 17px; }
 .rockos-benefit-grid span { color: #777; font-size: 13px; }
 
-.rockos-newsletter { padding: 55px 0; background: #f5b828; }
-.rockos-newsletter h2 { margin-bottom: 10px; }
+.rockos-newsletter {
+    padding: 58px 0;
+    background: #303030 url("/rockos_website_theme/static/src/img/bg-footer.png") center/cover;
+    color: #fff;
+}
+.rockos-newsletter h2 { margin-bottom: 10px; color: #fff; text-transform: uppercase; }
 .rockos-site footer.rockos-footer {
     display: block !important;
     min-height: 360px;
-    background: var(--rockos-charcoal) url("/rockos_website_theme/static/src/img/bg-footer.png") center/cover;
-    color: #fff;
-    a { color: #fff; }
+    background: #fff !important;
+    color: #333 !important;
+    a { color: #333 !important; }
 }
 .rockos-footer-grid { display: grid !important; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 50px; padding-top: 60px; padding-bottom: 60px; }
 .rockos-footer-grid > div { display: flex; flex-direction: column; gap: 10px; }
-.rockos-footer-grid h3 { color: var(--rockos-yellow); font-size: 17px; text-transform: uppercase; }
-.rockos-footer-logo { width: 180px; max-height: 100px; object-fit: contain; object-position: left center; filter: brightness(0) invert(1); }
-.rockos-copyright { padding: 18px; background: rgba(0,0,0,.25); font-size: 13px; }
+.rockos-footer-grid h3 { color: #222; font-size: 17px; text-transform: uppercase; }
+.rockos-footer-logo { width: 180px; max-height: 100px; object-fit: contain; object-position: left center; }
+.rockos-copyright { padding: 18px; border-top: 1px solid #e4e4e4; background: #fff; color: #777; font-size: 13px; }
 
 .rockos-product-card { transition: transform .2s ease, box-shadow .2s ease; }
 .rockos-product-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,.08); }

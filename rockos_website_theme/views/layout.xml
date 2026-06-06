@@ -89,16 +89,25 @@
                         <p>Australian owned and operated, bringing Rockos and other well-known brands to stores across Australia.</p>
                     </div>
                     <div>
-                        <h3>Shop</h3>
-                        <a href="/shop">All Products</a>
-                        <a href="/shop">New Arrivals</a>
-                        <a href="/shop">Best Sellers</a>
+                        <h3>Store Categories</h3>
+                        <a href="/shop?search=games">Games</a>
+                        <a href="/shop?search=hats">Hats</a>
+                        <a href="/shop?search=outdoor">Outdoor</a>
+                        <a href="/shop?search=sunglasses">Sunnies</a>
+                        <a href="/shop?search=technology">Technology</a>
+                        <a href="/shop?search=thongs">Thongs</a>
+                        <a href="/shop?search=toys">Toys</a>
+                        <a href="/shop?search=home">Your Pad</a>
                     </div>
                     <div>
                         <h3>Information</h3>
                         <a href="/about-us">About Us</a>
-                        <a href="/returns">Returns</a>
+                        <a href="/returns">Returns Policy</a>
                         <a href="/contactus">Contact Us</a>
+                        <a href="/shipping-policy">Shipping Policy</a>
+                        <a href="/privacy-policy">Privacy Policy</a>
+                        <a href="/contactus">Expression of Interest</a>
+                        <a href="/footwear-sizing-chart">Footwear Sizing Chart</a>
                     </div>
                     <div>
                         <h3>Contact Us</h3>
