@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class Website(models.Model):
@@ -9,6 +9,7 @@ class Website(models.Model):
     rockos_phone = fields.Char(string="Rockos Phone")
     rockos_free_shipping_text = fields.Char(string="Rockos Free Shipping Text")
 
+    @api.model
     def _rockos_setup_menu(self):
         from ..hooks import _seed_rockos_menu
 
