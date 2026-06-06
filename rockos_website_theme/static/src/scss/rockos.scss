@@ -153,15 +153,38 @@
 .rockos-footer-logo { width: 180px; max-height: 100px; object-fit: contain; object-position: left center; }
 .rockos-copyright { padding: 18px; border-top: 1px solid #e4e4e4; background: #fff; color: #777; font-size: 13px; }
 
-.rockos-page-hero { padding: 55px 0; background: #f5b828; }
-.rockos-page-hero h1 { margin: 0; color: #222; text-align: center; text-transform: uppercase; }
-.rockos-page-content { max-width: 1000px; padding-top: 55px; padding-bottom: 70px; line-height: 1.7; }
-.rockos-page-content h2 { margin-top: 32px; margin-bottom: 12px; font-size: 24px; }
+.rockos-breadcrumb { padding: 17px 0; background: #f5f5f5; border-bottom: 1px solid #e8e8e8; font-size: 13px; }
+.rockos-breadcrumb .rockos-container { display: flex; gap: 10px; align-items: center; }
+.rockos-breadcrumb a { color: #777; }
+.rockos-page-title { padding: 28px 0; border-bottom: 1px solid #e8e8e8; background: #fff; }
+.rockos-page-title h1 { margin: 0; color: #222; font-size: 28px; text-transform: uppercase; }
+.rockos-info-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); gap: 55px; padding-top: 42px; padding-bottom: 70px; }
+.rockos-info-sidebar { display: flex; flex-direction: column; align-self: start; border: 1px solid #e5e5e5; }
+.rockos-info-sidebar h2 { margin: 0; padding: 15px 18px; background: #303030; color: #fff; font-size: 16px; text-transform: uppercase; }
+.rockos-info-sidebar h2:not(:first-child) { margin-top: 22px; }
+.rockos-info-sidebar a { padding: 9px 18px; border-bottom: 1px solid #eee; color: #444; font-size: 14px; }
+.rockos-info-sidebar a:hover { color: var(--rockos-yellow); }
+.rockos-page-content { min-width: 0; max-width: 1000px; line-height: 1.7; }
+.rockos-page-content > :first-child { margin-top: 0; }
+.rockos-page-content h2 { margin-top: 29px; margin-bottom: 10px; font-size: 20px; }
+.rockos-page-content h3 { margin-top: 25px; font-size: 18px; }
+.rockos-page-content p { margin-bottom: 16px; }
+.rockos-page-content li { margin-bottom: 7px; }
 .rockos-page-content a { color: #805470; font-weight: 600; }
 .rockos-contact-card { margin-top: 40px; padding: 30px; background: #f5f5f5; }
-.rockos-size-table { width: 100%; margin-bottom: 38px; border-collapse: collapse; }
+.rockos-size-table { width: 100%; margin-bottom: 44px; border-collapse: collapse; font-size: 14px; }
 .rockos-size-table th, .rockos-size-table td { padding: 10px 12px; border: 1px solid #ddd; text-align: left; }
 .rockos-size-table th { background: #303030; color: #fff; }
+.rockos-size-table tbody th { min-width: 78px; background: #f4f4f4; color: #222; }
+.rockos-share { display: flex; gap: 12px; align-items: center; margin-top: 45px; padding-top: 20px; border-top: 1px solid #e4e4e4; }
+.rockos-share a { display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center; background: #333; color: #fff; }
+.rockos-share a:hover { background: var(--rockos-yellow); color: #222; }
+.rockos-eoi-form { display: grid; gap: 18px; max-width: 680px; margin-top: 22px; }
+.rockos-eoi-form label { display: grid; gap: 6px; font-weight: 600; }
+.rockos-eoi-form small { color: #888; font-weight: 400; }
+.rockos-eoi-form input, .rockos-eoi-form textarea { width: 100%; padding: 11px 12px; border: 1px solid #d5d5d5; font: inherit; }
+.rockos-eoi-form .rockos-btn { width: max-content; border: 0; }
+.rockos-amrf-image { display: block; width: 700px; max-width: 100%; height: auto; margin: 0 auto 30px; }
 
 .rockos-product-card { transition: transform .2s ease, box-shadow .2s ease; }
 .rockos-product-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,.08); }
@@ -175,6 +198,8 @@
     .rockos-category-grid { grid-template-columns: repeat(2, 1fr); }
     .rockos-benefit-grid { grid-template-columns: repeat(2, 1fr); }
     .rockos-footer-grid { grid-template-columns: repeat(2, 1fr); }
+    .rockos-info-layout { grid-template-columns: 1fr; }
+    .rockos-info-sidebar { display: none; }
     .rockos-site .d-lg-flex { display: none; }
 }
 
@@ -184,6 +209,8 @@
     .rockos-hero-content h1 { font-size: 52px; }
     .rockos-category-grid, .rockos-benefit-grid, .rockos-footer-grid { grid-template-columns: 1fr; }
     .rockos-product-trust { grid-template-columns: 1fr; }
+    .rockos-page-title h1 { font-size: 23px; }
+    .rockos-size-table { display: block; overflow-x: auto; }
 }
 
 @media (min-width: 992px) {

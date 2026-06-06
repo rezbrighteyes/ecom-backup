@@ -3,7 +3,7 @@
     <template id="rockos_layout_class" inherit_id="website.layout" name="Rockos: Layout Scope">
         <xpath expr="//head" position="inside">
             <link rel="stylesheet" type="text/css"
-                  href="/rockos_website_theme/static/src/css/rockos.css?v=180110"/>
+                  href="/rockos_website_theme/static/src/css/rockos.css?v=180120"/>
             <script defer="defer" type="text/javascript"
                     src="/rockos_website_theme/static/src/js/rockos.js?v=180110"/>
         </xpath>
