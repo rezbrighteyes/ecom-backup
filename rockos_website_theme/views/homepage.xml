@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="rockos_homepage" inherit_id="website.homepage" name="Rockos: Homepage">
-        <xpath expr="//div[@id='wrap']" position="replace">
+    <template id="rockos_homepage" name="Rockos Homepage">
+        <t t-call="website.layout">
+            <t t-set="pageName" t-value="'rockos-homepage'"/>
             <div id="wrap" class="rockos-home">
                 <section class="rockos-hero">
                     <div class="oe_structure" id="rockos_hero_editable">
@@ -46,6 +47,6 @@
                     </div>
                 </section>
             </div>
-        </xpath>
+        </t>
     </template>
 </odoo>

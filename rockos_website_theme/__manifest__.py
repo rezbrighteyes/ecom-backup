@@ -18,12 +18,6 @@
         "views/shop.xml",
         "views/product.xml",
     ],
-    "assets": {
-        "web.assets_frontend": [
-            "rockos_website_theme/static/src/scss/rockos.scss",
-            "rockos_website_theme/static/src/js/rockos.js",
-        ],
-    },
     "post_init_hook": "post_init_hook",
     "post_update_hook": "post_update_hook",
     "installable": True,
