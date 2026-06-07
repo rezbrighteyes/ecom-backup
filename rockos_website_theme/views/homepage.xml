@@ -28,11 +28,16 @@
                    t-as="product"
                    t-att-href="product.website_url"
                    class="rockos-home-product-card">
+                    <t t-set="product_variant" t-value="product.product_variant_id"/>
+                    <t t-set="product_price_vals"
+                       t-value="product_variant._get_sales_prices(website).get(product_variant.id, {})"/>
                     <img t-att-src="'/web/image/product.template/%s/image_512' % product.id"
                          t-att-alt="product.name"/>
                     <strong t-out="product.name"/>
                     <span class="rockos-product-rating"><i class="fa fa-star-o"/><i class="fa fa-star-o"/><i class="fa fa-star-o"/><i class="fa fa-star-o"/><i class="fa fa-star-o"/> <small>Reviews (<t t-out="product.rating_count or 0"/>)</small></span>
-                    <span class="rockos-product-price" t-field="product.website_price" t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
+                    <span class="rockos-product-price"
+                          t-out="product_price_vals.get('price_reduce', product.list_price)"
+                          t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
                 </a>
             </div>
             <p class="rockos-center" t-else="">Choose products in Website settings under Rockos Storefront.</p>
