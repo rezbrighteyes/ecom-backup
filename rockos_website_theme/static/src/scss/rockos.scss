@@ -106,7 +106,7 @@
 .rockos-eyebrow { color: var(--rockos-yellow); text-transform: uppercase; font-weight: 700; letter-spacing: .12em; }
 .rockos-btn { background: var(--rockos-yellow); color: #111; border-radius: 0; padding: 13px 28px; font-weight: 700; text-transform: uppercase; }
 
-.rockos-category-section { max-width: 1000px; padding-top: 64px; padding-bottom: 42px; }
+.rockos-category-section { max-width: 1230px; padding-top: 64px; padding-bottom: 42px; }
 .rockos-home-content { padding-top: 64px; padding-bottom: 64px; }
 .rockos-category-section h2, .rockos-home-content h2, .rockos-newsletter h2 {
     text-align: center;
@@ -116,16 +116,17 @@
 .rockos-category-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    grid-auto-rows: 300px;
-    gap: 8px;
+    grid-auto-rows: 365px;
+    gap: 10px;
 }
 .rockos-category-card-wide { grid-column: span 2; }
 .rockos-category-card {
+    display: block;
     position: relative;
     overflow: hidden;
     background: #eee;
-    img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s ease; }
-    span { position: absolute; top: 50%; left: 50%; padding: 5px 9px; transform: translate(-50%, -50%); background: rgba(220,220,220,.62); color: #222; font-size: 22px; font-weight: 700; line-height: 1; text-align: center; text-transform: uppercase; white-space: nowrap; }
+    img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: cover; transition: transform .25s ease; }
+    span { display: block !important; position: absolute !important; z-index: 5 !important; top: 50% !important; left: 50% !important; padding: 6px 10px !important; transform: translate(-50%, -50%) !important; background: rgba(220,220,220,.68) !important; color: #222 !important; font-size: 22px !important; font-weight: 700 !important; line-height: 1 !important; text-align: center !important; text-transform: uppercase !important; white-space: nowrap !important; opacity: 1 !important; visibility: visible !important; }
     &:hover img { transform: scale(1.04); }
 }
 
@@ -197,7 +198,7 @@
 @media (max-width: 991px) {
     .rockos-mainbar > .container, .rockos-mainbar > .rockos-container { min-height: 78px; }
     .rockos-logo img { width: 105px; }
-    .rockos-category-grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 260px; }
+    .rockos-category-grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 300px; }
     .rockos-benefit-grid { grid-template-columns: repeat(2, 1fr); }
     .rockos-footer-grid { grid-template-columns: repeat(2, 1fr); }
     .rockos-info-layout { grid-template-columns: 1fr; }
