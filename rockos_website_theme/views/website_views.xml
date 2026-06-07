@@ -11,6 +11,9 @@
                     <field name="rockos_instagram_url"/>
                     <field name="rockos_phone"/>
                     <field name="rockos_free_shipping_text"/>
+                    <field name="rockos_hero_image"
+                           widget="image"
+                           options="{'size': [1960, 540]}"/>
                     <field name="rockos_best_seller_product_ids"
                            widget="many2many_tags"
                            options="{'no_create': True}"/>

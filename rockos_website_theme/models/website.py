@@ -8,6 +8,10 @@ class Website(models.Model):
     rockos_instagram_url = fields.Char(string="Rockos Instagram URL")
     rockos_phone = fields.Char(string="Rockos Phone")
     rockos_free_shipping_text = fields.Char(string="Rockos Free Shipping Text")
+    rockos_hero_image = fields.Binary(
+        string="Homepage Hero Banner",
+        attachment=True,
+    )
     rockos_best_seller_product_ids = fields.Many2many(
         "product.template",
         "rockos_website_best_seller_rel",

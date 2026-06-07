@@ -164,6 +164,12 @@ def _configure_rockos_website(env, website):
             "rb",
         ) as logo_file:
             values["logo"] = base64.b64encode(logo_file.read())
+    if not website.rockos_hero_image:
+        with tools.file_open(
+            "rockos_website_theme/static/src/img/rockos_hero_banner.webp",
+            "rb",
+        ) as hero_file:
+            values["rockos_hero_image"] = base64.b64encode(hero_file.read())
     website.write(values)
 
     _seed_rockos_menu(env, website)

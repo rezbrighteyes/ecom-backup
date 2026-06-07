@@ -87,23 +87,9 @@
 .rockos-mobile-nav.is-open { display: flex; }
 .rockos-mobile-nav a { color: #222; font-weight: 700; }
 
-.rockos-hero {
-    position: relative;
-    min-height: 480px;
-    overflow: hidden;
-    background: #333;
-    color: #fff;
-}
-
-.rockos-hero .oe_structure { min-height: inherit; display: flex; align-items: center; }
-.rockos-hero-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .52; }
-.rockos-hero-content {
-    position: relative;
-    z-index: 1;
-    h1 { font-size: clamp(48px, 8vw, 92px); margin: 0 0 10px; }
-    p { font-size: 20px; max-width: 570px; }
-}
-.rockos-eyebrow { color: var(--rockos-yellow); text-transform: uppercase; font-weight: 700; letter-spacing: .12em; }
+.rockos-hero { display: none !important; }
+.rockos-home-hero { overflow: hidden; background: #fff; }
+.rockos-home-hero img { display: block; width: 100%; height: auto; }
 .rockos-btn { background: var(--rockos-yellow); color: #111; border-radius: 0; padding: 13px 28px; font-weight: 700; text-transform: uppercase; }
 
 .rockos-category-section { max-width: 1230px; padding-top: 64px; padding-bottom: 42px; }
@@ -225,8 +211,6 @@
 
 @media (max-width: 575px) {
     .rockos-topbar .container { justify-content: center !important; }
-    .rockos-hero { min-height: 390px; }
-    .rockos-hero-content h1 { font-size: 52px; }
     .rockos-category-grid, .rockos-benefit-grid, .rockos-footer-grid { grid-template-columns: 1fr; }
     .rockos-category-grid { grid-auto-rows: 250px; }
     .rockos-category-card-wide { grid-column: span 1; }

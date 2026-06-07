@@ -3,7 +3,7 @@
     <template id="rockos_layout_class" inherit_id="website.layout" name="Rockos: Layout Scope">
         <xpath expr="//head" position="inside">
             <link rel="stylesheet" type="text/css"
-                  href="/rockos_website_theme/static/src/css/rockos.css?v=180150"/>
+                  href="/rockos_website_theme/static/src/css/rockos.css?v=180160"/>
             <script defer="defer" type="text/javascript"
                     src="/rockos_website_theme/static/src/js/rockos.js?v=180110"/>
         </xpath>
@@ -76,6 +76,10 @@
     <template id="rockos_footer" inherit_id="website.layout" name="Rockos: Footer">
         <xpath expr="//footer" position="before">
             <t t-if="request.httprequest.path == '/'">
+                <section class="rockos-home-hero">
+                    <img t-att-src="'/web/image/website/%s/rockos_hero_image' % website.id"
+                         alt="Rockos hero banner"/>
+                </section>
                 <section class="rockos-category-section rockos-container">
                     <div class="oe_structure" id="rockos_categories_editable">
                         <h2>Welcome to Rocko's</h2>
