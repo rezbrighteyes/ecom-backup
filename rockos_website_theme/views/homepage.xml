@@ -16,18 +16,6 @@
                         </div>
                     </div>
                 </section>
-                <section class="rockos-container rockos-home-content">
-                    <div class="oe_structure" id="rockos_home_products_editable">
-                        <t t-call="rockos_website_theme.rockos_home_product_section">
-                            <t t-set="section_title">Best Sellers</t>
-                            <t t-set="products" t-value="website.rockos_best_seller_product_ids"/>
-                        </t>
-                        <t t-call="rockos_website_theme.rockos_home_product_section">
-                            <t t-set="section_title">New Arrivals</t>
-                            <t t-set="products" t-value="website.rockos_new_arrival_product_ids"/>
-                        </t>
-                    </div>
-                </section>
             </div>
         </xpath>
     </template>
