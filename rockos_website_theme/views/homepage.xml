@@ -18,13 +18,36 @@
                 </section>
                 <section class="rockos-container rockos-home-content">
                     <div class="oe_structure" id="rockos_home_products_editable">
-                        <h2>Best Sellers</h2>
-                        <p class="rockos-center">Use the Odoo website editor to add a Dynamic Products block here.</p>
-                        <h2>New Arrivals</h2>
-                        <p class="rockos-center">Use the Odoo website editor to add another Dynamic Products block here.</p>
+                        <t t-call="rockos_website_theme.rockos_home_product_section">
+                            <t t-set="section_title">Best Sellers</t>
+                            <t t-set="products" t-value="website.rockos_best_seller_product_ids"/>
+                        </t>
+                        <t t-call="rockos_website_theme.rockos_home_product_section">
+                            <t t-set="section_title">New Arrivals</t>
+                            <t t-set="products" t-value="website.rockos_new_arrival_product_ids"/>
+                        </t>
                     </div>
                 </section>
             </div>
         </xpath>
+    </template>
+
+    <template id="rockos_home_product_section" name="Rockos Homepage Product Section">
+        <section class="rockos-product-section">
+            <h2 t-out="section_title"/>
+            <div class="rockos-home-product-grid" t-if="products">
+                <a t-foreach="products"
+                   t-as="product"
+                   t-att-href="product.website_url"
+                   class="rockos-home-product-card">
+                    <img t-att-src="'/web/image/product.template/%s/image_512' % product.id"
+                         t-att-alt="product.name"/>
+                    <strong t-out="product.name"/>
+                    <span class="rockos-product-rating"><i class="fa fa-star-o"/><i class="fa fa-star-o"/><i class="fa fa-star-o"/><i class="fa fa-star-o"/><i class="fa fa-star-o"/> <small>Reviews (<t t-out="product.rating_count or 0"/>)</small></span>
+                    <span class="rockos-product-price" t-field="product.website_price" t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
+                </a>
+            </div>
+            <p class="rockos-center" t-else="">Choose products in Website settings under Rockos Storefront.</p>
+        </section>
     </template>
 </odoo>

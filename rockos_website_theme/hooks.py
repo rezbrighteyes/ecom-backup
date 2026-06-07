@@ -11,6 +11,23 @@ ROCKOS_BRANCH_NAME = "Rockos"
 ROCKOS_PARENT_COMPANY_NAME = "ECOM SUPERSTORE PTY LTD"
 ROCKOS_VIEW_PREFIX = "rockos_website_theme."
 ROCKOS_MENU_VERSION = "2"
+ROCKOS_PRODUCT_SECTION_VERSION = "1"
+ROCKOS_BEST_SELLER_NAMES = [
+    "Earbuds",
+    "Dual Car Charger",
+    "Braided Micro USB Cable",
+    "Double Pluggers",
+]
+ROCKOS_NEW_ARRIVAL_NAMES = [
+    "Rocko's Ankle Sports Socks 11-14 Bamboo White",
+    "Rocko's Ankle Sports Socks 6-11 Bamboo White",
+    "Rocko's Business Socks 11-14 Bamboo Black",
+    "Rocko's Business Socks 6-11 Bamboo Black",
+    "Rocko's Kids Ankle Socks 13-2 Bamboo White",
+    "Rocko's Kids Ankle Socks 5-8 Bamboo White",
+    "Rocko's Kids Ankle Socks 9-12 Bamboo White",
+    "Rocko's Sneaker Socks 11-14 Bamboo White",
+]
 ROCKOS_PAGES = [
     ("About Us", "/about-us", "rockos_website_theme.rockos_about_us"),
     ("Returns Policy", "/returns-policy", "rockos_website_theme.rockos_returns_policy"),
@@ -150,6 +167,30 @@ def _configure_rockos_website(env, website):
     website.write(values)
 
     _seed_rockos_menu(env, website)
+    _seed_rockos_product_sections(env, website)
+
+
+def _seed_rockos_product_sections(env, website):
+    parameter = env["ir.config_parameter"].sudo()
+    seed_key = f"rockos_website_theme.product_sections_seeded.{website.id}"
+    if parameter.get_param(seed_key) == ROCKOS_PRODUCT_SECTION_VERSION:
+        return
+
+    Product = env["product.template"].sudo()
+
+    def find_products(names):
+        products = Product.browse()
+        for name in names:
+            product = Product.search([("name", "ilike", name)], limit=1)
+            if product:
+                products |= product
+        return products
+
+    website.write({
+        "rockos_best_seller_product_ids": [(6, 0, find_products(ROCKOS_BEST_SELLER_NAMES).ids)],
+        "rockos_new_arrival_product_ids": [(6, 0, find_products(ROCKOS_NEW_ARRIVAL_NAMES).ids)],
+    })
+    parameter.set_param(seed_key, ROCKOS_PRODUCT_SECTION_VERSION)
 
 
 def _seed_rockos_menu(env, website):

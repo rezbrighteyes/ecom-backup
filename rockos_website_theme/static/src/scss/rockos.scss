@@ -189,6 +189,22 @@
 .rockos-eoi-form .rockos-btn { width: max-content; border: 0; }
 .rockos-amrf-image { display: block; width: 700px; max-width: 100%; height: auto; margin: 0 auto 30px; }
 
+.rockos-home-content { max-width: 1230px; }
+.rockos-product-section { margin-bottom: 65px; }
+.rockos-home-product-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 52px 34px; }
+.rockos-home-product-card {
+    display: grid;
+    align-content: start;
+    color: #222;
+    text-transform: uppercase;
+    img { width: 100%; height: 230px; margin-bottom: 18px; object-fit: contain; }
+    strong { min-height: 38px; font-size: 13px; line-height: 1.2; letter-spacing: .04em; }
+    &:hover { color: #222; }
+}
+.rockos-product-rating { margin: 7px 0 15px; color: var(--rockos-yellow); font-size: 13px; text-transform: none; }
+.rockos-product-rating small { color: #444; }
+.rockos-product-price { color: #111; font-size: 18px; font-weight: 700; text-transform: none; }
+
 .rockos-product-card { transition: transform .2s ease, box-shadow .2s ease; }
 .rockos-product-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,.08); }
 .rockos-product-trust { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 20px 0; }
@@ -200,6 +216,7 @@
     .rockos-logo img { width: 105px; }
     .rockos-category-grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 300px; }
     .rockos-benefit-grid { grid-template-columns: repeat(2, 1fr); }
+    .rockos-home-product-grid { grid-template-columns: repeat(2, 1fr); }
     .rockos-footer-grid { grid-template-columns: repeat(2, 1fr); }
     .rockos-info-layout { grid-template-columns: 1fr; }
     .rockos-info-sidebar { display: none; }
@@ -214,6 +231,7 @@
     .rockos-category-grid { grid-auto-rows: 250px; }
     .rockos-category-card-wide { grid-column: span 1; }
     .rockos-product-trust { grid-template-columns: 1fr; }
+    .rockos-home-product-grid { grid-template-columns: 1fr; }
     .rockos-page-title h1 { font-size: 23px; }
     .rockos-size-table { display: block; overflow-x: auto; }
 }

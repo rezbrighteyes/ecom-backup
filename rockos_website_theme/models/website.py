@@ -8,6 +8,20 @@ class Website(models.Model):
     rockos_instagram_url = fields.Char(string="Rockos Instagram URL")
     rockos_phone = fields.Char(string="Rockos Phone")
     rockos_free_shipping_text = fields.Char(string="Rockos Free Shipping Text")
+    rockos_best_seller_product_ids = fields.Many2many(
+        "product.template",
+        "rockos_website_best_seller_rel",
+        "website_id",
+        "product_tmpl_id",
+        string="Homepage Best Sellers",
+    )
+    rockos_new_arrival_product_ids = fields.Many2many(
+        "product.template",
+        "rockos_website_new_arrival_rel",
+        "website_id",
+        "product_tmpl_id",
+        string="Homepage New Arrivals",
+    )
 
     @api.model
     def _rockos_setup_menu(self):
