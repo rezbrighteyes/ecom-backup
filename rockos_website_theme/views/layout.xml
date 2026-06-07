@@ -74,6 +74,31 @@
     </template>
 
     <template id="rockos_footer" inherit_id="website.layout" name="Rockos: Footer">
+        <xpath expr="//footer" position="before">
+            <t t-if="request.httprequest.path == '/'">
+                <section class="rockos-category-section rockos-container">
+                    <div class="oe_structure" id="rockos_categories_editable">
+                        <h2>Welcome to Rocko's</h2>
+                        <div class="rockos-category-grid">
+                            <a href="/shop?search=thongs" class="rockos-category-card rockos-category-card-wide"><img src="/rockos_website_theme/static/src/img/86.png" alt="Thongs"/><span>Thongs</span></a>
+                            <a href="/shop?search=sunglasses" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/89.jpg" alt="Sunnies"/><span>Sunnies</span></a>
+                            <a href="/shop?search=technology" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/91.png.webp" alt="Technology"/><span>Technology</span></a>
+                            <a href="/shop?search=hats" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/88.png" alt="Hats"/><span>Hats</span></a>
+                            <a href="/shop?search=fishing" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/90.png.webp" alt="Fishing"/><span>Fishing</span></a>
+                            <a href="/shop?search=kids+footwear" class="rockos-category-card rockos-category-card-wide"><img src="/rockos_website_theme/static/src/img/93.png.webp" alt="Kids Footwear"/><span>Kids Footwear</span></a>
+                        </div>
+                    </div>
+                </section>
+                <section class="rockos-benefits">
+                    <div class="rockos-container rockos-benefit-grid">
+                        <div><i class="fa fa-truck"/><strong>Free Shipping</strong><span t-out="website.rockos_free_shipping_text"/></div>
+                        <div><i class="fa fa-thumbs-up"/><strong>100% Satisfaction</strong><span>Guaranteed</span></div>
+                        <div><i class="fa fa-life-ring"/><strong>Excellent</strong><span>Customer Support</span></div>
+                        <div><i class="fa fa-lock"/><strong>100% Secure</strong><span>Payment System</span></div>
+                    </div>
+                </section>
+            </t>
+        </xpath>
         <xpath expr="//footer" position="replace">
             <footer class="rockos-footer">
                 <section class="rockos-newsletter">
