@@ -106,7 +106,8 @@
 .rockos-eyebrow { color: var(--rockos-yellow); text-transform: uppercase; font-weight: 700; letter-spacing: .12em; }
 .rockos-btn { background: var(--rockos-yellow); color: #111; border-radius: 0; padding: 13px 28px; font-weight: 700; text-transform: uppercase; }
 
-.rockos-category-section, .rockos-home-content { padding-top: 64px; padding-bottom: 64px; }
+.rockos-category-section { max-width: 1000px; padding-top: 64px; padding-bottom: 42px; }
+.rockos-home-content { padding-top: 64px; padding-bottom: 64px; }
 .rockos-category-section h2, .rockos-home-content h2, .rockos-newsletter h2 {
     text-align: center;
     margin-bottom: 35px;
@@ -114,23 +115,24 @@
 }
 .rockos-category-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 300px;
+    gap: 8px;
 }
+.rockos-category-card-wide { grid-column: span 2; }
 .rockos-category-card {
     position: relative;
     overflow: hidden;
-    min-height: 230px;
     background: #eee;
-    img { width: 100%; height: 100%; min-height: 230px; object-fit: cover; transition: transform .25s ease; }
-    span { position: absolute; inset: auto 0 0; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,.8)); color: #fff; font-size: 24px; font-weight: 700; text-align: center; }
+    img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s ease; }
+    span { position: absolute; top: 50%; left: 50%; padding: 5px 9px; transform: translate(-50%, -50%); background: rgba(220,220,220,.62); color: #222; font-size: 22px; font-weight: 700; line-height: 1; text-align: center; text-transform: uppercase; white-space: nowrap; }
     &:hover img { transform: scale(1.04); }
 }
 
-.rockos-benefits { background: #f6f6f6; padding: 32px 0; }
+.rockos-benefits { background: #fff; padding: 28px 0 48px; }
 .rockos-benefit-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; }
-.rockos-benefit-grid div { display: grid; grid-template-columns: 40px 1fr; }
-.rockos-benefit-grid i { grid-row: span 2; color: var(--rockos-yellow); font-size: 27px; align-self: center; }
+.rockos-benefit-grid div { display: grid; grid-template-columns: 56px 1fr; align-items: center; }
+.rockos-benefit-grid i { display: flex; width: 46px; height: 46px; grid-row: span 2; align-items: center; justify-content: center; align-self: center; border: 1px solid #ddd; border-radius: 50%; color: #999; font-size: 18px; }
 .rockos-benefit-grid strong { font-size: 17px; }
 .rockos-benefit-grid span { color: #777; font-size: 13px; }
 
@@ -195,7 +197,7 @@
 @media (max-width: 991px) {
     .rockos-mainbar > .container, .rockos-mainbar > .rockos-container { min-height: 78px; }
     .rockos-logo img { width: 105px; }
-    .rockos-category-grid { grid-template-columns: repeat(2, 1fr); }
+    .rockos-category-grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 260px; }
     .rockos-benefit-grid { grid-template-columns: repeat(2, 1fr); }
     .rockos-footer-grid { grid-template-columns: repeat(2, 1fr); }
     .rockos-info-layout { grid-template-columns: 1fr; }
@@ -208,6 +210,8 @@
     .rockos-hero { min-height: 390px; }
     .rockos-hero-content h1 { font-size: 52px; }
     .rockos-category-grid, .rockos-benefit-grid, .rockos-footer-grid { grid-template-columns: 1fr; }
+    .rockos-category-grid { grid-auto-rows: 250px; }
+    .rockos-category-card-wide { grid-column: span 1; }
     .rockos-product-trust { grid-template-columns: 1fr; }
     .rockos-page-title h1 { font-size: 23px; }
     .rockos-size-table { display: block; overflow-x: auto; }
