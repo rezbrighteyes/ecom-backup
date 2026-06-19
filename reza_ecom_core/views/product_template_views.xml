@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="product.product_template_form_view"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='image_1920'][@widget='image']" position="attributes">
-                <attribute name="options">{'convert_to_webp': True, 'preview_image': 'image_1024'}</attribute>
+                <attribute name="options">{'convert_to_webp': True, 'preview_image': 'image_1024', 'zoom': True}</attribute>
             </xpath>
         </field>
     </record>
