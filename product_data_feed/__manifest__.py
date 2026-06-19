@@ -5,7 +5,7 @@
 
 {
     'name': 'Product Data Feed',
-    'version': '18.0.1.1.7',
+    'version': '18.0.1.1.8',
     'category': 'Hidden',
     'author': 'Garazd Creation',
     'website': 'https://garazd.biz/shop',
