@@ -9,6 +9,9 @@
         'website_sale',
         'loyalty',
     ],
+    'data': [
+        'views/product_template_views.xml',
+    ],
     'installable': True,
     'auto_install': False,
     'application': False,

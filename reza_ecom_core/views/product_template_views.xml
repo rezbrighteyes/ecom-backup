@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="product_template_form_view_image_preview" model="ir.ui.view">
+        <field name="name">product.template.form.image.preview.reza_ecom_core</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='image_1920'][@widget='image']" position="attributes">
+                <attribute name="options">{'convert_to_webp': True, 'preview_image': 'image_1024'}</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
