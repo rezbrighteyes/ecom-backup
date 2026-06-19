@@ -16,9 +16,6 @@
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_only_form_view" />
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='image_1920'][@widget='image']" position="attributes">
-                <attribute name="options">{'preview_image': 'image_1024'}</attribute>
-            </xpath>
             <xpath expr="//field[@name='default_code']" position="after">
                 <field name="second_reference" invisible="product_variant_count &gt; 1" />
             </xpath>
