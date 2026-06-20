@@ -12,6 +12,11 @@
     'data': [
         'views/product_template_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'reza_ecom_core/static/src/js/product_image_preview.js',
+        ],
+    },
     'installable': True,
     'auto_install': False,
     'application': False,
