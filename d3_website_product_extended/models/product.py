@@ -93,7 +93,7 @@ class ProductTemplate(models.Model):
             self.D3_FILTERABLE_STUDIO_SPEC_TYPES
             if filterable_only else self.D3_DISPLAYABLE_STUDIO_SPEC_TYPES
         )
-        specs_view_order = self._d3_get_specs_backend_view_field_order()
+        specs_view_order = set(self._d3_get_specs_backend_view_field_order())
         studio_fields = self.env['ir.model.fields'].sudo().search([
             ('model', '=', 'product.template'),
             ('name', '=like', 'x_studio_%'),
@@ -104,6 +104,7 @@ class ProductTemplate(models.Model):
             (field.name, field.field_description or field.name)
             for field in studio_fields
             if field.name in self._fields
+            and field.name in specs_view_order
             and not self._d3_is_excluded_auto_studio_spec_field(field)
         ]
         return self._d3_sort_spec_fields_by_backend_view(fields_specs)
@@ -139,8 +140,6 @@ class ProductTemplate(models.Model):
                 if field_name and field_name not in seen_fields:
                     field_names.append(field_name)
                     seen_fields.add(field_name)
-            if field_names:
-                return field_names
         return field_names
 
     @api.model
@@ -334,9 +333,6 @@ class ProductTemplate(models.Model):
         self.ensure_one()
         spec_groups = {
             'general': [
-                ('d3_model_code', _('Model Code')),
-                ('d3_gender', _('Gender')),
-                ('d3_warranty', _('Warranty')),
                 ('d3_specific_size', _('Size')),
                 ('d3_specific_shape', _('Shape')),
                 ('d3_lens_technology', _('Lens Technology')),
