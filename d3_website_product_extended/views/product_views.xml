@@ -24,21 +24,86 @@
                 <page string="Specifications / Filters" name="d3_specifications_filters">
                     <group>
                         <group string="Product Specifics">
-                            <field name="d3_specific_size"/>
-                            <field name="d3_specific_shape"/>
-                            <field name="d3_lens_technology"/>
-                            <field name="d3_lens_material"/>
-                            <field name="d3_lens_colour"/>
-                            <field name="d3_lens_category"/>
-                            <field name="d3_frame_material"/>
-                            <field name="d3_frame_colour"/>
+                            <label for="d3_specific_size"/>
+                            <div class="o_row">
+                                <field name="d3_specific_size"/>
+                                <field name="d3_hide_website_specific_size" nolabel="1"/>
+                                <label for="d3_hide_website_specific_size" string="Hide on Website"/>
+                            </div>
+                            <label for="d3_specific_shape"/>
+                            <div class="o_row">
+                                <field name="d3_specific_shape"/>
+                                <field name="d3_hide_website_specific_shape" nolabel="1"/>
+                                <label for="d3_hide_website_specific_shape" string="Hide on Website"/>
+                            </div>
+                            <label for="d3_lens_technology"/>
+                            <div class="o_row">
+                                <field name="d3_lens_technology"/>
+                                <field name="d3_hide_website_lens_technology" nolabel="1"/>
+                                <label for="d3_hide_website_lens_technology" string="Hide on Website"/>
+                            </div>
+                            <label for="d3_lens_material"/>
+                            <div class="o_row">
+                                <field name="d3_lens_material"/>
+                                <field name="d3_hide_website_lens_material" nolabel="1"/>
+                                <label for="d3_hide_website_lens_material" string="Hide on Website"/>
+                            </div>
+                            <label for="d3_lens_colour"/>
+                            <div class="o_row">
+                                <field name="d3_lens_colour"/>
+                                <field name="d3_hide_website_lens_colour" nolabel="1"/>
+                                <label for="d3_hide_website_lens_colour" string="Hide on Website"/>
+                            </div>
+                            <label for="d3_lens_category"/>
+                            <div class="o_row">
+                                <field name="d3_lens_category"/>
+                                <field name="d3_hide_website_lens_category" nolabel="1"/>
+                                <label for="d3_hide_website_lens_category" string="Hide on Website"/>
+                            </div>
+                            <label for="d3_frame_material"/>
+                            <div class="o_row">
+                                <field name="d3_frame_material"/>
+                                <field name="d3_hide_website_frame_material" nolabel="1"/>
+                                <label for="d3_hide_website_frame_material" string="Hide on Website"/>
+                            </div>
+                            <label for="d3_frame_colour"/>
+                            <div class="o_row">
+                                <field name="d3_frame_colour"/>
+                                <field name="d3_hide_website_frame_colour" nolabel="1"/>
+                                <label for="d3_hide_website_frame_colour" string="Hide on Website"/>
+                            </div>
                         </group>
                         <group string="Sizing">
-                            <field name="d3_base_curve"/>
-                            <field name="d3_bridge_size"/>
-                            <field name="d3_lens_height"/>
-                            <field name="d3_lens_width"/>
-                            <field name="d3_temple_length"/>
+                            <label for="d3_base_curve"/>
+                            <div class="o_row">
+                                <field name="d3_base_curve"/>
+                                <field name="d3_hide_website_base_curve" nolabel="1"/>
+                                <label for="d3_hide_website_base_curve" string="Hide on Website"/>
+                            </div>
+                            <label for="d3_bridge_size"/>
+                            <div class="o_row">
+                                <field name="d3_bridge_size"/>
+                                <field name="d3_hide_website_bridge_size" nolabel="1"/>
+                                <label for="d3_hide_website_bridge_size" string="Hide on Website"/>
+                            </div>
+                            <label for="d3_lens_height"/>
+                            <div class="o_row">
+                                <field name="d3_lens_height"/>
+                                <field name="d3_hide_website_lens_height" nolabel="1"/>
+                                <label for="d3_hide_website_lens_height" string="Hide on Website"/>
+                            </div>
+                            <label for="d3_lens_width"/>
+                            <div class="o_row">
+                                <field name="d3_lens_width"/>
+                                <field name="d3_hide_website_lens_width" nolabel="1"/>
+                                <label for="d3_hide_website_lens_width" string="Hide on Website"/>
+                            </div>
+                            <label for="d3_temple_length"/>
+                            <div class="o_row">
+                                <field name="d3_temple_length"/>
+                                <field name="d3_hide_website_temple_length" nolabel="1"/>
+                                <label for="d3_hide_website_temple_length" string="Hide on Website"/>
+                            </div>
                         </group>
                     </group>
                 </page>

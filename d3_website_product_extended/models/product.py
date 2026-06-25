@@ -30,6 +30,21 @@ class ProductTemplate(models.Model):
         ('d3_lens_width', _('Lens Width')),
         ('d3_temple_length', _('Temple Length')),
     ]
+    D3_WEBSITE_HIDE_SPEC_FIELDS = {
+        'd3_specific_size': 'd3_hide_website_specific_size',
+        'd3_specific_shape': 'd3_hide_website_specific_shape',
+        'd3_lens_technology': 'd3_hide_website_lens_technology',
+        'd3_lens_material': 'd3_hide_website_lens_material',
+        'd3_lens_colour': 'd3_hide_website_lens_colour',
+        'd3_lens_category': 'd3_hide_website_lens_category',
+        'd3_frame_material': 'd3_hide_website_frame_material',
+        'd3_frame_colour': 'd3_hide_website_frame_colour',
+        'd3_base_curve': 'd3_hide_website_base_curve',
+        'd3_bridge_size': 'd3_hide_website_bridge_size',
+        'd3_lens_height': 'd3_hide_website_lens_height',
+        'd3_lens_width': 'd3_hide_website_lens_width',
+        'd3_temple_length': 'd3_hide_website_temple_length',
+    }
 
     d3_model_code = fields.Char(string='Model Code', index=True)
     d3_warranty = fields.Text(string='Warranty')
@@ -51,6 +66,19 @@ class ProductTemplate(models.Model):
     d3_lens_height = fields.Char(string='Lens Height')
     d3_lens_width = fields.Char(string='Lens Width')
     d3_temple_length = fields.Char(string='Temple Length')
+    d3_hide_website_specific_size = fields.Boolean(string='Hide Size on Website')
+    d3_hide_website_specific_shape = fields.Boolean(string='Hide Shape on Website')
+    d3_hide_website_lens_technology = fields.Boolean(string='Hide Lens Technology on Website')
+    d3_hide_website_lens_material = fields.Boolean(string='Hide Lens Material on Website')
+    d3_hide_website_lens_colour = fields.Boolean(string='Hide Lens Colour on Website')
+    d3_hide_website_lens_category = fields.Boolean(string='Hide Lens Category on Website')
+    d3_hide_website_frame_material = fields.Boolean(string='Hide Frame Material on Website')
+    d3_hide_website_frame_colour = fields.Boolean(string='Hide Frame Colour on Website')
+    d3_hide_website_base_curve = fields.Boolean(string='Hide Base Curve on Website')
+    d3_hide_website_bridge_size = fields.Boolean(string='Hide Bridge Size on Website')
+    d3_hide_website_lens_height = fields.Boolean(string='Hide Lens Height on Website')
+    d3_hide_website_lens_width = fields.Boolean(string='Hide Lens Width on Website')
+    d3_hide_website_temple_length = fields.Boolean(string='Hide Temple Length on Website')
 
     @api.model
     def _d3_get_filterable_spec_fields(self):
@@ -202,7 +230,10 @@ class ProductTemplate(models.Model):
         domains = []
         for field_name, values in selected_filters.items():
             field_domains = [
-                [(field_name, '=', self._d3_parse_spec_filter_value(field_name, value))]
+                expression.AND([
+                    [(field_name, '=', self._d3_parse_spec_filter_value(field_name, value))],
+                    self._d3_get_website_visible_spec_domain(field_name),
+                ])
                 for value in values
             ]
             if field_domains:
@@ -217,6 +248,18 @@ class ProductTemplate(models.Model):
         if field and field.type in ('char', 'text', 'selection'):
             return [(field_name, '!=', False), (field_name, '!=', '')]
         return [(field_name, '!=', False)]
+
+    @api.model
+    def _d3_get_website_visible_spec_domain(self, field_name):
+        hide_field_name = self.D3_WEBSITE_HIDE_SPEC_FIELDS.get(field_name)
+        if hide_field_name and hide_field_name in self._fields:
+            return [(hide_field_name, '=', False)]
+        return []
+
+    def _d3_is_spec_hidden_on_website(self, field_name):
+        self.ensure_one()
+        hide_field_name = self.D3_WEBSITE_HIDE_SPEC_FIELDS.get(field_name)
+        return bool(hide_field_name and hide_field_name in self._fields and self[hide_field_name])
 
     @api.model
     def _d3_format_spec_value(self, field_name, value):
@@ -246,7 +289,8 @@ class ProductTemplate(models.Model):
             groups = ProductTemplate.read_group(
                 [
                     ('id', 'in', product_ids),
-                ] + self._d3_get_present_value_domain(field_name),
+                ] + self._d3_get_present_value_domain(field_name)
+                + self._d3_get_website_visible_spec_domain(field_name),
                 [field_name],
                 [field_name],
                 lazy=False,
@@ -322,6 +366,8 @@ class ProductTemplate(models.Model):
             field_specs = self._d3_sort_spec_fields_by_backend_view(field_specs)
         visible_specs = []
         for field_name, label in field_specs:
+            if self._d3_is_spec_hidden_on_website(field_name):
+                continue
             value = self[field_name]
             if value:
                 visible_specs.append((label, self._d3_format_spec_value(field_name, value)))
