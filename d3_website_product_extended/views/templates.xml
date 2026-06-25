@@ -1,5 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <template id="product_specs_table" name="Product Specifications Table">
+        <t t-set="d3_specs" t-value="product._d3_get_visible_product_specs(d3_specs_group)"/>
+        <div t-if="d3_specs" class="d3-product-specifications mt-3">
+            <dl class="row mb-0">
+                <t t-foreach="d3_specs" t-as="spec">
+                    <dt class="col-6 col-md-4 text-muted fw-normal border-bottom py-2">
+                        <t t-out="spec[0]"/>
+                    </dt>
+                    <dd class="col-6 col-md-8 border-bottom py-2 mb-0">
+                        <t t-out="spec[1]"/>
+                    </dd>
+                </t>
+            </dl>
+        </div>
+    </template>
+
+    <template id="product_spec_filters" inherit_id="website_sale.products_attributes" name="Specifications filters">
+        <xpath expr="//div[@id='wsale_products_attributes_collapse']" position="attributes">
+            <attribute name="t-if">attributes or all_tags or d3_spec_filters</attribute>
+        </xpath>
+        <xpath expr="//div[@t-if='attrib_values or tags']" position="attributes">
+            <attribute name="t-if">attrib_values or tags or d3_selected_spec_filters</attribute>
+        </xpath>
+        <xpath expr="//div[@id='wsale_products_attributes_collapse']/form/div/a" position="attributes">
+            <attribute name="t-att-href">keep('/shop' + ('/category/' + slug(category)) if category else None, attribute_value=0, tags=0, d3_spec_filter=0)</attribute>
+        </xpath>
+        <xpath expr="//t[@t-if='opt_wsale_filter_tags and opt_wsale_attributes']" position="before">
+            <t t-foreach="d3_spec_filters" t-as="spec_filter">
+                <div class="accordion-item nav-item mb-1 rounded-0" t-if="spec_filter['values']">
+                    <h6 class="mb-3">
+                        <b class="d-none d-lg-block" t-out="spec_filter['label']"/>
+                    </h6>
+                    <div class="flex-column mb-3">
+                        <t t-foreach="spec_filter['values']" t-as="spec_value">
+                            <div class="form-check mb-1">
+                                <input type="checkbox"
+                                       name="d3_spec_filter"
+                                       class="form-check-input"
+                                       t-att-id="'d3_spec_%s_%s' % (spec_filter['field'], spec_value_index)"
+                                       t-att-value="spec_value['key']"
+                                       t-att-checked="'checked' if spec_value['selected'] else None"/>
+                                <label class="form-check-label fw-normal"
+                                       t-att-for="'d3_spec_%s_%s' % (spec_filter['field'], spec_value_index)">
+                                    <t t-out="spec_value['label']"/>
+                                    <small class="text-muted" t-if="spec_value['count']">(<t t-out="spec_value['count']"/>)</small>
+                                </label>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </t>
+        </xpath>
+    </template>
+
+    <template id="product_spec_filters_offcanvas" inherit_id="website_sale.o_wsale_offcanvas" name="Specifications filters offcanvas">
+        <xpath expr="//form[contains(@t-attf-class, 'js_attributes')]" position="attributes">
+            <attribute name="t-if">opt_wsale_attributes or opt_wsale_attributes_top or d3_spec_filters</attribute>
+            <attribute name="t-attf-class">js_attributes accordion accordion-flush d-flex flex-column {{(len(attributes) &gt; 0 or d3_spec_filters) and 'border-bottom'}}</attribute>
+        </xpath>
+        <xpath expr="//form[contains(@t-attf-class, 'js_attributes')]/t[@t-if='opt_wsale_filter_tags and (opt_wsale_attributes or opt_wsale_attributes_top)']" position="before">
+            <t t-foreach="d3_spec_filters" t-as="spec_filter">
+                <div t-if="spec_filter['values']"
+                     t-attf-class="accordion-item border-top-0 {{spec_filter['selected'] and 'order-1' or 'order-2'}}">
+                    <h2 class="accordion-header mb-0" t-attf-id="o_wsale_offcanvas_d3_spec_{{spec_filter['field']}}_header">
+                        <button t-attf-class="o_wsale_offcanvas_title accordion-button rounded-0 {{not spec_filter['selected'] and 'collapsed'}}"
+                                type="button"
+                                t-att-data-status="spec_filter['selected'] and 'active' or 'inactive'"
+                                data-bs-toggle="collapse"
+                                t-attf-data-bs-target="#o_wsale_offcanvas_d3_spec_{{spec_filter['field']}}"
+                                t-att-aria-expanded="spec_filter['selected'] and 'True' or 'False'"
+                                t-attf-aria-controls="o_wsale_offcanvas_d3_spec_{{spec_filter['field']}}">
+                            <b t-out="spec_filter['label']"/>
+                        </button>
+                    </h2>
+                    <div t-attf-id="o_wsale_offcanvas_d3_spec_{{spec_filter['field']}}"
+                         t-attf-class="accordion-collapse collapse {{spec_filter['selected'] and 'show'}}"
+                         t-att-aria-expanded="spec_filter['selected'] and 'True' or 'False'"
+                         t-attf-aria-labelledby="o_wsale_offcanvas_d3_spec_{{spec_filter['field']}}_header">
+                        <div class="accordion-body pt-0">
+                            <div class="list-group list-group-flush">
+                                <div t-foreach="spec_filter['values']" t-as="spec_value" class="list-group-item border-0 ps-0 pb-0">
+                                    <div class="form-check mb-1">
+                                        <input type="checkbox"
+                                               name="d3_spec_filter"
+                                               class="form-check-input"
+                                               t-att-id="'d3_spec_offcanvas_%s_%s' % (spec_filter['field'], spec_value_index)"
+                                               t-att-value="spec_value['key']"
+                                               t-att-checked="'checked' if spec_value['selected'] else None"/>
+                                        <label class="form-check-label fw-normal"
+                                               t-att-for="'d3_spec_offcanvas_%s_%s' % (spec_filter['field'], spec_value_index)">
+                                            <t t-out="spec_value['label']"/>
+                                            <small class="text-muted" t-if="spec_value['count']">(<t t-out="spec_value['count']"/>)</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </xpath>
+    </template>
+
     <template id="products_extended" inherit_id="website_sale.products">
         <xpath expr="//t[@t-if='td_product']" position="replace">
             <t t-if="td_product">

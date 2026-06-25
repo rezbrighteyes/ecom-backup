@@ -22,6 +22,7 @@ from odoo.addons.sale.controllers import portal as sale_portal
 from odoo.addons.website.controllers.main import QueryURL
 from odoo.addons.website.models.ir_http import sitemap_qs2dom
 from odoo.addons.website_sale.controllers.main import TableCompute
+from odoo.addons.website_sale.controllers.main import WebsiteSale as WebsiteSaleController
 from itertools import product
 
 
@@ -264,3 +265,36 @@ class WebsiteSale(payment_portal.PaymentPortal):
             values['main_object'] = category
         values.update(self._get_additional_extra_shop_values(values, **post))
         return request.render("website_sale.products", values)
+
+
+class D3WebsiteSaleSpecFilters(WebsiteSaleController):
+
+    def _shop_get_query_url_kwargs(
+        self, category, search, min_price, max_price, order=None, tags=None,
+        attribute_value=None, d3_spec_filter=None, **post
+    ):
+        values = super()._shop_get_query_url_kwargs(
+            category, search, min_price, max_price, order=order, tags=tags,
+            attribute_value=attribute_value, **post
+        )
+        values['d3_spec_filter'] = d3_spec_filter
+        return values
+
+    def _get_search_options(self, *args, **kwargs):
+        values = super()._get_search_options(*args, **kwargs)
+        values['d3_spec_filters'] = request.httprequest.args.getlist('d3_spec_filter')
+        return values
+
+    def _get_additional_shop_values(self, values):
+        extra_values = super()._get_additional_shop_values(values)
+        ProductTemplate = request.env['product.template']
+        selected_spec_filters = ProductTemplate._d3_get_selected_website_spec_filters()
+        selected_spec_filter_keys = ProductTemplate._d3_get_spec_filter_keys(selected_spec_filters)
+        extra_values.update({
+            'd3_spec_filters': ProductTemplate._d3_get_website_spec_filter_values(
+                values.get('search_product') or ProductTemplate,
+                selected_spec_filter_keys,
+            ),
+            'd3_selected_spec_filters': selected_spec_filter_keys,
+        })
+        return extra_values

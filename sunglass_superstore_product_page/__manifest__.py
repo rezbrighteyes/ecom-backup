@@ -9,6 +9,7 @@
         'website_sale',
         'website_sale_wishlist',
         'stock',
+        'd3_website_product_extended',
     ],
     'data': [
         'views/templates.xml',

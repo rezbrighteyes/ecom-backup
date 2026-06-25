@@ -5,7 +5,7 @@
     'author': 'reza',
     'category': 'Website/Website',
     'license': 'OPL-1',
-    'depends': ['website_sale', 'stock'],
+    'depends': ['website_sale', 'stock', 'd3_website_product_extended'],
     'data': [
         'views/product_page.xml',
         'views/drift_kart_banner.xml',

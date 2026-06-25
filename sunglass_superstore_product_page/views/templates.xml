@@ -91,29 +91,54 @@
               priority="30">
         <xpath expr="//t[@t-call='website_sale.shop_product_images']" position="after">
             <div id="ss_product_accordion_section" class="ss-left-accordion mt-3">
+                <t t-set="d3_has_description" t-value="product.description_ecommerce or product.website_description"/>
+                <t t-set="d3_general_specs" t-value="product._d3_get_visible_product_specs('general')"/>
                 <div id="product_accordion" class="accordion accordion-flush">
-                    <div class="accordion-item">
+                    <div t-if="d3_has_description" class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button fw-medium"
                                     type="button"
                                     data-bs-toggle="collapse"
-                                    data-bs-target="#ss_collapse_details"
+                                    data-bs-target="#ss_collapse_description"
                                     aria-expanded="true"
-                                    aria-controls="ss_collapse_details">
-                                <span class="ss-accordion-label">
-                                    Product Details &amp; Specifications
-                                </span>
+                                    aria-controls="ss_collapse_description">
+                                <span class="ss-accordion-label">Description</span>
                             </button>
                         </h2>
-                        <div id="ss_collapse_details" class="accordion-collapse collapse show">
+                        <div id="ss_collapse_description" class="accordion-collapse collapse show">
                             <div class="accordion-body">
-                                <div t-field="product.website_description"
+                                <div t-if="product.description_ecommerce"
+                                     t-field="product.description_ecommerce"
+                                     class="mb-2 oe_structure"
+                                     placeholder="Add a product description here."/>
+                                <div t-if="not product.description_ecommerce and product.website_description"
+                                     t-field="product.website_description"
                                      class="mb-2 oe_structure"
                                      placeholder="Add a product description here."/>
                             </div>
                         </div>
                     </div>
-                    <div class="accordion-item">
+                    <div t-if="d3_general_specs" class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button t-attf-class="accordion-button fw-medium #{d3_has_description and 'collapsed' or ''}"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#ss_collapse_specifications"
+                                    t-att-aria-expanded="not d3_has_description and 'true' or 'false'"
+                                    aria-controls="ss_collapse_specifications">
+                                <span class="ss-accordion-label">Specifications</span>
+                            </button>
+                        </h2>
+                        <div id="ss_collapse_specifications"
+                             t-attf-class="accordion-collapse collapse #{not d3_has_description and 'show' or ''}">
+                            <div class="accordion-body">
+                                <t t-set="d3_specs_group" t-value="'general'"/>
+                                <t t-call="d3_website_product_extended.product_specs_table"/>
+                            </div>
+                        </div>
+                    </div>
+                    <t t-set="d3_size_specs" t-value="product._d3_get_visible_product_specs('size')"/>
+                    <div t-if="d3_size_specs" class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed fw-medium"
                                     type="button"
@@ -125,11 +150,15 @@
                             </button>
                         </h2>
                         <div id="ss_collapse_size" class="accordion-collapse collapse">
-                            <div class="accordion-body oe_structure"
-                                 id="oe_structure_ss_size_fit"/>
+                            <div class="accordion-body"
+                                 id="oe_structure_ss_size_fit">
+                                <t t-set="d3_specs_group" t-value="'size'"/>
+                                <t t-call="d3_website_product_extended.product_specs_table"/>
+                            </div>
                         </div>
                     </div>
-                    <div class="accordion-item">
+                    <t t-set="d3_material_specs" t-value="product._d3_get_visible_product_specs('material')"/>
+                    <div t-if="d3_material_specs" class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed fw-medium"
                                     type="button"
@@ -141,8 +170,11 @@
                             </button>
                         </h2>
                         <div id="ss_collapse_material" class="accordion-collapse collapse">
-                            <div class="accordion-body oe_structure"
-                                 id="oe_structure_ss_material"/>
+                            <div class="accordion-body"
+                                 id="oe_structure_ss_material">
+                                <t t-set="d3_specs_group" t-value="'material'"/>
+                                <t t-call="d3_website_product_extended.product_specs_table"/>
+                            </div>
                         </div>
                     </div>
                 </div>
