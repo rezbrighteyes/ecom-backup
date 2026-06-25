@@ -15,6 +15,9 @@ class ProductTemplate(models.Model):
         'char', 'selection', 'boolean', 'integer', 'float', 'monetary',
         'date', 'datetime', 'many2one',
     }
+    D3_EXCLUDED_AUTO_STUDIO_SPEC_TERMS = {
+        'neto reference',
+    }
     D3_FILTERABLE_SPEC_FIELDS = [
         ('d3_specific_size', _('Size')),
         ('d3_specific_shape', _('Shape')),
@@ -30,21 +33,6 @@ class ProductTemplate(models.Model):
         ('d3_lens_width', _('Lens Width')),
         ('d3_temple_length', _('Temple Length')),
     ]
-    D3_WEBSITE_HIDE_SPEC_FIELDS = {
-        'd3_specific_size': 'd3_hide_website_specific_size',
-        'd3_specific_shape': 'd3_hide_website_specific_shape',
-        'd3_lens_technology': 'd3_hide_website_lens_technology',
-        'd3_lens_material': 'd3_hide_website_lens_material',
-        'd3_lens_colour': 'd3_hide_website_lens_colour',
-        'd3_lens_category': 'd3_hide_website_lens_category',
-        'd3_frame_material': 'd3_hide_website_frame_material',
-        'd3_frame_colour': 'd3_hide_website_frame_colour',
-        'd3_base_curve': 'd3_hide_website_base_curve',
-        'd3_bridge_size': 'd3_hide_website_bridge_size',
-        'd3_lens_height': 'd3_hide_website_lens_height',
-        'd3_lens_width': 'd3_hide_website_lens_width',
-        'd3_temple_length': 'd3_hide_website_temple_length',
-    }
 
     d3_model_code = fields.Char(string='Model Code', index=True)
     d3_warranty = fields.Text(string='Warranty')
@@ -66,19 +54,27 @@ class ProductTemplate(models.Model):
     d3_lens_height = fields.Char(string='Lens Height')
     d3_lens_width = fields.Char(string='Lens Width')
     d3_temple_length = fields.Char(string='Temple Length')
-    d3_hide_website_specific_size = fields.Boolean(string='Hide Size on Website')
-    d3_hide_website_specific_shape = fields.Boolean(string='Hide Shape on Website')
-    d3_hide_website_lens_technology = fields.Boolean(string='Hide Lens Technology on Website')
-    d3_hide_website_lens_material = fields.Boolean(string='Hide Lens Material on Website')
-    d3_hide_website_lens_colour = fields.Boolean(string='Hide Lens Colour on Website')
-    d3_hide_website_lens_category = fields.Boolean(string='Hide Lens Category on Website')
-    d3_hide_website_frame_material = fields.Boolean(string='Hide Frame Material on Website')
-    d3_hide_website_frame_colour = fields.Boolean(string='Hide Frame Colour on Website')
-    d3_hide_website_base_curve = fields.Boolean(string='Hide Base Curve on Website')
-    d3_hide_website_bridge_size = fields.Boolean(string='Hide Bridge Size on Website')
-    d3_hide_website_lens_height = fields.Boolean(string='Hide Lens Height on Website')
-    d3_hide_website_lens_width = fields.Boolean(string='Hide Lens Width on Website')
-    d3_hide_website_temple_length = fields.Boolean(string='Hide Temple Length on Website')
+    d3_hidden_website_spec_field_ids = fields.Many2many(
+        'ir.model.fields',
+        'd3_product_template_hidden_website_spec_field_rel',
+        'product_tmpl_id',
+        'field_id',
+        string='Excluded Website Specification Fields',
+    )
+    d3_hidden_website_spec_field_names = fields.Text(
+        string='Excluded Website Specification Field Names',
+        compute='_compute_d3_hidden_website_spec_field_names',
+        store=True,
+    )
+
+    @api.depends('d3_hidden_website_spec_field_ids')
+    def _compute_d3_hidden_website_spec_field_names(self):
+        for product in self:
+            product.d3_hidden_website_spec_field_names = ''.join(
+                f'|{field.name}|'
+                for field in product.d3_hidden_website_spec_field_ids
+                if field.model == 'product.template' and field.name in product._fields
+            )
 
     @api.model
     def _d3_get_filterable_spec_fields(self):
@@ -108,8 +104,14 @@ class ProductTemplate(models.Model):
             (field.name, field.field_description or field.name)
             for field in studio_fields
             if field.name in self._fields
+            and not self._d3_is_excluded_auto_studio_spec_field(field)
         ]
         return self._d3_sort_spec_fields_by_backend_view(fields_specs)
+
+    @api.model
+    def _d3_is_excluded_auto_studio_spec_field(self, field):
+        field_text = f'{field.name} {field.field_description or ""}'.lower().replace('_', ' ')
+        return any(term in field_text for term in self.D3_EXCLUDED_AUTO_STUDIO_SPEC_TERMS)
 
     @api.model
     def _d3_get_specs_backend_view_field_order(self):
@@ -251,15 +253,14 @@ class ProductTemplate(models.Model):
 
     @api.model
     def _d3_get_website_visible_spec_domain(self, field_name):
-        hide_field_name = self.D3_WEBSITE_HIDE_SPEC_FIELDS.get(field_name)
-        if hide_field_name and hide_field_name in self._fields:
-            return [(hide_field_name, '=', False)]
-        return []
+        return expression.OR([
+            [('d3_hidden_website_spec_field_names', '=', False)],
+            [('d3_hidden_website_spec_field_names', 'not ilike', f'|{field_name}|')],
+        ])
 
     def _d3_is_spec_hidden_on_website(self, field_name):
         self.ensure_one()
-        hide_field_name = self.D3_WEBSITE_HIDE_SPEC_FIELDS.get(field_name)
-        return bool(hide_field_name and hide_field_name in self._fields and self[hide_field_name])
+        return f'|{field_name}|' in (self.d3_hidden_website_spec_field_names or '')
 
     @api.model
     def _d3_format_spec_value(self, field_name, value):
