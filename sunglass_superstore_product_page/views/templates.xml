@@ -150,7 +150,7 @@
                             </button>
                         </h2>
                         <div id="ss_collapse_size" class="accordion-collapse collapse">
-                            <div class="accordion-body"
+                            <div class="accordion-body oe_structure"
                                  id="oe_structure_ss_size_fit">
                                 <t t-set="d3_specs_group" t-value="'size'"/>
                                 <t t-call="d3_website_product_extended.product_specs_table"/>
@@ -170,7 +170,7 @@
                             </button>
                         </h2>
                         <div id="ss_collapse_material" class="accordion-collapse collapse">
-                            <div class="accordion-body"
+                            <div class="accordion-body oe_structure"
                                  id="oe_structure_ss_material">
                                 <t t-set="d3_specs_group" t-value="'material'"/>
                                 <t t-call="d3_website_product_extended.product_specs_table"/>
