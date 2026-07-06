@@ -3,7 +3,7 @@
     'name': "D3 Sale Extended",
     'summary': "D3 Sale Extended",
     'category': 'Sales',
-    'version': '18.0.2.0.1',
+    'version': '18.0.2.0.2',
     'author': 'Dimension3',
     'website': 'https://d-3.com.au',
     'depends': [
