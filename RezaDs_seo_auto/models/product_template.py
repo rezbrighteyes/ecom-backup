@@ -165,9 +165,13 @@ def _strip_colourway(core):
     if not m:
         return core
     head, tail = core[:m.start()], core[m.start():]
-    code = re.search(r'\b[A-Za-z]{1,4}\d{1,4}\b', head)
-    if code:
-        head = head[:code.end()]
+    # The LAST code before 'Polarised', not the first. A kids name carries two -
+    # the range code and the colour code, as in 'Kids MJK059 C4' - and taking the
+    # first treated 'C4' as colourway, collapsing every colourway of a range onto
+    # one title. 43 of 440 products shared 13 titles because of it.
+    codes = list(re.finditer(r'\b[A-Za-z]{1,4}\d{1,4}\b', head))
+    if codes:
+        head = head[:codes[-1].end()]
     else:
         slash = head.find(' / ')
         if slash != -1:
