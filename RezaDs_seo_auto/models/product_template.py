@@ -103,6 +103,22 @@ _CATEGORY_NOUNS = [
 # Filler that must never be the last word of a trimmed title.
 _TITLE_TAIL_FILLER = {'w', 'with', 'and', 'the', 'for', 'matte', 'gloss', 'crystal'}
 
+# Names that must NOT inherit a category noun. An accessory sits under its
+# parent's category (a cord under Sunglasses), so category-derived noun
+# injection would wrongly label "Neoprene Cord" as "Sunglasses". A name already
+# carrying '|'-delimited spec fields reads badly with a noun tacked on the end.
+_ACCESSORY_TERMS = {
+    'cord', 'strap', 'retainer', 'lanyard', 'leash', 'case', 'pouch', 'bag',
+    'cloth', 'cleaning', 'kit', 'spare', 'screw', 'hinge', 'float', 'floating',
+}
+
+
+def _noun_suppressed(name):
+    """True when a category noun must not be appended to this name."""
+    if '|' in name:
+        return True
+    return any(t in _ACCESSORY_TERMS for t in re.findall(r'[a-z]+', name.lower()))
+
 
 def _title_spaces(text):
     return re.sub(r'\s+', ' ', text or '').strip()
@@ -282,6 +298,10 @@ class ProductTemplate(models.Model):
             candidates.append(self.categ_id.name)
         candidates.append(name)
         noun = _category_noun(candidates)
+        if noun and _noun_suppressed(name):
+            # Accessory or spec-style name — do not inherit the parent
+            # category's noun (a cord is not "Sunglasses").
+            noun = ''
         core = _compose_meta_title(name, noun)
         # Default is now '%(name)s' (no suffix). " | Buy Online" earned nothing
         # in search and ate 13 chars; a site wanting a suffix sets the template.
