@@ -1,6 +1,8 @@
 import logging
 from odoo import models
 
+from .product_template import _make_slug
+
 _logger = logging.getLogger(__name__)
 
 
@@ -23,7 +25,10 @@ class ProductTemplateSitemap(models.Model):
                 else:
                     priority = 0.1
 
-                slug = product.seo_name or '%s-%s' % (product.name or '', product.id)
+                # Fall back to a sanitised slug plus the id. The raw name put an
+                # unescaped string into the URL; the id keeps it resolvable the
+                # way Odoo's own /shop/<slug>-<id> is.
+                slug = product.seo_name or '%s-%s' % (_make_slug(product.name or ''), product.id)
                 result.append({
                     'loc': '/shop/%s' % slug,
                     'priority': priority,
@@ -33,18 +38,3 @@ class ProductTemplateSitemap(models.Model):
                 _logger.warning('Sitemap error for product %s: %s', product.id, e)
 
         return result
-
-
-class StockMoveLastmod(models.Model):
-    _inherit = 'stock.move.line'
-
-    def write(self, vals):
-        res = super().write(vals)
-        if 'qty_done' in vals:
-            for move in self:
-                product = move.move_id.product_id.product_tmpl_id
-                if product.website_published:
-                    product.sudo().write({
-                        'website_meta_title': product.website_meta_title or product.name
-                    })
-        return res

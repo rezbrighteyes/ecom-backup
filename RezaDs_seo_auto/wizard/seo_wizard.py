@@ -36,8 +36,10 @@ class SeoRegenerateWizard(models.TransientModel):
             updates = {}
 
             if self.regenerate_title and (self.overwrite_existing or not product.website_meta_title):
-                name_part = product.name[:45] if len(product.name) > 45 else product.name
-                updates['website_meta_title'] = ('%s | Buy Online' % name_part)[:60]
+                # Shared builder — same logic as automatic generation. Do NOT
+                # reintroduce a local name[:45] cut here: it is what re-broke the
+                # catalogue on every wizard run.
+                updates['website_meta_title'] = product._build_meta_title()
 
             if self.regenerate_slug and (self.overwrite_existing or not product.seo_name):
                 from odoo.addons.RezaDs_seo_auto.models.product_template import _make_slug

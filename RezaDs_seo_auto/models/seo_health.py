@@ -69,7 +69,14 @@ class ProductTemplateSeoHealth(models.Model):
             score = 0
             issues = []
 
-            has_title = bool(record.website_meta_title and record.website_meta_title != record.name)
+            # A title counts when it is present and within Google's display
+            # budget. The old test also required title != name, which scored a
+            # word-severed truncation its point yet zeroed a clean title that
+            # happened to equal the product name — so fixing the titles would
+            # have reported a regression. Length, not difference-from-name, is
+            # what a real SEO title needs.
+            title = (record.website_meta_title or '').strip()
+            has_title = bool(title) and len(title) <= 70
             has_desc = bool(record.website_meta_description and len(record.website_meta_description) >= 50)
             has_slug = bool(record.seo_name)
             has_content = bool(record.description_ecommerce)

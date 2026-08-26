@@ -52,6 +52,151 @@ def _strip_html(html):
     return text
 
 
+# ---------------------------------------------------------------------------
+# Meta-title construction
+#
+# GSC demand for these catalogues is brand + category ("mangrove jacks
+# sunglasses", "fish thongs") — never a model code or a colourway. So the title
+# budget (~60 chars, Google's display cut) is spent in value order:
+#
+#     brand  ->  model  ->  Polarised  ->  category noun
+#
+# and the colourway (Black / Smoke ...) is dropped: it carries no search value
+# and already sits in the H1. The old generator did record.name[:45] — a hard
+# character cut that severed words ("Polaris" out of "Polarised"), left dangling
+# separators ("Black / "), then spent 13 chars on " | Buy Online" that nobody
+# searches. Everything below replaces that. The functions are pure so they can
+# be verified without a database.
+# ---------------------------------------------------------------------------
+MAX_META_TITLE = 60
+_TITLE_SEPARATORS = ' -/&,+|'
+
+# Redundant phrasing shortened before anything is ever cut. Order matters.
+_TITLE_COMPRESSIONS = [
+    (' Polarised Lenses', ' Polarised'),
+    (' Revo Mirror ', ' Revo '),
+    (' Mirror Polarised', ' Polarised'),
+    (' Matte Crystal ', ' Crystal '),
+    (' w Matte ', ' / '),
+    (' w ', ' / '),
+]
+
+# Category noun injected when the name/categories imply it and it is not already
+# present. First match wins, so more specific needles come first. This is a
+# curated map on purpose: an unrecognised category adds NO noun rather than
+# appending a raw, possibly noisy category label.
+_CATEGORY_NOUNS = [
+    ('sunglass', 'Sunglasses'),
+    ('thong', 'Thongs'),
+    ('sandal', 'Thongs'),
+    ('lure', 'Fishing'),
+    ('tackle', 'Fishing'),
+    ('fishing', 'Fishing'),
+    ('visor', 'Hat'),
+    ('cap', 'Hat'),
+    ('hat', 'Hat'),
+    ('reading glass', 'Reading Glasses'),
+    ('optical', 'Glasses'),
+    ('watch', 'Watch'),
+]
+
+# Filler that must never be the last word of a trimmed title.
+_TITLE_TAIL_FILLER = {'w', 'with', 'and', 'the', 'for', 'matte', 'gloss', 'crystal'}
+
+
+def _title_spaces(text):
+    return re.sub(r'\s+', ' ', text or '').strip()
+
+
+def _title_rstrip(text):
+    return (text or '').rstrip(_TITLE_SEPARATORS).strip()
+
+
+def _title_word_trim(text, limit):
+    """Trim to `limit` on a word boundary, then drop trailing separators/filler."""
+    text = _title_spaces(text)
+    if len(text) <= limit:
+        return _title_rstrip(text)
+    cut = text[:limit]
+    if ' ' in cut:
+        cut = cut[:cut.rindex(' ')]
+    cut = _title_rstrip(cut)
+    while cut and cut.split()[-1].lower() in _TITLE_TAIL_FILLER:
+        cut = _title_rstrip(cut[:cut.rindex(' ')]) if ' ' in cut else ''
+    return cut
+
+
+def _category_noun(candidates):
+    """First curated noun implied by any candidate string, else ''."""
+    hay = ' '.join(c for c in candidates if c).lower()
+    for needle, noun in _CATEGORY_NOUNS:
+        if needle in hay:
+            return noun
+    return ''
+
+
+def _strip_colourway(core):
+    """Remove the colourway that sits between the model code and 'Polarised'.
+
+    MJ names read '<brand> <model> <code> <colourway> Polarised ...'. The model
+    code is a short letter+digit token (C1, C8, RB3025). Everything from the
+    first such code to 'Polarised' is the colourway and is dropped. When no code
+    is present the colourway boundary is unknown, so only an explicit '<x> / <y>'
+    colour segment is removed; otherwise the name is left intact rather than
+    guessed at.
+    """
+    m = re.search(r'\bpolaris\w*\b', core, re.IGNORECASE)
+    if not m:
+        return core
+    head, tail = core[:m.start()], core[m.start():]
+    code = re.search(r'\b[A-Za-z]{1,4}\d{1,4}\b', head)
+    if code:
+        head = head[:code.end()]
+    else:
+        slash = head.find(' / ')
+        if slash != -1:
+            head = head[:slash]
+            head = head[:head.rindex(' ')] if ' ' in head else head
+    return _title_spaces('%s %s' % (_title_rstrip(head), tail))
+
+
+def _fit_meta_title(core, category_noun, limit):
+    """Fit an over-long title, protecting Polarised and the category noun.
+
+    Colourway is already gone; what remains long is a wordy brand+model. Trim the
+    body (brand+model) from the right, reserving room for Polarised and the noun.
+    """
+    noun = category_noun if (category_noun and core.lower().endswith(category_noun.lower())) else ''
+    body = core[:len(core) - len(noun)].strip() if noun else core
+    pol = ''
+    mpol = re.search(r'\bpolaris\w*\b', body, re.IGNORECASE)
+    if mpol:
+        pol = body[mpol.start():mpol.end()]
+        body = _title_spaces(body[:mpol.start()] + ' ' + body[mpol.end():])
+    reserve = len(pol) + (1 if pol else 0) + (len(noun) + 1 if noun else 0)
+    body = _title_word_trim(body, max(0, limit - reserve))
+    return _title_spaces(' '.join(p for p in (body, pol, noun) if p))
+
+
+def _compose_meta_title(name, category_noun='', limit=MAX_META_TITLE):
+    """Build the SEO title body from a product name. Pure; no ORM."""
+    core = _title_spaces(name)
+    if not core:
+        return ''
+    for phrase, replacement in _TITLE_COMPRESSIONS:
+        if phrase in core:
+            core = _title_spaces(core.replace(phrase, replacement))
+    if 'polaris' in core.lower():
+        core = _strip_colourway(core)
+    core = _title_rstrip(core)
+    if category_noun and category_noun.lower() not in core.lower():
+        core = '%s %s' % (core, category_noun)
+    core = _title_spaces(core)
+    if len(core) <= limit:
+        return core
+    return _fit_meta_title(core, category_noun, limit)
+
+
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
@@ -116,19 +261,44 @@ class ProductTemplate(models.Model):
         except Exception as e:
             _logger.warning('Could not create 301 redirect for %s: %s', self.name, e)
 
+    def _build_meta_title(self):
+        """Shared SEO-title builder. The single source of truth for both the
+        automatic generation below and the regenerate wizard, so the two can
+        never drift apart or re-break the catalogue against each other.
+
+        The category noun comes from the website categories or the name; the
+        colourway is dropped; 'Polarised' is protected; the title is trimmed on
+        a word boundary to 60 chars. The config template is honoured for sites
+        that set a custom one, but is substituted with str.replace rather than
+        %-formatting: a '%' in a product name would otherwise raise ValueError
+        and silently fall back to the old suffix.
+        """
+        self.ensure_one()
+        name = self.name or ''
+        candidates = []
+        if 'public_categ_ids' in self._fields and self.public_categ_ids:
+            candidates += self.public_categ_ids.mapped('name')
+        if self.categ_id:
+            candidates.append(self.categ_id.name)
+        candidates.append(name)
+        noun = _category_noun(candidates)
+        core = _compose_meta_title(name, noun)
+        # Default is now '%(name)s' (no suffix). " | Buy Online" earned nothing
+        # in search and ate 13 chars; a site wanting a suffix sets the template.
+        template = self._get_seo_param('meta_title_template', '%(name)s')
+        if template and template.strip() not in ('', '%(name)s'):
+            title = template.replace('%(name)s', core)
+        else:
+            title = core
+        return _title_word_trim(title, MAX_META_TITLE)
+
     def _set_seo_defaults(self, name_changed=False, desc_changed=False):
         for record in self:
             updates = {}
 
             if record._seo_feature_enabled('auto_title'):
                 if not record.website_meta_title or name_changed:
-                    template = record._get_seo_param('meta_title_template', '%(name)s | Buy Online')
-                    try:
-                        name_part = record.name[:45] if len(record.name) > 45 else record.name
-                        title = template % {'name': name_part}
-                    except (KeyError, TypeError, ValueError):
-                        title = '%s | Buy Online' % record.name[:45]
-                    updates['website_meta_title'] = title[:60]
+                    updates['website_meta_title'] = record._build_meta_title()
 
             if record._seo_feature_enabled('auto_slug'):
                 if not record.seo_name or name_changed:
