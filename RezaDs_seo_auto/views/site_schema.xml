@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Site-level and category-level structured data.
+
+        Both hang off website.layout for the same reason product_schema.xml
+        does: the shop controller's render values are visible from the layout,
+        and Odoo's QWeb resolves a missing name to a falsy value, so the
+        guards below are safe on pages where `category` was never set.
+
+        Until now the only structured data in the estate sat on product pages.
+        The homepage, all 24 category pages, About, Contact and Brands told
+        Google nothing about who runs the site or what a category contains.
+    -->
+    <template id="site_schema_jsonld"
+              inherit_id="website.layout"
+              name="RezaDs SEO - Organization, WebSite and Category JSON-LD">
+        <xpath expr="//head/meta[last()]" position="after">
+            <t t-if="website">
+                <script type="application/ld+json" t-out="website.get_site_jsonld()"/>
+            </t>
+            <t t-if="category and category._name == 'product.public.category'">
+                <script type="application/ld+json"
+                        t-out="category.get_category_jsonld(products)"/>
+            </t>
+        </xpath>
+    </template>
+
+    <!--
+        Canonical must name this website, not whichever sibling owns the shared
+        base URL. Odoo's layout sets canonical_domain from website.get_base_url(),
+        which falls back to web.base.url when website.domain is blank — the
+        reason three storefronts currently canonicalise their whole sites into
+        ecomsuperstore.com.au. This is the one xpath in the branch that binds to
+        a core node; verify it applies on staging before merging.
+    -->
+    <template id="canonical_domain_per_website"
+              inherit_id="website.layout"
+              name="RezaDs SEO - canonical names this website, not a sibling">
+        <xpath expr="//t[@t-set='canonical_domain']" position="replace">
+            <t t-set="canonical_domain" t-value="website._seo_canonical_domain()"/>
+        </xpath>
+    </template>
+</odoo>

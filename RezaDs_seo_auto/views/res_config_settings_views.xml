@@ -50,6 +50,25 @@
                     <setting id="seo_redirect_setting" string="301 Redirects" help="Auto-create redirects when product URL slug changes.">
                         <field name="seo_enable_redirects"/>
                     </setting>
+                    <setting id="seo_site_schema_setting" string="Organization / WebSite Schema" help="Inject Organization and WebSite JSON-LD on every page of this storefront.">
+                        <field name="seo_enable_site_schema"/>
+                    </setting>
+                    <setting id="seo_category_schema_setting" string="Category Schema" help="Inject CollectionPage, BreadcrumbList and ItemList JSON-LD on shop category pages.">
+                        <field name="seo_enable_category_schema"/>
+                    </setting>
+                    <setting id="seo_merchant_policy_setting" string="Shipping / Return Policy Schema" help="Add shippingDetails and hasMerchantReturnPolicy to the product Offer. Shipping is declared only for items already above the free-shipping threshold.">
+                        <field name="seo_enable_merchant_policies"/>
+                        <div class="content-group" invisible="not seo_enable_merchant_policies">
+                            <div class="row mt8">
+                                <label class="col-lg-4" string="Return window (days)" for="seo_return_days"/>
+                                <field name="seo_return_days"/>
+                            </div>
+                            <div class="row mt8">
+                                <label class="col-lg-4" string="Free shipping over" for="seo_free_shipping_threshold"/>
+                                <field name="seo_free_shipping_threshold"/>
+                            </div>
+                        </div>
+                    </setting>
                 </block>
             </xpath>
         </field>

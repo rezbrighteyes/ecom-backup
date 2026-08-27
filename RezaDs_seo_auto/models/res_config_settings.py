@@ -48,3 +48,23 @@ class ResConfigSettings(models.TransientModel):
         string='Enable 301 Redirects',
         config_parameter='rezads_seo.enable_redirects',
     )
+    seo_enable_site_schema = fields.Boolean(
+        string='Enable Organization / WebSite Schema',
+        config_parameter='rezads_seo.enable_site_schema',
+    )
+    seo_enable_category_schema = fields.Boolean(
+        string='Enable Category Schema',
+        config_parameter='rezads_seo.enable_category_schema',
+    )
+    seo_enable_merchant_policies = fields.Boolean(
+        string='Enable Shipping / Return Policy Schema',
+        config_parameter='rezads_seo.enable_merchant_policies',
+    )
+    seo_return_days = fields.Integer(
+        string='Return Window (days)',
+        config_parameter='rezads_seo.return_days',
+    )
+    seo_free_shipping_threshold = fields.Float(
+        string='Free Shipping Threshold',
+        config_parameter='rezads_seo.free_shipping_threshold',
+    )
