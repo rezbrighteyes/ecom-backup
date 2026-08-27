@@ -193,6 +193,18 @@ class WebsiteSale(payment_portal.PaymentPortal):
             url = "/shop/category/%s" % request.env['ir.http']._slug(category)
 
         pager = website.pager(url=url, total=product_count, page=page, step=ppg, scope=5, url_args=post)
+
+        # website.pager() silently clamps an out-of-range page to the last one,
+        # so /shop/page/200 answered 200 OK with page 13's products and a
+        # canonical pointing at itself. For a 413-product catalogue that is an
+        # unbounded set of self-canonicalising duplicates for Googlebot to
+        # crawl, and the same held for every category: page 200 of a
+        # seven-product category was a live, indexable page. Anything past the
+        # last real page is now a 404, which is what it always was in content.
+        requested_page = int(page) if str(page).isdigit() else 1
+        if requested_page > 1 and pager['page']['num'] != requested_page:
+            raise NotFound()
+
         offset = pager['offset']
         products = search_product[offset:offset + ppg]
 
