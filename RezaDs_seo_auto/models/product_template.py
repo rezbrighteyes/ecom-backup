@@ -476,18 +476,34 @@ class ProductTemplate(models.Model):
         public_categ_ids is shared across the whole estate and each category
         belongs to one website, so picking without filtering emits another
         site's category URL — which 404s on this domain. Returns root first.
+
+        Filtering the leaf is not enough. Category trees cross websites in this
+        database: 'Ride-Ons' (id 108) belongs to WhatYouNeed but its parent
+        'Toys' (id 88) belongs to ecomsuperstore, so walking parent_id from a
+        correctly-scoped leaf still emitted /shop/category/toys-88 — a 404 on
+        whatyouneed.com.au, inside a BreadcrumbList Google reads. The walk now
+        stops at the first ancestor that belongs to another website, which
+        yields a shorter but resolvable trail. Reparenting 108 under a
+        WhatYouNeed root is the data-side half of the fix.
         """
         self.ensure_one()
         cats = self.public_categ_ids
+        website_id = False
         try:
-            website = self.env['website'].get_current_website()
-            scoped = cats.filtered(
-                lambda c: not c.website_id or c.website_id.id == website.id
-            )
-            if scoped:
-                cats = scoped
+            website_id = self.env['website'].get_current_website().id
         except Exception:
             pass
+
+        def _on_this_website(categ):
+            """A category with no website is shared and always resolvable."""
+            if not website_id:
+                return True
+            return not categ.website_id or categ.website_id.id == website_id
+
+        if website_id:
+            scoped = cats.filtered(_on_this_website)
+            if scoped:
+                cats = scoped
         if not cats:
             return []
 
