@@ -18,6 +18,40 @@ def _make_slug(name):
     return re.sub(r'[\s_-]+', '-', ' '.join(words))
 
 
+def _plain_slug(text):
+    """Slugify the way Odoo's router does: keep every word, drop punctuation.
+
+    Deliberately not _make_slug — that strips stop words, which is right for a
+    hand-built seo_name and wrong for reproducing a URL Odoo already serves.
+    """
+    text = unicodedata.normalize('NFKD', text or '').encode('ascii', 'ignore').decode('ascii')
+    text = re.sub(r'[^\w\s-]', '', text).strip().lower()
+    return re.sub(r'[\s_-]+', '-', text)
+
+
+def _slug_record(record):
+    """Odoo's own '<slug>-<id>' identifier for a record.
+
+    The helper moved between versions — ir.http._slug on 17+, a module-level
+    slug() in http_routing before that — so both are tried before falling back
+    to building it here. Odoo slugifies display_name, which is why a child
+    category carries its parent's words (Sunglasses / Wrap -> sunglasses-wrap).
+    """
+    if not record:
+        return ''
+    try:
+        return record.env['ir.http']._slug(record)
+    except Exception:
+        pass
+    try:
+        from odoo.addons.http_routing.models.ir_http import slug
+        return slug(record)
+    except Exception:
+        pass
+    label = getattr(record, 'display_name', None) or getattr(record, 'name', '') or ''
+    return '%s-%s' % (_plain_slug(label), record.id)
+
+
 def _extract_seo_description(html, max_chars=160):
     if not html:
         return None
@@ -265,8 +299,10 @@ class ProductTemplate(models.Model):
         if not self._seo_feature_enabled('redirects'):
             return
         try:
-            old_url = '/shop/%s' % old_slug
-            new_url = '/shop/%s' % self.seo_name
+            # Both sides need the record id the router matches on. Without it
+            # the rewrite points from a URL that never existed to one that 404s.
+            old_url = '/shop/%s-%s' % (old_slug, self.id)
+            new_url = self._canonical_path()
             existing = self.env['website.rewrite'].sudo().search([
                 ('url_from', '=', old_url),
             ], limit=1)
@@ -392,6 +428,63 @@ class ProductTemplate(models.Model):
             return default_brand
         return website_name
 
+    def _canonical_path(self):
+        """The path Odoo actually serves for this product: /shop/<slug>-<id>.
+
+        seo_name on its own is not a URL. The router appends the record id and
+        matches on it, so /shop/<seo_name> returns 404. website_url is the same
+        value the canonical tag uses, so schema and canonical cannot disagree.
+        """
+        self.ensure_one()
+        try:
+            url = self.website_url
+            if url:
+                return url
+        except Exception:
+            pass
+        return '/shop/%s' % _slug_record(self)
+
+    def _breadcrumb_categories(self):
+        """Public-category ancestors to show, scoped to the current website.
+
+        public_categ_ids is shared across the whole estate and each category
+        belongs to one website, so picking without filtering emits another
+        site's category URL — which 404s on this domain. Returns root first.
+        """
+        self.ensure_one()
+        cats = self.public_categ_ids
+        try:
+            website = self.env['website'].get_current_website()
+            scoped = cats.filtered(
+                lambda c: not c.website_id or c.website_id.id == website.id
+            )
+            if scoped:
+                cats = scoped
+        except Exception:
+            pass
+        if not cats:
+            return []
+
+        def _depth(categ):
+            depth, node = 0, categ
+            while node.parent_id:
+                depth += 1
+                node = node.parent_id
+            return depth
+
+        leaf = sorted(cats, key=lambda c: (-_depth(c), c.id))[0]
+        chain, node = [], leaf
+        while node:
+            chain.insert(0, node)
+            node = node.parent_id
+        return chain
+
+    def _get_gtin13(self):
+        """barcode as a GTIN-13, or ''. Google matches offers on gtin, not sku."""
+        self.ensure_one()
+        code = (self.barcode or '').strip()
+        return code if len(code) == 13 and code.isdigit() else ''
+
     def get_noindex(self):
         self.ensure_one()
         if not self._seo_feature_enabled('noindex'):
@@ -426,20 +519,22 @@ class ProductTemplate(models.Model):
                 'name': 'Shop',
                 'item': '%s/shop' % domain if domain else '/shop',
             })
-            if self.categ_id and self.categ_id.name:
-                categ_slug = _make_slug(self.categ_id.name)
+            # categ_id is the internal category and has no storefront page.
+            # The public categories do, one per website.
+            for categ in self._breadcrumb_categories():
+                categ_path = '/shop/category/%s' % _slug_record(categ)
                 items.append({
                     '@type': 'ListItem',
-                    'position': 3,
-                    'name': self.categ_id.name,
-                    'item': '%s/shop/category/%s' % (domain, categ_slug) if domain else '/shop/category/%s' % categ_slug,
+                    'position': len(items) + 1,
+                    'name': categ.name or '',
+                    'item': '%s%s' % (domain, categ_path) if domain else categ_path,
                 })
-            slug = self.seo_name or self.id
+            product_path = self._canonical_path()
             items.append({
                 '@type': 'ListItem',
                 'position': len(items) + 1,
                 'name': self.name or '',
-                'item': '%s/shop/%s' % (domain, slug) if domain else '/shop/%s' % slug,
+                'item': '%s%s' % (domain, product_path) if domain else product_path,
             })
             data = {
                 '@context': 'https://schema.org/',
@@ -468,8 +563,8 @@ class ProductTemplate(models.Model):
             image_path = '/web/image/product.template/%s/image_1024' % self.id
             image_url = '%s%s' % (domain, image_path) if domain else image_path
 
-            slug = self.seo_name or self.id
-            product_url = '%s/shop/%s' % (domain, slug) if domain else '/shop/%s' % slug
+            product_path = self._canonical_path()
+            product_url = '%s%s' % (domain, product_path) if domain else product_path
 
             description = (
                 self.description_sale
@@ -505,6 +600,13 @@ class ProductTemplate(models.Model):
                     }
                 }
             }
+
+            # Google matches an offer on gtin before sku. sku here is whatever
+            # sits in default_code, which is not a GTIN on every record.
+            gtin13 = self._get_gtin13()
+            if gtin13:
+                data['gtin13'] = gtin13
+                data['offers']['gtin13'] = gtin13
 
             # Add aggregateRating if approved reviews exist
             try:
