@@ -419,6 +419,32 @@ class ProductTemplate(models.Model):
             pass
         return 'AUD'
 
+    def _website_offer_price(self):
+        """The price the storefront actually charges, not the list price.
+
+        The product page renders combination_info['price'] — the pricelist
+        applied — while this schema used list_price. Every discounted product
+        therefore advertised a price the customer would never be charged
+        ($69.99 in JSON-LD against $57.74 on the page). Merchant Center reads
+        that as a price mismatch and can disapprove the item, and where a rich
+        result does show it quotes the higher number.
+
+        Falls back to list_price only when combination info is unavailable
+        (no variant, no website context), which is the old behaviour.
+        """
+        self.ensure_one()
+        try:
+            info = self._get_combination_info(only_template=True)
+            price = info.get('price')
+            if price is not None:
+                return float(price)
+        except Exception as e:
+            _logger.warning(
+                'Website price unavailable for product %s, using list_price: %s',
+                self.id, e,
+            )
+        return float(self.list_price or 0)
+
     def _get_brand_name(self, website_name=''):
         self.ensure_one()
         if getattr(self, 'feed_brand_id', False) and self.feed_brand_id:
@@ -591,7 +617,7 @@ class ProductTemplate(models.Model):
                     '@type': 'Offer',
                     'url': product_url,
                     'priceCurrency': currency,
-                    'price': '%.2f' % (self.list_price or 0),
+                    'price': '%.2f' % self._website_offer_price(),
                     'priceValidUntil': valid_until,
                     'availability': availability,
                     'seller': {
