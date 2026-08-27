@@ -516,10 +516,80 @@ class ProductTemplate(models.Model):
 
         leaf = sorted(cats, key=lambda c: (-_depth(c), c.id))[0]
         chain, node = [], leaf
-        while node:
+        while node and _on_this_website(node):
             chain.insert(0, node)
             node = node.parent_id
         return chain
+
+    def _free_shipping_threshold(self):
+        """Order value above which this website ships free, or None.
+
+        Each storefront sets its own threshold, so this reads the per-website
+        value where sunglass_superstore_product_page provides it and falls back
+        to a configured default. Returns None when no threshold is known, which
+        makes the caller omit shippingDetails rather than invent a rate.
+        """
+        self.ensure_one()
+        getter = getattr(self, '_sf_get_shipping_threshold', None)
+        if getter:
+            try:
+                value = getter()
+                if value is not None:
+                    return float(value)
+            except Exception:
+                pass
+        configured = self._get_seo_param('free_shipping_threshold', '')
+        try:
+            return float(configured) if configured else None
+        except (TypeError, ValueError):
+            return None
+
+    def _merchant_policies(self):
+        """shippingDetails and hasMerchantReturnPolicy for the Offer.
+
+        Google wants both on a product offer, and their absence is a soft
+        warning in Merchant Center. Two rules keep the output honest:
+
+        - shippingDetails is emitted only when this item's own price already
+          clears the free-shipping threshold, so 'shippingRate 0' is true for
+          buying it alone. Below the threshold the real rate depends on the
+          basket and the destination, which is not knowable here, so the
+          property is omitted rather than guessed.
+        - the return window is a flat site-wide policy, so it is always safe.
+        """
+        self.ensure_one()
+        policies = {}
+
+        threshold = self._free_shipping_threshold()
+        if threshold is not None and self._website_offer_price() >= threshold:
+            policies['shippingDetails'] = {
+                '@type': 'OfferShippingDetails',
+                'shippingRate': {
+                    '@type': 'MonetaryAmount',
+                    'value': '0',
+                    'currency': self._get_currency_code(),
+                },
+                'shippingDestination': {
+                    '@type': 'DefinedRegion',
+                    'addressCountry': 'AU',
+                },
+            }
+
+        try:
+            return_days = int(self._get_seo_param('return_days', '30'))
+        except (TypeError, ValueError):
+            return_days = 30
+        if return_days > 0:
+            policies['hasMerchantReturnPolicy'] = {
+                '@type': 'MerchantReturnPolicy',
+                'applicableCountry': 'AU',
+                'returnPolicyCategory':
+                    'https://schema.org/MerchantReturnFiniteReturnWindow',
+                'merchantReturnDays': return_days,
+                'returnMethod': 'https://schema.org/ReturnByMail',
+            }
+
+        return policies
 
     def _get_gtin13(self):
         """barcode as a GTIN-13, or ''. Google matches offers on gtin, not sku."""
@@ -642,6 +712,9 @@ class ProductTemplate(models.Model):
                     }
                 }
             }
+
+            if self._seo_feature_enabled('merchant_policies'):
+                data['offers'].update(self._merchant_policies())
 
             # Google matches an offer on gtin before sku. sku here is whatever
             # sits in default_code, which is not a GTIN on every record.
