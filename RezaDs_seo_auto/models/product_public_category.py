@@ -97,13 +97,21 @@ class ProductPublicCategory(models.Model):
         symbol = '$' if currency in ('AUD', 'USD', 'NZD') else ''
 
         prices = [p.list_price for p in products if p.list_price]
-        parts = ['Shop %d %s product%s' % (count, name.lower(), '' if count == 1 else 's')]
+
+        # Not "Shop 105 toys products". Category names are frequently already
+        # plural (Toys, Sunglasses) or uncountable (Apparel), so appending a
+        # noun to them produces copy no one would write by hand. Naming the
+        # range and counting separately reads correctly whatever the category
+        # is called.
         if brand:
-            parts[0] += ' at %s' % brand
-        parts[0] += '.'
+            opening = 'Shop the %s range at %s' % (name, brand)
+        else:
+            opening = 'Shop the %s range' % name
+        parts = ['%s — %d product%s' % (opening, count, '' if count == 1 else 's')]
 
         if prices:
-            parts.append('From %s%.2f.' % (symbol, min(prices)))
+            parts[0] += ' from %s%.2f' % (symbol, min(prices))
+        parts[0] += '.'
 
         threshold = self._get_seo_param('free_shipping_threshold', '')
         if threshold:

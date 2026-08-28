@@ -41,4 +41,26 @@
             <t t-set="canonical_domain" t-value="website._seo_canonical_domain()"/>
         </xpath>
     </template>
+
+    <!--
+        /shop has no h1 at all. Category pages get one from the category name,
+        but the unfiltered shop landing page renders none, so the page Google
+        is most likely to treat as the storefront index has no heading.
+
+        Added only when there is no category and no search, so the existing
+        category h1 is never duplicated. Visually hidden rather than displayed:
+        the page is a product grid whose design does not call for a heading,
+        and inventing one would change the layout to satisfy a crawler.
+    -->
+    <template id="shop_landing_heading"
+              inherit_id="website_sale.products"
+              name="RezaDs SEO - h1 on the shop landing page">
+        <xpath expr="//div[@id='products_grid']" position="before">
+            <t t-if="not category and not search">
+                <h1 class="visually-hidden">
+                    Shop all products at <t t-out="website.name"/>
+                </h1>
+            </t>
+        </xpath>
+    </template>
 </odoo>
