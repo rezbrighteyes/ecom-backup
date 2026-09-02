@@ -19,10 +19,18 @@ leaves every order in `draft` and makes the status assertions meaningless. The
 remote reads are stubbed too: these are unit tests of OUR logic, not of the
 wholesale connection, which is proven separately by an actual order.
 
-NOTE ON WHAT CANNOT BE COVERED HERE: TransactionCase runs on a TestCursor where
-`commit()` releases and reopens a savepoint instead of committing. The
-commit-before-confirm ordering is therefore NOT exercised by any of these; its
-correctness rests on reading.
+NOTE ON COMMITS. Odoo 18 `TransactionCase.setUpClass` replaces `cr.commit`,
+`cr.rollback` and `cr.close` with `forbidden()` (`odoo/tests/common.py`), so any
+test reaching this module's deliberate commit-before-confirm dies with
+"Cannot commit or rollback a cursor from inside a test". A `TestCursor`, where
+commit would merely reopen a savepoint, is only installed by
+`registry.enter_test_mode()`, which `HttpCase` calls and `TransactionCase` does
+not -- an earlier version of this docstring had that backwards, and the seven
+tests that create or confirm a purchase order all failed on it.
+
+`setUp` therefore neutralises `commit` for the duration. The consequence is
+unchanged and worth restating: the ORDERING of the commit relative to the remote
+call is NOT exercised by any test here. Its correctness rests on reading.
 """
 from unittest.mock import patch
 
@@ -59,6 +67,14 @@ class TestEdbertPurchase(TransactionCase):
             "external_api_partner_id": cls.vendor.id,
             "external_api_purchase_partner": 10399,
         })
+
+    def setUp(self):
+        super().setUp()
+        # See the module docstring. The worker commits on purpose, and Odoo 18
+        # forbids that inside a test; without this, every test that creates or
+        # confirms a purchase order fails on the cursor rather than on its own
+        # assertion.
+        self.patch(self.env.cr, "commit", lambda *a, **k: None)
 
     def _order(self, qty=3.0, uom=None, company=None):
         vals = {
@@ -206,6 +222,50 @@ class TestEdbertPurchase(TransactionCase):
         self.assertIn("not mapped", order.reza_edbert_note or "")
         self.assertEqual(order.reza_edbert_attempts, 1,
                          "it must be retried, so the counter has to move")
+
+    def test_an_order_with_nothing_physical_is_not_a_failure(self):
+        """Services and combos are not bought from Edbert. Marking such an order
+        `failed` puts a red banner on a correct order and retries it five times.
+        It is only a failure when buyable lines EXIST and none is mapped."""
+        service = self.env["product.product"].create({
+            "name": "TEST delivery service", "type": "service", "list_price": 9.0})
+        order = self.env["sale.order"].create({
+            "partner_id": self.customer.id,
+            "order_line": [(0, 0, {"product_id": service.id, "product_uom_qty": 1.0})],
+        })
+        order.action_confirm()
+        self._raise(order)
+        self.assertEqual(order.reza_edbert_status, "not_needed")
+        self.assertEqual(order.reza_edbert_attempts, 0,
+                         "a correct order must not consume retries")
+
+    def test_partial_survives_a_failure_before_the_retry(self):
+        """Regression: _reza_mark_done used to read `partial` off the CURRENT
+        status, and any failure between the create-path mark and a later
+        successful resume overwrites both status and note -- so the skipped-line
+        list was lost and the order was recorded as a clean success while Edbert
+        was only part-supplying it."""
+        unmapped = self.env["product.product"].create({
+            "name": "TEST unmapped", "type": "consu", "is_storable": True,
+            "standard_price": 5.0, "list_price": 10.0, "external_api_id": 0})
+        order = self.env["sale.order"].create({
+            "partner_id": self.customer.id,
+            "order_line": [
+                (0, 0, {"product_id": self.product.id, "product_uom_qty": 2.0}),
+                (0, 0, {"product_id": unmapped.id, "product_uom_qty": 1.0}),
+            ],
+        })
+        order.action_confirm()
+        purchase = self._draft_purchase(order, qty=2.0)   # one line only
+        order._reza_mark("failed", "the push died", purchase)   # wipes the note
+
+        got = self._raise(order)
+        self.assertTrue(got)
+        self.assertEqual(order.reza_edbert_status, "partial",
+                         "one sale line is not on the purchase order, so this is "
+                         "NOT a clean success")
+        self.assertTrue(order.reza_edbert_note,
+                        "the skipped line must be named, or nobody knows it is short")
 
     # ------------------------------------------------------------ idempotency
     def test_it_never_raises_a_second_purchase_order(self):

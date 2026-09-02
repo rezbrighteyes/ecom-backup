@@ -77,6 +77,10 @@ warehouse -- measured 2026-09-02, deliveries pick from `MJ/Stock` and
 order on the root would receive the goods into a shed nothing sells from, and
 the customer delivery could never reserve them.
 
+Measured on ecom 2026-09-02 AFTER the rollout: companies 1, 4 and 5 all carry
+credentials, and those three are the only ones holding confirmed orders (4, 240
+and 313). So no order sits `pending` on a credential gap today.
+
 `_reza_api_company()` therefore returns the order's OWN company or nothing, and
 an order whose company carries no credentials is left `pending` with a note
 saying so, while the cron drops it from the batch. It is deliberately not a
@@ -100,6 +104,7 @@ import xmlrpc.client
 import psycopg2
 
 from odoo import _, fields, models
+from odoo.exceptions import AccessError
 
 _logger = logging.getLogger(__name__)
 
@@ -183,7 +188,14 @@ class SaleOrder(models.Model):
         """Button target. MUST be public: Odoo refuses a private method over
         `/web/dataset/call_button` (`check_method_name`, regex `^(_.*|init)$`),
         and view validation only tests that the attribute exists -- so a private
-        name installs cleanly and then raises AccessError on every click."""
+        name installs cleanly and then raises AccessError on every click.
+
+        `groups=` on the view button hides it; it does NOT stop an RPC caller,
+        and everything past this point runs under sudo() with the wholesale
+        credentials. So the group is re-tested here, server side."""
+        if not self.env.user.has_group("purchase.group_purchase_user"):
+            raise AccessError(
+                _("Only Purchase users can raise the Edbert purchase order."))
         for order in self:
             order._reza_raise_edbert_purchase()
         return True
@@ -331,12 +343,18 @@ class SaleOrder(models.Model):
 
         lines, skipped = self._reza_lines()
         if not lines:
-            # Deliberately `failed`, not `not_needed`: every line lacking an
-            # `external_api_id` is a mapping gap, not a decision. Post-catalogue
-            # -rebuild products carry `external_api_id = 0`, so this is a real
-            # and recurring data fault that must stay visible and be retried.
-            self._reza_mark("failed", "; ".join(skipped[:4]) or _("Nothing to buy."),
-                            bump=True)
+            if skipped:
+                # Buyable lines exist and none is mapped. That is a data gap,
+                # not a decision -- post-catalogue-rebuild products carry
+                # `external_api_id = 0` -- so it stays visible and is retried.
+                self._reza_mark("failed", "; ".join(skipped[:4]), bump=True)
+            else:
+                # Nothing physical on the order at all: services, or a combo
+                # whose components are their own lines. Edbert supplies
+                # nothing and nothing is wrong. Marking this `failed` would put
+                # a red banner on a correct order and retry it five times.
+                self._reza_mark(
+                    "not_needed", _("Nothing on this order is supplied by Edbert."))
             return False
 
         costs = self._reza_edbert_costs(api, [l["wholesale_id"] for l in lines])
@@ -490,16 +508,30 @@ class SaleOrder(models.Model):
     def _reza_mark_done(self, purchase):
         """Record a purchase order that really did reach wholesale.
 
-        `partial` and its note survive, because that note lists lines Edbert is
-        NOT supplying and somebody still has to read it. Anything else is
-        cleared: an order recovered from `failed` must not keep the old failure
-        note, or the red banner stays up over a purchase order that is now
-        confirmed and pushed.
+        The partial state is RECOMPUTED from the records, never read off the
+        current status. Any failure between the create-path mark and a later
+        successful resume overwrites both the status and the note -- the cron
+        handler does it, and so does `_reza_confirm` -- so deriving `partial`
+        from `reza_edbert_status` silently loses the skipped-line list and
+        records a clean success over an order Edbert is only part-supplying.
+        That is the exact fault this module exists to prevent, arriving through
+        the fix for it.
+
+        Comparing the purchase order's products against the sale's buyable
+        lines cannot be lost that way, and it catches every reason a line was
+        left off -- unmapped, archived in wholesale, or zero cost.
         """
         self.ensure_one()
-        partial = self.reza_edbert_status == "partial"
-        self._reza_mark("partial" if partial else "raised",
-                        self.reza_edbert_note if partial else False, purchase)
+        wanted, skipped = self._reza_lines()
+        bought = set(purchase.order_line.mapped("product_id").ids)
+        notes = list(skipped) + [
+            _("%s: not bought from Edbert") % l["product"].display_name
+            for l in wanted if l["product"].id not in bought
+        ]
+        if notes:
+            self._reza_mark("partial", "; ".join(notes[:4]), purchase)
+        else:
+            self._reza_mark("raised", False, purchase)
 
     def _reza_confirm(self, purchase):
         """Confirm the purchase order -- this is the leg that reaches wholesale."""
