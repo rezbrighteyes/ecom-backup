@@ -418,7 +418,10 @@ class SaleOrder(models.Model):
         self._reza_mark(status, ("; ".join(skipped[:4]) or False), purchase)
         self.env.cr.commit()
 
-        return self._reza_confirm(purchase)
+        confirmed = self._reza_confirm(purchase)
+        if confirmed:
+            self._reza_settle_pickings(purchase)
+        return confirmed
 
     # ---------------------------------------------------------- the recovery
     def _reza_resume(self, purchase, api):
@@ -497,6 +500,7 @@ class SaleOrder(models.Model):
                     purchase.name, remote["name"])
         confirmed = self._reza_confirm(purchase)
         if confirmed:
+            self._reza_settle_pickings(purchase)
             # The create path marks BEFORE it confirms, so it needs no mark
             # here. The resume path does: without this an order recovered from
             # `failed` keeps that status and its stale note, and goes on showing
@@ -532,6 +536,93 @@ class SaleOrder(models.Model):
             self._reza_mark("partial", "; ".join(notes[:4]), purchase)
         else:
             self._reza_mark("raised", False, purchase)
+
+    def _reza_settle_pickings(self, purchase):
+        """Complete the transfer `d3_external_api` could not.
+
+        WHY IT CANNOT. The connector validates the wholesale picking and then
+        does `if res is True:` before validating the ecom receipt
+        (`models/purchase_order.py:79-90`). On the Edbert databases
+        `reza_auto_post_print_invoice_enabled` is set, so
+        `reza_starshipit_consolidation.button_validate` hands back the
+        dispatch-confirmation WIZARD instead of validating
+        (`stock_picking.py:200`). A dict is not True, so BOTH sides stay open
+        and nothing says why. Passing `reza_skip_auto_invoice_prompt=True` is
+        what reaches `super()`.
+
+        This is the paperwork leg of a transfer between two warehouses in the
+        same physical shed, so it completes without a picker. It NEVER raises:
+        the purchase order is already raised and committed, and an order that
+        reached wholesale must not be reported as failed because a transfer
+        could not be closed. What it cannot do, it says on the order.
+        """
+        self.ensure_one()
+        if not purchase.external_api_sale:
+            return False
+        try:
+            proxy, db, uid, pwd = self._reza_wholesale_proxy(self._reza_api_company())
+            ctx = {"skip_reza_fuel_surcharge_sync": True, "skip_tax_update": True,
+                   "reza_skip_auto_invoice_prompt": True}
+            rows = proxy.execute_kw(db, uid, pwd, "sale.order", "search_read",
+                                    [[["id", "=", purchase.external_api_sale]]],
+                                    {"fields": ["name", "picking_ids"]})
+            if not rows or not rows[0].get("picking_ids"):
+                return False
+            remote_name = rows[0]["name"]
+            pickings = proxy.execute_kw(db, uid, pwd, "stock.picking", "read",
+                                        [rows[0]["picking_ids"], ["name", "state"]])
+            settled, stuck = [], []
+            for p in pickings:
+                if p["state"] == "done":
+                    settled.append(p["name"])
+                    continue
+                if p["state"] != "assigned":
+                    # Not reserved -- wholesale cannot supply it yet. Expected,
+                    # not a fault; the shed will pick it when stock arrives.
+                    stuck.append("%s is %s" % (p["name"], p["state"]))
+                    continue
+                proxy.execute_kw(db, uid, pwd, "stock.picking", "button_validate",
+                                 [[p["id"]]], {"context": ctx})
+                after = proxy.execute_kw(db, uid, pwd, "stock.picking", "read",
+                                         [[p["id"]], ["name", "state"]])[0]
+                (settled if after["state"] == "done" else stuck).append(
+                    after["name"] if after["state"] == "done"
+                    else "%s stayed %s" % (after["name"], after["state"]))
+            if stuck:
+                _logger.warning(
+                    "reza_ecom_intercompany_po: %s -> %s not fully dispatched: %s",
+                    self.name, remote_name, "; ".join(stuck))
+                self._reza_note(_("Wholesale %s is not fully dispatched: %s")
+                                % (remote_name, "; ".join(stuck[:3])))
+                return False
+            # Wholesale has shipped. Receive it here.
+            receipts = purchase.picking_ids.filtered(lambda p: p.state not in ("done", "cancel"))
+            for r in receipts:
+                r.action_assign()
+                for move in r.move_ids:
+                    move.quantity = move.product_uom_qty
+                    move.picked = True
+                r.with_context(skip_backorder=True).button_validate()
+            bad = purchase.picking_ids.filtered(lambda p: p.state not in ("done", "cancel"))
+            if bad:
+                self._reza_note(_("Wholesale shipped %s but the receipt %s is still %s.")
+                                % (remote_name, bad[0].name, bad[0].state))
+                return False
+            _logger.info("reza_ecom_intercompany_po: %s settled %s and received it",
+                         self.name, ", ".join(settled))
+            return True
+        except Exception:  # noqa: BLE001
+            _logger.exception(
+                "reza_ecom_intercompany_po: could not settle the transfer for %s", self.name)
+            self._reza_note(_("The purchase order was raised, but the transfer could not "
+                              "be completed automatically. Validate it by hand."))
+            return False
+
+    def _reza_note(self, text):
+        """Append to the note WITHOUT touching status or attempts."""
+        self.ensure_one()
+        old = self.reza_edbert_note or ""
+        self.sudo().write({"reza_edbert_note": ((old + " | ") if old else "") + text})
 
     def _reza_confirm(self, purchase):
         """Confirm the purchase order -- this is the leg that reaches wholesale."""

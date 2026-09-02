@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="purchase_order_form_reza_return_to_edbert" model="ir.ui.view">
+        <field name="name">purchase.order.form.reza.return.to.edbert</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Odoo refuses to CANCEL a purchase order whose receipt is done,
+                 so undoing a completed bridge transfer cannot be a cancel. This
+                 sends the goods back on both sides instead, and leaves nothing
+                 received. Public method name: `groups=` here hides the button,
+                 it does not stop an RPC caller, so the group is re-tested in
+                 the method as well. -->
+            <xpath expr="//header" position="inside">
+                <button name="action_reza_return_to_edbert" type="object"
+                        string="Return to Edbert" class="btn-secondary"
+                        confirm="This sends the goods back to Edbert and reverses the transfer on both sides. Continue?"
+                        invisible="not external_api_sale or state not in ('purchase', 'done')"
+                        groups="purchase.group_purchase_user"/>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>
