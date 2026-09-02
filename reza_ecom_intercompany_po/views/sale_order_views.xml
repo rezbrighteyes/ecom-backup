@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_order_form_reza_edbert_purchase" model="ir.ui.view">
+        <field name="name">sale.order.form.reza.edbert.purchase</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Public method: Odoo refuses a private one over call_button.
+                 `not_needed` is in the visibility tuple so that status is not a
+                 one-way door: it is out of the cron domain, so sync switched
+                 off during a wholesale outage would otherwise write off every
+                 order confirmed in that window, silently. -->
+            <xpath expr="//header" position="inside">
+                <button name="action_reza_raise_edbert_purchase" type="object"
+                        string="Raise Edbert Purchase" class="btn-secondary"
+                        invisible="reza_edbert_status not in ('pending', 'failed', 'not_needed')"
+                        groups="purchase.group_purchase_user"/>
+            </xpath>
+
+            <!-- The heading is coloured per status, but reza_edbert_note is
+                 declared ONCE and shared beneath them: a field named twice in
+                 one arch makes the web client log "defined multiple times".
+                 The note carries the reason on `failed` and the skipped lines
+                 on `partial`, so it must render for both. -->
+            <xpath expr="//sheet" position="before">
+                <div invisible="reza_edbert_status not in ('failed', 'partial', 'not_needed') and (reza_edbert_status != 'pending' or not reza_edbert_note)">
+                    <div class="alert alert-danger mb-0" role="alert"
+                         invisible="reza_edbert_status != 'failed'">
+                        <strong>The Edbert purchase order was not raised.</strong>
+                    </div>
+                    <div class="alert alert-warning mb-0" role="alert"
+                         invisible="reza_edbert_status != 'partial'">
+                        <strong>Raised, but some lines were not bought from Edbert.</strong>
+                    </div>
+                    <div class="alert alert-info mb-0" role="alert"
+                         invisible="reza_edbert_status != 'not_needed'">
+                        <strong>No Edbert purchase order was needed.</strong>
+                    </div>
+                    <!-- Pending is normally silent. A pending order carrying a
+                         note is waiting on configuration, not on the queue, so
+                         it has to say so or it looks like nothing is wrong. -->
+                    <div class="alert alert-warning mb-0" role="alert"
+                         invisible="reza_edbert_status != 'pending' or not reza_edbert_note">
+                        <strong>The Edbert purchase order is waiting on a setting.</strong>
+                    </div>
+                    <div class="alert alert-light border-top-0 mt-0" role="alert">
+                        <field name="reza_edbert_note" readonly="1" nolabel="1"/>
+                        <field name="reza_edbert_attempts" readonly="1"
+                               invisible="reza_edbert_status != 'failed'"/>
+                    </div>
+                </div>
+            </xpath>
+
+            <!-- `sale_shipping` is created by sale.view_order_form itself
+                 (the base form, no inherit_id), so `sale` in depends covers
+                 this anchor. Verified on ecom 2026-09-02: view 2962, owned by
+                 module `sale` per ir.model.data. -->
+            <xpath expr="//group[@name='sale_shipping']" position="after">
+                <group string="Edbert" name="reza_edbert"
+                       invisible="not reza_edbert_status">
+                    <field name="reza_edbert_status" readonly="1"/>
+                    <field name="reza_edbert_purchase_id" readonly="1"
+                           invisible="not reza_edbert_purchase_id"/>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

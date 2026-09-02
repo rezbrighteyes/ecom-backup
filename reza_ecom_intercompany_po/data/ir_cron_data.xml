@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- noupdate so a later module upgrade cannot re-enable or re-time a cron
+         somebody has deliberately switched off. That trap is recorded in the
+         wholesale repo: Reza_neto_connector shipped a cron without it and every
+         upgrade turned it back on. -->
+    <data noupdate="1">
+        <record id="ir_cron_raise_edbert_purchases" model="ir.cron">
+            <field name="name">Edbert: raise intercompany purchase orders</field>
+            <field name="model_id" ref="sale.model_sale_order"/>
+            <field name="state">code</field>
+            <field name="code">model._reza_cron_raise_edbert_purchases()</field>
+            <field name="interval_number">10</field>
+            <field name="interval_type">minutes</field>
+            <field name="active" eval="False"/>
+            <!-- Pinned, so the job does not run as whoever happened to install
+                 the module. -->
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+    </data>
+</odoo>
