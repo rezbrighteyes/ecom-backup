@@ -289,6 +289,24 @@ on that queue.
 Published stockists appear in `/sitemap.xml` for every website they are assigned to, via
 the `sitemap=` callback on the index route. Paginated pages are excluded.
 
+Each entry carries a **`lastmod`** from the stockist's `write_date`. Odoo emits `lastmod`
+for `website.page` records and nothing else — on the Mangrove Jacks site that was 3 URLs
+out of 556 — and `lastmod` is the signal Google reads to decide whether a page is worth
+recrawling. `priority` and `changefreq` are deliberately not set: the template supports
+them and Google ignores both.
+
+**Odoo caches the sitemap as an attachment for 12 hours**, named `/sitemap-<website
+id>-<hash>.xml`. So a newly installed module's pages do not appear until that expires,
+and the sitemap you fetch can be older than the code. Mangrove Jacks is website 3. To
+force a rebuild, delete its cached attachments:
+
+```python
+env["ir.attachment"].search([("name", "like", "/sitemap-3-")]).unlink()
+```
+
+Odoo never cleans these up — there were 39 on this database going back to May 2025, one
+of them 600KB.
+
 ## Fields worth knowing
 
 | Field | Note |

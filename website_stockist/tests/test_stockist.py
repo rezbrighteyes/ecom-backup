@@ -560,3 +560,19 @@ class TestOpeningHoursSpecification(TransactionCase):
         """Falling through to the site logo is Odoo's job, not ours."""
         self.stockist.write({"image_1920": False, "logo": False})
         self.assertIsNone(self.stockist._social_image_url())
+
+    def test_sitemap_entries_carry_a_lastmod(self):
+        """lastmod is what Google reads to decide whether to recrawl."""
+        from odoo.addons.website_stockist.controllers.main import _sitemap_stockists
+        self.stockist.is_published = True
+        entries = list(_sitemap_stockists(self.env, None, None))
+        self.assertTrue(entries, "the sitemap callback yielded nothing")
+        mine = [e for e in entries if e["loc"] == self.stockist.website_url]
+        self.assertTrue(mine, "the published stockist is missing from the sitemap")
+        self.assertIn("lastmod", mine[0])
+
+    def test_unpublished_stockist_stays_out_of_the_sitemap(self):
+        from odoo.addons.website_stockist.controllers.main import _sitemap_stockists
+        self.stockist.is_published = False
+        locs = [e["loc"] for e in _sitemap_stockists(self.env, None, None)]
+        self.assertNotIn(self.stockist.website_url, locs)

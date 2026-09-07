@@ -14,15 +14,27 @@ def _sitemap_stockists(env, rule, qs):
     Stockist = env["website.stockist"]
     website = env["website"].get_current_website()
     domain = Stockist._get_published_domain(website.id)
-    # The index page itself.
+    stockists = Stockist.sudo().search(domain)
+
+    # lastmod is what Google reads to decide whether a page is worth
+    # recrawling. Odoo emits it for website.page records and nothing else, so
+    # 553 of 556 URLs on this site carry no date at all. These can: a stockist
+    # is a real record with a real write_date.
     index_loc = "/stockists"
     if not qs or qs.lower() in index_loc:
-        yield {"loc": index_loc}
-    for stockist in Stockist.sudo().search(domain):
+        entry = {"loc": index_loc}
+        newest = max(stockists.mapped("write_date"), default=None)
+        if newest:
+            entry["lastmod"] = newest.date()
+        yield entry
+    for stockist in stockists:
         loc = stockist.website_url
         if qs and qs.lower() not in loc.lower():
             continue
-        yield {"loc": loc}
+        entry = {"loc": loc}
+        if stockist.write_date:
+            entry["lastmod"] = stockist.write_date.date()
+        yield entry
 
 
 class WebsiteStockistController(http.Controller):
