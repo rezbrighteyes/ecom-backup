@@ -237,3 +237,74 @@ class TestSiteSchema(TransactionCase):
         types = [n['@type'] for n in json.loads(website.get_site_jsonld())['@graph']]
         self.assertIn('Organization', types)
         self.assertIn('WebSite', types)
+
+
+class TestPaginatedTitles(TransactionCase):
+    """Every paginated category page carried page one's title.
+
+    /shop/category/sunglasses-wrap-sunglasses-128/page/2 and /page/3 both
+    rendered "Wrap Polarised Sunglasses | Mangrove Jacks" and both canonicalised
+    to themselves, so Google saw identical pages claiming the same thing. It
+    ranked page 2 at position 1.5 on 186 impressions for one click, while page
+    one — the page that should rank — was not shown.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.website = self.env['website'].search([], limit=1)
+
+    def _at(self, path):
+        """Run the helpers as though this request were for `path`."""
+        from unittest.mock import patch
+        import odoo.addons.RezaDs_seo_auto.models.website as mod
+
+        class _Req:
+            class httprequest:
+                pass
+        req = _Req()
+        req.httprequest.path = path
+        return patch.object(mod, 'request', req)
+
+    def test_page_number_read_from_the_path(self):
+        with self._at('/shop/category/sunglasses-4/page/3'):
+            self.assertEqual(self.website._seo_page_number(), 3)
+
+    def test_unpaginated_path_is_page_zero(self):
+        with self._at('/shop/category/sunglasses-4'):
+            self.assertEqual(self.website._seo_page_number(), 0)
+
+    def test_trailing_slash_still_parses(self):
+        with self._at('/shop/category/sunglasses-4/page/2/'):
+            self.assertEqual(self.website._seo_page_number(), 2)
+
+    def test_a_path_segment_named_page_is_not_a_page_number(self):
+        """/page/about must not be read as pagination."""
+        with self._at('/page/about'):
+            self.assertEqual(self.website._seo_page_number(), 0)
+
+    def test_page_one_gets_no_suffix(self):
+        """Page one keeps the clean title; only 2+ are ambiguous."""
+        category = self.env['product.public.category'].create(
+            {'name': 'Wrap', 'website_meta_title': 'Wrap Polarised Sunglasses'})
+        with self._at('/shop/category/wrap-1'):
+            self.assertFalse(self.website._seo_paginated_title(category))
+
+    def test_paginated_title_numbers_the_meta_title(self):
+        category = self.env['product.public.category'].create(
+            {'name': 'Wrap', 'website_meta_title': 'Wrap Polarised Sunglasses'})
+        with self._at('/shop/category/wrap-1/page/2'):
+            self.assertEqual(self.website._seo_paginated_title(category),
+                             'Wrap Polarised Sunglasses | Page 2')
+
+    def test_falls_back_to_the_record_name(self):
+        """A category with no meta title must still get a distinct title."""
+        category = self.env['product.public.category'].create({'name': 'Shield'})
+        with self._at('/shop/category/shield-1/page/4'):
+            title = self.website._seo_paginated_title(category)
+            self.assertIn('Shield', title)
+            self.assertTrue(title.endswith('| Page 4'))
+
+    def test_no_object_still_yields_a_title(self):
+        with self._at('/shop/page/2'):
+            title = self.website._seo_paginated_title(False)
+            self.assertTrue(title.endswith('| Page 2'))

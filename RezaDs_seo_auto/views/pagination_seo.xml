@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+      Number the title on page 2 and beyond.
+
+      website.layout only assigns `title` when it is not already set:
+
+          <t t-if="not title"> ... seo_object.website_meta_title ... </t>
+
+      so setting it before that block runs wins without touching Odoo's own
+      logic or duplicating its fallbacks. Anything that is not a paginated URL
+      gets False back and falls through untouched.
+    -->
+    <template id="seo_paginated_title" inherit_id="website.layout">
+        <xpath expr="//t[@t-if='not title']" position="before">
+            <t t-set="seo_paginated_title"
+               t-value="website._seo_paginated_title(seo_object or main_object)"/>
+            <t t-if="seo_paginated_title">
+                <t t-set="title" t-value="seo_paginated_title"/>
+            </t>
+        </xpath>
+    </template>
+
+</odoo>

@@ -1,6 +1,6 @@
 {
     'name': 'Smart SEO by Reza D Shiraz',
-    'version': '18.0.9.1.0',
+    'version': '18.0.9.2.0',
     'category': 'Website/eCommerce',
     'summary': 'Complete eCommerce SEO: Schema.org, breadcrumbs, auto meta, 301 redirects, sitemap, dashboard',
     'author': 'Reza D Shiraz',
@@ -8,6 +8,7 @@
     'depends': ['website_sale', 'stock'],
     'data': [
         'security/ir.model.access.csv',
+        'views/pagination_seo.xml',
         'views/product_schema.xml',
         'views/site_schema.xml',
         'views/seo_health_views.xml',

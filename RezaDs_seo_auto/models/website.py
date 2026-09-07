@@ -22,6 +22,47 @@ class Website(models.Model):
     def _seo_feature_enabled(self, feature):
         return self._get_seo_param('enable_%s' % feature, 'True') == 'True'
 
+    def _seo_page_number(self):
+        """Which page of a paginated listing this request is, or 0.
+
+        Odoo paginates as /shop/category/<slug>/page/3.
+        """
+        if not request or not getattr(request, 'httprequest', None):
+            return 0
+        path = (request.httprequest.path or '').rstrip('/')
+        if '/page/' not in path:
+            return 0
+        tail = path.rsplit('/page/', 1)[-1]
+        return int(tail) if tail.isdigit() else 0
+
+    def _seo_paginated_title(self, seo_object):
+        """Title for page 2 and beyond, or False when the page is not paginated.
+
+        Every paginated page carried the SAME title as page one and canonicalised
+        to itself, so Google saw a run of identical pages each claiming to be
+        "Wrap Polarised Sunglasses" and picked between them arbitrarily. It picked
+        page 2: 186 impressions at position 1.5, one click, while page one — the
+        page that should rank — went unshown.
+
+        Numbering the title is the smallest fix that resolves the ambiguity. The
+        pages stay indexed and keep their self-canonical, which is what Google
+        asks for; they just stop claiming to be each other.
+        """
+        page = self._seo_page_number()
+        if page < 2:
+            return False
+
+        base = ''
+        if seo_object:
+            fields = getattr(seo_object, '_fields', {})
+            if 'website_meta_title' in fields and seo_object.website_meta_title:
+                base = seo_object.website_meta_title
+            elif 'name' in fields and seo_object.name:
+                base = '%s | %s' % (seo_object.name, self.name or '')
+        if not base:
+            base = self.name or ''
+        return '%s | Page %s' % (base.strip(' |'), page)
+
     def _seo_base_url(self):
         """This website's own public origin, never another site's.
 
