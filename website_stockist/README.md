@@ -154,16 +154,35 @@ scroll-snap gets the same compactness and stays under the reader's control.
 
 ### The page says Sunglasses, not MJ39
 
-`stockist_category` on each tag drives what a reader sees. Ranges are grouped by it
-and shown once, so a store carrying MJ39, MJ49 and MJ59 shows a single **Sunglasses**
-badge linking to all three, and MJPluggers with MJNobbies collapse to **Footwear**.
-Nobody outside the business knows what MJ39 is.
+Nobody outside the business knows what MJ39 is. They know **Sunglasses**.
 
-A range nobody has classified is deliberately **not shown** — it still contributes its
-products to the strip, so nothing disappears from the page, it just adds no badge and no
-word to the description. Publishing "MJMystery" to a customer would be worse than
-publishing nothing. Find them with the **Needs a stockist category** filter on the
-product tag list.
+**Categories come from the products, not from the tags ticked on the stockist.** That
+distinction matters because a retailer can be recorded either way:
+
+* **By range** — a BrightEyes store ticked MJ39, MJ49, MJ59.
+* **By retailer** — every product Anaconda carries is tagged `Anaconda`, and the
+  stockist is ticked with that one tag.
+
+In the second shape the tag on the stockist says nothing at all about the range. The
+products do: each carries its own range tags, and those carry the category. Reading the
+categories off the products handles both shapes with one rule, and keeps the page honest
+either way — the badges cannot claim a category the stock does not support.
+
+Two consequences worth knowing:
+
+* **The strip samples by category, not by tag.** With one retailer tag, sampling by tag
+  is one bucket, and 24 products in merchandising order are all sunglasses — a store
+  that genuinely sells footwear and headwear would show none of it.
+* **Categories describe everything stocked, not just the 24 shown.** A store with 400
+  sunglasses and one shirt still gets an Apparel badge.
+
+A category whose tags nobody has classified simply does not appear. Its products still
+show in the strip, so nothing is lost from the page — publishing "MJMystery" to a
+customer would be worse than publishing nothing. Find them with the **Needs a stockist
+category** filter on the product tag list.
+
+The category is **Headwear**, not "Hats": MJHat is one range of several, and the group
+counts caps, beanies and visors in the same category.
 
 ### Titles and meta descriptions
 

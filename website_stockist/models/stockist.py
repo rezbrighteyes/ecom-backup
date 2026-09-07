@@ -209,37 +209,68 @@ class WebsiteStockist(models.Model):
     # ------------------------------------------------------------------
     # Compute / constraints
     # ------------------------------------------------------------------
-    def _range_groups(self):
-        """[(label, tag recordset)] — what the page shows instead of tag codes.
+    CATEGORY_ORDER = ["sunglasses", "headwear", "footwear", "apparel", "accessories"]
 
-        A customer reading a stockist page has no idea what MJ39 is. They know
-        "Sunglasses". Ranges are grouped by their category and shown once, so
-        MJ39, MJ49 and MJ59 collapse to a single Sunglasses badge linking to all
-        three, and MJPluggers with MJNobbies collapse to Footwear.
+    def _stock_domain(self):
+        """Products this stockist carries: published, sellable, on its websites."""
+        self.ensure_one()
+        domain = [("product_tag_ids", "in", self.range_ids.ids),
+                  ("is_published", "=", True),
+                  ("sale_ok", "=", True),
+                  ("active", "=", True)]
+        if self.website_ids:
+            domain.append(("website_id", "in", [False] + self.website_ids.ids))
+        return domain
 
-        A range nobody has classified is deliberately left out rather than shown
-        by its code — it still contributes its products to the strip, so nothing
-        is lost from the page, and the backend list shows which tags need a
-        category. Publishing "MJMystery" to a customer would be worse than
-        publishing nothing.
+    def _categories_stocked(self):
+        """{category: tag recordset} for the stock this stockist actually holds.
+
+        Derived from the PRODUCTS, not from the tags ticked on the stockist. A
+        retailer may be recorded with a single tag naming the retailer — every
+        product Anaconda carries tagged "Anaconda" — and that tag says nothing
+        about what is in the range. The products do: each carries its own range
+        tags, and those carry the category.
+
+        This also keeps the page honest for a store recorded the other way. Tick
+        MJ49 on a BrightEyes store and the categories still come from what those
+        products are, so the badges can never claim a category the stock does not
+        support.
+
+        Deliberately not limited to the products shown in the strip: the strip is
+        capped at 24 and the categories describe everything stocked.
         """
         self.ensure_one()
-        order = ["sunglasses", "hats", "footwear", "apparel", "accessories"]
+        if not self.range_ids:
+            return {}
+        products = self.env["product.template"].search(self._stock_domain())
+        by_category = {}
+        for tag in products.product_tag_ids:
+            if tag.stockist_category:
+                by_category.setdefault(tag.stockist_category,
+                                       self.env["product.tag"].browse())
+                by_category[tag.stockist_category] |= tag
+        return by_category
+
+    def _range_groups(self):
+        """[(label, tag recordset)] — the categories a customer would recognise.
+
+        Nobody outside the business knows what MJ39 is; they know "Sunglasses".
+        A category whose tags nobody has classified simply does not appear —
+        its products still show in the strip, so nothing is lost from the page.
+        Publishing "MJMystery" to a customer would be worse than publishing
+        nothing, and the backend's "Needs a stockist category" filter is how you
+        find them.
+        """
+        self.ensure_one()
         labels = dict(self.env["product.tag"]._fields["stockist_category"].selection)
-        groups = []
-        for category in order:
-            tags = self.range_ids.filtered(
-                lambda t, c=category: t.stockist_category == c)
-            if tags:
-                groups.append((labels[category], tags))
-        return groups
+        stocked = self._categories_stocked()
+        return [(labels[c], stocked[c]) for c in self.CATEGORY_ORDER if c in stocked]
 
     def _stocked_categories(self):
-        """Category words for this stockist, in a stable, readable order."""
-        order = ["sunglasses", "hats", "footwear", "apparel", "accessories"]
+        """Category words for the description, in a stable, readable order."""
+        stocked = self._categories_stocked()
         labels = dict(self.env["product.tag"]._fields["stockist_category"].selection)
-        held = {t.stockist_category for t in self.range_ids if t.stockist_category}
-        return [labels[c].lower() for c in order if c in held]
+        return [labels[c].lower() for c in self.CATEGORY_ORDER if c in stocked]
 
     @staticmethod
     def _join_readable(words):
@@ -286,55 +317,45 @@ class WebsiteStockist(models.Model):
 
     @api.depends("range_ids", "website_ids")
     def _compute_product_ids(self):
-        """Published, sellable products carrying this stockist's ranges.
+        """A spread of what this stockist carries, capped at PRODUCT_DISPLAY_LIMIT.
 
-        The filtering lives here on purpose. Nobody should have to curate which
-        products carry a range tag so that the stockist page stays honest — tag
-        whatever is true about the product, and this decides what is fit to show.
+        Sampled evenly across CATEGORIES rather than across the tags ticked on
+        the stockist. That distinction is the whole point once a retailer is
+        recorded with a single tag naming the retailer: sampling by tag would
+        return one bucket, and 24 products ordered by the merchandiser's own
+        sequence are all sunglasses, so a store that genuinely sells footwear
+        and headwear would show none of it.
 
-        Three filters, each earning its place:
-
-        * ``is_published`` — a stockist page must never advertise something with
-          no page to send the reader to.
-        * ``sale_ok`` and ``active`` — an archived or non-sellable product can
-          still hold its tags, and would otherwise reappear here after being
-          deliberately withdrawn.
-        * ``website_id`` — ``is_published`` is one boolean for the whole
-          database, not per site. Without this a product published only on
-          another site in the group would be offered by a Mangrove Jacks page.
-
-        The five ranges hold 299 published products between them, so what gets
-        shown matters more than how many. Products are taken evenly from each
-        range in the merchandiser's own website order, rather than 24 alphabetical
-        ones that would all begin with the same letter and all come from
-        whichever range sorts first.
+        Products with no classified category are still eligible — they just
+        cannot be sampled by category, so they fill any remaining room at the
+        end rather than being excluded from a page whose stock they are part of.
         """
         Product = self.env["product.template"]
         for stockist in self:
-            ranges = stockist.range_ids
-            if not ranges:
+            if not stockist.range_ids:
                 stockist.product_ids = False
                 continue
 
-            base = [("is_published", "=", True),
-                    ("sale_ok", "=", True),
-                    ("active", "=", True)]
-            if stockist.website_ids:
-                base.append(("website_id", "in", [False] + stockist.website_ids.ids))
-
-            per_range = max(1, self.PRODUCT_DISPLAY_LIMIT // len(ranges))
+            base = stockist._stock_domain()
+            categories = stockist._categories_stocked()
             picked = Product.browse()
-            for tag in ranges:
-                picked |= Product.search(
-                    base + [("product_tag_ids", "in", tag.ids)],
-                    order="website_sequence, name", limit=per_range,
-                )
-            # Even sampling can come up short when a range is thin; top up from
-            # the whole set rather than leave the strip half empty.
+
+            if categories:
+                share = max(1, self.PRODUCT_DISPLAY_LIMIT // len(categories))
+                for category in self.CATEGORY_ORDER:
+                    tags = categories.get(category)
+                    if not tags:
+                        continue
+                    picked |= Product.search(
+                        base + [("product_tag_ids", "in", tags.ids)],
+                        order="website_sequence, name", limit=share,
+                    )
+
+            # A thin category leaves room; unclassified stock has nowhere else
+            # to appear. Both are handled by topping up from everything.
             if len(picked) < self.PRODUCT_DISPLAY_LIMIT:
                 picked |= Product.search(
-                    base + [("product_tag_ids", "in", ranges.ids),
-                            ("id", "not in", picked.ids)],
+                    base + [("id", "not in", picked.ids)],
                     order="website_sequence, name",
                     limit=self.PRODUCT_DISPLAY_LIMIT - len(picked),
                 )

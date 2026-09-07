@@ -405,11 +405,11 @@ class TestOpeningHoursSpecification(TransactionCase):
         sun = self.env["product.tag"].create(
             {"name": "MJ49", "stockist_category": "sunglasses"})
         hat = self.env["product.tag"].create(
-            {"name": "MJHat", "stockist_category": "hats"})
+            {"name": "MJHat", "stockist_category": "headwear"})
         self.stockist.range_ids = [(6, 0, [sun.id, hat.id])]
         self.stockist.city, self.stockist.zip = "Morayfield", "4506"
         description = self.stockist._meta_description()
-        self.assertIn("sunglasses and hats", description)
+        self.assertIn("sunglasses and headwear", description)
         self.assertNotIn("footwear", description)
 
     def test_meta_order_is_stable_not_tag_order(self):
@@ -430,7 +430,7 @@ class TestOpeningHoursSpecification(TransactionCase):
         self.assertNotIn("  ", description)
 
     def test_meta_never_exceeds_the_truncation_point(self):
-        cats = ["sunglasses", "hats", "footwear", "apparel", "accessories"]
+        cats = ["sunglasses", "headwear", "footwear", "apparel", "accessories"]
         tags = [self.env["product.tag"].create({"name": "T%s" % c,
                                                 "stockist_category": c}) for c in cats]
         self.stockist.write({
@@ -442,7 +442,7 @@ class TestOpeningHoursSpecification(TransactionCase):
 
     def test_phone_is_shortened_rather_than_dropped(self):
         """The number is the action; the sentence around it is not."""
-        cats = ["sunglasses", "hats", "footwear", "apparel"]
+        cats = ["sunglasses", "headwear", "footwear", "apparel"]
         tags = [self.env["product.tag"].create({"name": "P%s" % c,
                                                 "stockist_category": c}) for c in cats]
         self.stockist.write({
@@ -483,3 +483,62 @@ class TestOpeningHoursSpecification(TransactionCase):
         self.stockist.range_ids = [(6, 0, [mystery.id])]
         self.assertEqual(self.stockist._range_groups(), [])
         self.assertIn(product, self.stockist.product_ids)
+
+    def test_one_retailer_tag_still_yields_every_category(self):
+        """A stockist recorded with a single retailer tag, the Anaconda shape.
+
+        The store carries one tag naming the retailer. That tag says nothing
+        about the range — the products it is on do, through their own tags.
+        """
+        anaconda = self.env["product.tag"].create({"name": "Anaconda"})
+        sun = self.env["product.tag"].create(
+            {"name": "MJ49", "stockist_category": "sunglasses"})
+        foot = self.env["product.tag"].create(
+            {"name": "MJPluggers", "stockist_category": "footwear"})
+        hat = self.env["product.tag"].create(
+            {"name": "MJHat", "stockist_category": "headwear"})
+        for name, other in (("Wrap", sun), ("Thong", foot), ("Cap", hat)):
+            self.env["product.template"].create({
+                "name": "MJ %s" % name,
+                "product_tag_ids": [(6, 0, [anaconda.id, other.id])],
+                "is_published": True})
+        self.stockist.range_ids = [(6, 0, [anaconda.id])]
+        labels = [label for label, _ in self.stockist._range_groups()]
+        self.assertEqual(labels, ["Sunglasses", "Headwear", "Footwear"])
+        self.assertIn("sunglasses, headwear and footwear",
+                      self.stockist._meta_description())
+
+    def test_strip_spreads_across_categories_not_one_bucket(self):
+        """24 products from one retailer tag must not all be sunglasses."""
+        anaconda = self.env["product.tag"].create({"name": "Anaconda2"})
+        sun = self.env["product.tag"].create(
+            {"name": "MJ59x", "stockist_category": "sunglasses"})
+        foot = self.env["product.tag"].create(
+            {"name": "MJFootx", "stockist_category": "footwear"})
+        for i in range(40):
+            self.env["product.template"].create({
+                "name": "AAA Sun %02d" % i, "is_published": True,
+                "product_tag_ids": [(6, 0, [anaconda.id, sun.id])]})
+        boot = self.env["product.template"].create({
+            "name": "ZZZ Boot", "is_published": True,
+            "product_tag_ids": [(6, 0, [anaconda.id, foot.id])]})
+        self.stockist.range_ids = [(6, 0, [anaconda.id])]
+        self.assertIn(boot, self.stockist.product_ids,
+                      "footwear was crowded out by the larger category")
+
+    def test_categories_cover_all_stock_not_just_the_strip(self):
+        """The strip is capped at 24; the badges describe everything stocked."""
+        retailer = self.env["product.tag"].create({"name": "Anaconda3"})
+        sun = self.env["product.tag"].create(
+            {"name": "MJ69x", "stockist_category": "sunglasses"})
+        rare = self.env["product.tag"].create(
+            {"name": "MJShirtx", "stockist_category": "apparel"})
+        for i in range(40):
+            self.env["product.template"].create({
+                "name": "Sun %02d" % i, "is_published": True,
+                "product_tag_ids": [(6, 0, [retailer.id, sun.id])]})
+        self.env["product.template"].create({
+            "name": "zzz Shirt", "is_published": True,
+            "product_tag_ids": [(6, 0, [retailer.id, rare.id])]})
+        self.stockist.range_ids = [(6, 0, [retailer.id])]
+        self.assertIn("Apparel", [l for l, _ in self.stockist._range_groups()])

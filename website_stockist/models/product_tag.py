@@ -16,7 +16,7 @@ from odoo import api, fields, models
 NAME_HINTS = (
     ("sunglasses", ("mjsun", "mj39", "mj49", "mj59", "mj69", "mj79", "mj89", "mj99")),
     ("footwear", ("mjfoot", "mjpluggers", "mjfishshoe", "mjnobbies")),
-    ("hats", ("mjhat",)),
+    ("headwear", ("mjhat", "hats", "caps", "beanie", "visor")),
     ("apparel", ("mjshirt",)),
 )
 
@@ -28,7 +28,7 @@ class ProductTag(models.Model):
         [
             ("sunglasses", "Sunglasses"),
             ("footwear", "Footwear"),
-            ("hats", "Hats"),
+            ("headwear", "Headwear"),
             ("apparel", "Apparel"),
             ("accessories", "Accessories"),
         ],
