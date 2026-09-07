@@ -22,14 +22,14 @@ Key points
 * Per-record SEO metadata via ``website.seo.metadata``.
 * Stockists appear in the XML sitemap of every website they are assigned to.
 """,
-    "version": "18.0.4.2.0",
+    "version": "18.0.5.0.0",
     "category": "Website",
     "author": "BrightEyes Group",
     "license": "OPL-1",
     "depends": [
         "website",
         "mail",
-        # range_ids is a many2many to product.tag, which the product module
+        # stockist_tag_ids is a many2many to product.tag, which the product module
         # owns. website does not pull product in, so without this the registry
         # build depends on load order rather than on anything declared.
         "product",

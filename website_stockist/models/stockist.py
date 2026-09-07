@@ -146,18 +146,24 @@ class WebsiteStockist(models.Model):
         help="Set to Google when the photo came from the listing, so a later sync "
              "knows it may replace it. A photo uploaded here is never overwritten.",
     )
-    # The relation table and column names are deliberately unchanged from when
-    # this was called brand_ids: an m2m is stored by table, not by field name,
-    # so the rename carries every existing row across without a migration.
-    range_ids = fields.Many2many(
+    # The relation table and column names have never changed through two
+    # renames — brand_ids, then stockist_tag_ids, now this. An m2m is stored by table
+    # rather than by field name, so each rename carried every existing row
+    # across with no migration.
+    stockist_tag_ids = fields.Many2many(
         "product.tag",
         "website_stockist_product_tag_rel",
         "stockist_id",
         "tag_id",
-        string="Ranges stocked",
-        help="Mangrove Jacks is one brand; MJ59 and MJ89 are ranges within it. "
-             "Only tick a range this stockist genuinely carries — a locator that "
-             "lists stock a store does not hold sends customers to a dead end.",
+        string="Stockist tags",
+        help="The tag that names this stockist on a product — BER, Anaconda. "
+             "Tag a product with it and this stockist may show that product; "
+             "leave it off and the product never appears here. Stockists carry "
+             "different parts of the range, and this is what keeps each page "
+             "honest about which part.\n\n"
+             "The categories shown to a customer are not read from this tag. "
+             "They come from the products it selects, so the page can never "
+             "claim a category the stock does not support.",
     )
     product_ids = fields.Many2many(
         "product.template",
@@ -214,7 +220,7 @@ class WebsiteStockist(models.Model):
     def _stock_domain(self):
         """Products this stockist carries: published, sellable, on its websites."""
         self.ensure_one()
-        domain = [("product_tag_ids", "in", self.range_ids.ids),
+        domain = [("product_tag_ids", "in", self.stockist_tag_ids.ids),
                   ("is_published", "=", True),
                   ("sale_ok", "=", True),
                   ("active", "=", True)]
@@ -240,7 +246,7 @@ class WebsiteStockist(models.Model):
         capped at 24 and the categories describe everything stocked.
         """
         self.ensure_one()
-        if not self.range_ids:
+        if not self.stockist_tag_ids:
             return {}
         products = self.env["product.template"].search(self._stock_domain())
         by_category = {}
@@ -251,7 +257,7 @@ class WebsiteStockist(models.Model):
                 by_category[tag.stockist_category] |= tag
         return by_category
 
-    def _range_groups(self):
+    def _category_groups(self):
         """[(label, tag recordset)] — the categories a customer would recognise.
 
         Nobody outside the business knows what MJ39 is; they know "Sunglasses".
@@ -336,7 +342,7 @@ class WebsiteStockist(models.Model):
         base = self.env["website"].get_current_website().get_base_url()
         return "%s/web/image/website.stockist/%s/%s" % (base.rstrip("/"), self.id, field)
 
-    @api.depends("range_ids", "website_ids")
+    @api.depends("stockist_tag_ids", "website_ids")
     def _compute_product_ids(self):
         """A spread of what this stockist carries, capped at PRODUCT_DISPLAY_LIMIT.
 
@@ -353,7 +359,7 @@ class WebsiteStockist(models.Model):
         """
         Product = self.env["product.template"]
         for stockist in self:
-            if not stockist.range_ids:
+            if not stockist.stockist_tag_ids:
                 stockist.product_ids = False
                 continue
 

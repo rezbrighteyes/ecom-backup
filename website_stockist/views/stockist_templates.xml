@@ -79,8 +79,8 @@
                                                 <a t-attf-href="tel:#{stockist.phone.replace(' ', '')}"
                                                    t-esc="stockist.phone"/>
                                             </p>
-                                            <p t-if="stockist._range_groups()" class="small text-muted mb-0">
-                                                <t t-foreach="stockist._range_groups()" t-as="group"><t t-esc="group[0]"/><t t-if="not group_last">, </t></t>
+                                            <p t-if="stockist._category_groups()" class="small text-muted mb-0">
+                                                <t t-foreach="stockist._category_groups()" t-as="group"><t t-esc="group[0]"/><t t-if="not group_last">, </t></t>
                                             </p>
                                         </div>
                                     </div>
@@ -180,11 +180,11 @@
                                 </ul>
                             </t>
 
-                            <t t-set="range_groups" t-value="stockist._range_groups()"/>
-                            <t t-if="range_groups">
+                            <t t-set="category_groups" t-value="stockist._category_groups()"/>
+                            <t t-if="category_groups">
                                 <h2 class="h5 mt-4">Stocked here</h2>
                                 <ul class="list-inline">
-                                    <li t-foreach="range_groups" t-as="group"
+                                    <li t-foreach="category_groups" t-as="group"
                                         class="list-inline-item mb-1">
                                         <a class="badge text-bg-light text-decoration-none"
                                            t-attf-href="/shop?tags=#{','.join(str(i) for i in group[1].ids)}"
@@ -227,7 +227,7 @@
                         <p class="small text-muted mt-2">
                             A selection of the range — stock varies by store, so call
                             <t t-esc="stockist.phone"/> to check availability.
-                            <a class="ms-1" t-attf-href="/shop?tags=#{','.join(str(i) for i in stockist.range_ids.ids)}">Browse the full range</a>
+                            <a class="ms-1" t-attf-href="/shop?tags=#{','.join(str(i) for i in stockist.stockist_tag_ids.ids)}">Browse the full range</a>
                         </p>
                     </t>
 

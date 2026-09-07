@@ -100,12 +100,12 @@
                             <field name="google_maps_url" widget="url" readonly="1"/>
                             <field name="google_sync_date"/>
                         </group>
-                        <group string="Ranges stocked">
-                            <field name="range_ids" widget="many2many_tags"
+                        <group string="Stockist tags">
+                            <field name="stockist_tag_ids" widget="many2many_tags"
                                    options="{'no_create': True}"/>
                             <field name="product_ids" widget="many2many_tags"
                                    readonly="1"
-                                   help="Published products carrying those ranges. Computed."/>
+                                   help="Every published product carrying this stockist's tag. Computed, so it follows the catalogue."/>
                         </group>
                     </group>
 
@@ -158,7 +158,7 @@
             <search string="Stockists">
                 <field name="name" filter_domain="['|','|',('name','ilike',self),('city','ilike',self),('store_code','ilike',self)]"/>
                 <field name="state_id"/>
-                <field name="range_ids"/>
+                <field name="stockist_tag_ids"/>
                 <field name="website_ids"/>
                 <filter name="published" string="Published" domain="[('is_published','=',True)]"/>
                 <filter name="unpublished" string="Unpublished" domain="[('is_published','=',False)]"/>

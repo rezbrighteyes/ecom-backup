@@ -111,21 +111,20 @@ In the page's Store JSON-LD they stay separate: the photo is `image`, the logo i
 Google reads those as different claims, and a shopfront photo in the logo slot is worse than
 no logo at all.
 
-### Ranges and the products in them
+### One tag per stockist decides what that stockist may show
 
-Mangrove Jacks is **one brand**; MJ59, MJ89, MJ49 and MJFoot are **ranges within
-it**. The field was called `brand_ids` and said "Brands stocked", which was wrong on
-both counts — it is now `range_ids`, "Ranges stocked". The m2m relation table and its
-columns are unchanged (`website_stockist_product_tag_rel`), so every existing row
-carried across without a migration.
+`stockist_tag_ids` holds **the tag that names the stockist on a product** — `BER`,
+`Anaconda`. Tag a product with it and that stockist may show the product; leave it off
+and the product never appears on that page. Stockists carry different parts of the
+range, and this is what keeps each page honest about which part.
 
-Ticking a range no longer just prints its code. `product_ids` is computed from
-`range_ids` and the page renders those products with their images, linked to their own
-product pages.
+It is a many2many, so a stockist can hold more than one tag, and the field has been
+renamed twice (`brand_ids`, then `range_ids`) without ever moving data: an m2m is stored
+by relation table, not by field name, so the table and its columns are unchanged.
 
-**The filtering lives in the module, not in how you tag.** Nobody should have to keep
-tags tidy so a public page stays honest — tag what is true about the product, and the
-compute decides what is fit to show. Three filters:
+`product_ids` is computed from it. **The filtering lives in the module, not in how you
+tag.** Nobody should have to keep tags tidy so a public page stays honest — tag what is
+true about the product, and the compute decides what is fit to show:
 
 | Filter | Why |
 |---|---|
@@ -133,23 +132,17 @@ compute decides what is fit to show. Three filters:
 | `sale_ok` and `active` | an archived or non-sellable product keeps its tags and would otherwise reappear after being deliberately withdrawn |
 | `website_id` | `is_published` is **one boolean for the whole database**, not one per site — without this, a product published only on another site in the group would be offered by a Mangrove Jacks page |
 
-The five ranges hold **299 published products** between them, so which ones show matters
-more than how many. Products are drawn evenly from each range in the merchandiser's own
-`website_sequence` order, then topped up from the whole set if a range is thin. Sorting
-by name instead would return 24 products all beginning with the same letter, all from
-whichever range sorts first. The cap is `PRODUCT_DISPLAY_LIMIT` (24).
+The strip is capped at `PRODUCT_DISPLAY_LIMIT` (24) and drawn evenly across categories in
+the merchandiser's own `website_sequence` order, then topped up if a category is thin.
+Ordering by name instead would return 24 products all beginning with the same letter.
 
-Because 24 of 299 needs an exit, each range badge links to `/shop?tags=<id>` and the
-strip carries a "Browse the full range" link with every tag. Both forms were checked
-against the live site — the multi-tag URL returns a different product set from a
+Because 24 of several hundred needs an exit, each category badge links to
+`/shop?tags=<ids>` and the strip carries a "Browse the full range" link. Both forms were
+checked against the live site — the multi-tag URL returns a different product set from a
 single-tag one, so the parameter is genuinely honoured.
 
-That is also what goes into `makesOffer` now. Previously the JSON-LD offered the tag,
-so a parser was told the store sells a thing called "MJ59". It now offers each product
-by name with its URL, which is a claim that means something.
-
-The strip scrolls horizontally rather than auto-scrolling. A marquee moves a product
-name out from under whoever is reading it and a touch user cannot pause one mid-read;
+The strip scrolls horizontally rather than auto-scrolling. A marquee moves a product name
+out from under whoever is reading it and a touch user cannot pause one mid-read;
 scroll-snap gets the same compactness and stays under the reader's control.
 
 ### The page says Sunglasses, not MJ39

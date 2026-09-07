@@ -305,7 +305,7 @@ class TestOpeningHoursSpecification(TransactionCase):
         product = self.env["product.template"].create({
             "name": "MJ59 Polarised", "product_tag_ids": [(6, 0, [tag.id])],
             "is_published": True})
-        self.stockist.range_ids = [(6, 0, [tag.id])]
+        self.stockist.stockist_tag_ids = [(6, 0, [tag.id])]
         self.assertIn(product, self.stockist.product_ids)
 
     def test_unpublished_products_are_not_listed(self):
@@ -314,11 +314,11 @@ class TestOpeningHoursSpecification(TransactionCase):
         hidden = self.env["product.template"].create({
             "name": "MJ89 Draft", "product_tag_ids": [(6, 0, [tag.id])],
             "is_published": False})
-        self.stockist.range_ids = [(6, 0, [tag.id])]
+        self.stockist.stockist_tag_ids = [(6, 0, [tag.id])]
         self.assertNotIn(hidden, self.stockist.product_ids)
 
     def test_no_ranges_means_no_products(self):
-        self.stockist.range_ids = [(5, 0, 0)]
+        self.stockist.stockist_tag_ids = [(5, 0, 0)]
         self.assertFalse(self.stockist.product_ids)
 
     def test_offers_name_products_not_ranges(self):
@@ -328,7 +328,7 @@ class TestOpeningHoursSpecification(TransactionCase):
         self.env["product.template"].create({
             "name": "MJ49 Wrap", "product_tag_ids": [(6, 0, [tag.id])],
             "is_published": True})
-        self.stockist.range_ids = [(6, 0, [tag.id])]
+        self.stockist.stockist_tag_ids = [(6, 0, [tag.id])]
         data = json.loads(self.stockist._json_ld("https://example.com").strip())
         names = [o["itemOffered"]["name"] for o in data["makesOffer"]]
         self.assertIn("MJ49 Wrap", names)
@@ -340,7 +340,7 @@ class TestOpeningHoursSpecification(TransactionCase):
         gone = self.env["product.template"].create({
             "name": "MJ39 Withdrawn", "product_tag_ids": [(6, 0, [tag.id])],
             "is_published": True})
-        self.stockist.range_ids = [(6, 0, [tag.id])]
+        self.stockist.stockist_tag_ids = [(6, 0, [tag.id])]
         self.assertIn(gone, self.stockist.product_ids)
         gone.active = False
         self.stockist.invalidate_recordset(["product_ids"])
@@ -351,7 +351,7 @@ class TestOpeningHoursSpecification(TransactionCase):
         internal = self.env["product.template"].create({
             "name": "MJFoot Display Stand", "product_tag_ids": [(6, 0, [tag.id])],
             "is_published": True, "sale_ok": False})
-        self.stockist.range_ids = [(6, 0, [tag.id])]
+        self.stockist.stockist_tag_ids = [(6, 0, [tag.id])]
         self.assertNotIn(internal, self.stockist.product_ids)
 
     def test_product_from_another_website_is_not_listed(self):
@@ -366,7 +366,7 @@ class TestOpeningHoursSpecification(TransactionCase):
             "name": "MJ89 Everywhere", "product_tag_ids": [(6, 0, [tag.id])],
             "is_published": True, "website_id": False})
         self.stockist.website_ids = [(6, 0, [mine.id])]
-        self.stockist.range_ids = [(6, 0, [tag.id])]
+        self.stockist.stockist_tag_ids = [(6, 0, [tag.id])]
         self.assertNotIn(theirs, self.stockist.product_ids)
         self.assertIn(shared, self.stockist.product_ids)
 
@@ -381,7 +381,7 @@ class TestOpeningHoursSpecification(TransactionCase):
         only = self.env["product.template"].create({
             "name": "ZZZ Small One", "product_tag_ids": [(6, 0, [small.id])],
             "is_published": True})
-        self.stockist.range_ids = [(6, 0, [big.id, small.id])]
+        self.stockist.stockist_tag_ids = [(6, 0, [big.id, small.id])]
         products = self.stockist.product_ids
         self.assertIn(only, products, "the thin range was crowded out")
         self.assertLessEqual(len(products), self.stockist.PRODUCT_DISPLAY_LIMIT)
@@ -397,7 +397,7 @@ class TestOpeningHoursSpecification(TransactionCase):
         self.env["product.template"].create({
             "name": "Small2 only", "product_tag_ids": [(6, 0, [small.id])],
             "is_published": True})
-        self.stockist.range_ids = [(6, 0, [big.id, small.id])]
+        self.stockist.stockist_tag_ids = [(6, 0, [big.id, small.id])]
         self.assertEqual(len(self.stockist.product_ids),
                          self.stockist.PRODUCT_DISPLAY_LIMIT)
 
@@ -406,7 +406,7 @@ class TestOpeningHoursSpecification(TransactionCase):
             {"name": "MJ49", "stockist_category": "sunglasses"})
         hat = self.env["product.tag"].create(
             {"name": "MJHat", "stockist_category": "headwear"})
-        self.stockist.range_ids = [(6, 0, [sun.id, hat.id])]
+        self.stockist.stockist_tag_ids = [(6, 0, [sun.id, hat.id])]
         self.stockist.city, self.stockist.zip = "Morayfield", "4506"
         description = self.stockist._meta_description()
         self.assertIn("sunglasses and headwear", description)
@@ -418,13 +418,13 @@ class TestOpeningHoursSpecification(TransactionCase):
             {"name": "MJPluggers", "stockist_category": "footwear"})
         sun = self.env["product.tag"].create(
             {"name": "MJ59", "stockist_category": "sunglasses"})
-        self.stockist.range_ids = [(6, 0, [foot.id, sun.id])]
+        self.stockist.stockist_tag_ids = [(6, 0, [foot.id, sun.id])]
         self.assertIn("sunglasses and footwear", self.stockist._meta_description())
 
     def test_unclassified_range_adds_no_word(self):
         """A tag nobody has categorised must not put a blank in the sentence."""
         plain = self.env["product.tag"].create({"name": "MJMystery"})
-        self.stockist.range_ids = [(6, 0, [plain.id])]
+        self.stockist.stockist_tag_ids = [(6, 0, [plain.id])]
         description = self.stockist._meta_description()
         self.assertIn("Find Mangrove Jacks sunglasses at", description)
         self.assertNotIn("  ", description)
@@ -437,7 +437,7 @@ class TestOpeningHoursSpecification(TransactionCase):
             "name": "A Very Long Retailer Name At A Large Shopping Centre",
             "city": "Somewhere With A Long Name", "zip": "4000",
             "phone": "(07) 1234 5678",
-            "range_ids": [(6, 0, [t.id for t in tags])]})
+            "stockist_tag_ids": [(6, 0, [t.id for t in tags])]})
         self.assertLessEqual(len(self.stockist._meta_description()), 155)
 
     def test_phone_is_shortened_rather_than_dropped(self):
@@ -448,7 +448,7 @@ class TestOpeningHoursSpecification(TransactionCase):
         self.stockist.write({
             "name": "Anaconda Adventure HQ Chullora Superstore",
             "city": "Chullora", "zip": "2190", "phone": "(02) 9782 0276",
-            "range_ids": [(6, 0, [t.id for t in tags])]})
+            "stockist_tag_ids": [(6, 0, [t.id for t in tags])]})
         description = self.stockist._meta_description()
         self.assertIn("(02) 9782 0276", description)
         self.assertLessEqual(len(description), 155)
@@ -458,8 +458,8 @@ class TestOpeningHoursSpecification(TransactionCase):
         tags = [self.env["product.tag"].create(
             {"name": n, "stockist_category": "sunglasses"})
             for n in ("MJ39", "MJ49", "MJ59")]
-        self.stockist.range_ids = [(6, 0, [t.id for t in tags])]
-        groups = self.stockist._range_groups()
+        self.stockist.stockist_tag_ids = [(6, 0, [t.id for t in tags])]
+        groups = self.stockist._category_groups()
         self.assertEqual([label for label, _ in groups], ["Sunglasses"])
         self.assertEqual(len(groups[0][1]), 3, "all three must be behind the one badge")
 
@@ -470,8 +470,8 @@ class TestOpeningHoursSpecification(TransactionCase):
             {"name": "MJNobbies", "stockist_category": "footwear"})
         sun = self.env["product.tag"].create(
             {"name": "MJ49", "stockist_category": "sunglasses"})
-        self.stockist.range_ids = [(6, 0, [pluggers.id, nobbies.id, sun.id])]
-        labels = [label for label, _ in self.stockist._range_groups()]
+        self.stockist.stockist_tag_ids = [(6, 0, [pluggers.id, nobbies.id, sun.id])]
+        labels = [label for label, _ in self.stockist._category_groups()]
         self.assertEqual(labels, ["Sunglasses", "Footwear"])
 
     def test_unclassified_range_is_not_shown_but_still_sells(self):
@@ -480,8 +480,8 @@ class TestOpeningHoursSpecification(TransactionCase):
         product = self.env["product.template"].create({
             "name": "Mystery Item", "product_tag_ids": [(6, 0, [mystery.id])],
             "is_published": True})
-        self.stockist.range_ids = [(6, 0, [mystery.id])]
-        self.assertEqual(self.stockist._range_groups(), [])
+        self.stockist.stockist_tag_ids = [(6, 0, [mystery.id])]
+        self.assertEqual(self.stockist._category_groups(), [])
         self.assertIn(product, self.stockist.product_ids)
 
     def test_one_retailer_tag_still_yields_every_category(self):
@@ -502,8 +502,8 @@ class TestOpeningHoursSpecification(TransactionCase):
                 "name": "MJ %s" % name,
                 "product_tag_ids": [(6, 0, [anaconda.id, other.id])],
                 "is_published": True})
-        self.stockist.range_ids = [(6, 0, [anaconda.id])]
-        labels = [label for label, _ in self.stockist._range_groups()]
+        self.stockist.stockist_tag_ids = [(6, 0, [anaconda.id])]
+        labels = [label for label, _ in self.stockist._category_groups()]
         self.assertEqual(labels, ["Sunglasses", "Headwear", "Footwear"])
         self.assertIn("sunglasses, headwear and footwear",
                       self.stockist._meta_description())
@@ -522,7 +522,7 @@ class TestOpeningHoursSpecification(TransactionCase):
         boot = self.env["product.template"].create({
             "name": "ZZZ Boot", "is_published": True,
             "product_tag_ids": [(6, 0, [anaconda.id, foot.id])]})
-        self.stockist.range_ids = [(6, 0, [anaconda.id])]
+        self.stockist.stockist_tag_ids = [(6, 0, [anaconda.id])]
         self.assertIn(boot, self.stockist.product_ids,
                       "footwear was crowded out by the larger category")
 
@@ -540,8 +540,8 @@ class TestOpeningHoursSpecification(TransactionCase):
         self.env["product.template"].create({
             "name": "zzz Shirt", "is_published": True,
             "product_tag_ids": [(6, 0, [retailer.id, rare.id])]})
-        self.stockist.range_ids = [(6, 0, [retailer.id])]
-        self.assertIn("Apparel", [l for l, _ in self.stockist._range_groups()])
+        self.stockist.stockist_tag_ids = [(6, 0, [retailer.id])]
+        self.assertIn("Apparel", [l for l, _ in self.stockist._category_groups()])
 
     def test_social_image_prefers_the_shopfront(self):
         import base64
@@ -576,3 +576,38 @@ class TestOpeningHoursSpecification(TransactionCase):
         self.stockist.is_published = False
         locs = [e["loc"] for e in _sitemap_stockists(self.env, None, None)]
         self.assertNotIn(self.stockist.website_url, locs)
+
+    def test_a_stockist_tag_limits_a_store_to_its_own_range(self):
+        """Two stockists, different tags, different stock — the BER/Anaconda shape.
+
+        Stockists carry different parts of the range. Tagging the product with
+        the stockist's own tag is what keeps each page honest about which part,
+        and a product left untagged for a stockist never appears on its page.
+        """
+        ber = self.env["product.tag"].create({"name": "BERx"})
+        anaconda = self.env["product.tag"].create({"name": "Anacondax"})
+        sun = self.env["product.tag"].create(
+            {"name": "MJ49y", "stockist_category": "sunglasses"})
+        foot = self.env["product.tag"].create(
+            {"name": "MJPluggersy", "stockist_category": "footwear"})
+
+        both = self.env["product.template"].create({
+            "name": "Sold everywhere", "is_published": True,
+            "product_tag_ids": [(6, 0, [ber.id, anaconda.id, sun.id])]})
+        ber_only = self.env["product.template"].create({
+            "name": "BER exclusive", "is_published": True,
+            "product_tag_ids": [(6, 0, [ber.id, foot.id])]})
+
+        other = self.stockist.copy({"name": "Anaconda Somewhere"})
+        self.stockist.stockist_tag_ids = [(6, 0, [ber.id])]
+        other.stockist_tag_ids = [(6, 0, [anaconda.id])]
+
+        self.assertIn(both, self.stockist.product_ids)
+        self.assertIn(ber_only, self.stockist.product_ids)
+        self.assertIn(both, other.product_ids)
+        self.assertNotIn(ber_only, other.product_ids,
+                         "a product not tagged for this stockist must not appear")
+
+        # And the categories follow the stock, so only one of them claims footwear.
+        self.assertIn("Footwear", [l for l, _ in self.stockist._category_groups()])
+        self.assertNotIn("Footwear", [l for l, _ in other._category_groups()])
