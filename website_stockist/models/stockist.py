@@ -209,23 +209,61 @@ class WebsiteStockist(models.Model):
     # ------------------------------------------------------------------
     # Compute / constraints
     # ------------------------------------------------------------------
-    @api.depends("range_ids")
+    @api.depends("range_ids", "website_ids")
     def _compute_product_ids(self):
-        """Published products carrying any of this stockist's ranges.
+        """Published, sellable products carrying this stockist's ranges.
 
-        Capped: a page listing several hundred products is neither useful to a
-        reader nor a good structured-data payload, and the cap keeps one badly
-        tagged range from swamping the page.
+        The filtering lives here on purpose. Nobody should have to curate which
+        products carry a range tag so that the stockist page stays honest — tag
+        whatever is true about the product, and this decides what is fit to show.
+
+        Three filters, each earning its place:
+
+        * ``is_published`` — a stockist page must never advertise something with
+          no page to send the reader to.
+        * ``sale_ok`` and ``active`` — an archived or non-sellable product can
+          still hold its tags, and would otherwise reappear here after being
+          deliberately withdrawn.
+        * ``website_id`` — ``is_published`` is one boolean for the whole
+          database, not per site. Without this a product published only on
+          another site in the group would be offered by a Mangrove Jacks page.
+
+        The five ranges hold 299 published products between them, so what gets
+        shown matters more than how many. Products are taken evenly from each
+        range in the merchandiser's own website order, rather than 24 alphabetical
+        ones that would all begin with the same letter and all come from
+        whichever range sorts first.
         """
+        Product = self.env["product.template"]
         for stockist in self:
-            if not stockist.range_ids:
+            ranges = stockist.range_ids
+            if not ranges:
                 stockist.product_ids = False
                 continue
-            stockist.product_ids = self.env["product.template"].search(
-                [("product_tag_ids", "in", stockist.range_ids.ids),
-                 ("is_published", "=", True)],
-                order="name", limit=self.PRODUCT_DISPLAY_LIMIT,
-            )
+
+            base = [("is_published", "=", True),
+                    ("sale_ok", "=", True),
+                    ("active", "=", True)]
+            if stockist.website_ids:
+                base.append(("website_id", "in", [False] + stockist.website_ids.ids))
+
+            per_range = max(1, self.PRODUCT_DISPLAY_LIMIT // len(ranges))
+            picked = Product.browse()
+            for tag in ranges:
+                picked |= Product.search(
+                    base + [("product_tag_ids", "in", tag.ids)],
+                    order="website_sequence, name", limit=per_range,
+                )
+            # Even sampling can come up short when a range is thin; top up from
+            # the whole set rather than leave the strip half empty.
+            if len(picked) < self.PRODUCT_DISPLAY_LIMIT:
+                picked |= Product.search(
+                    base + [("product_tag_ids", "in", ranges.ids),
+                            ("id", "not in", picked.ids)],
+                    order="website_sequence, name",
+                    limit=self.PRODUCT_DISPLAY_LIMIT - len(picked),
+                )
+            stockist.product_ids = picked
 
     @api.depends("street", "street2", "city", "state_id", "zip")
     def _compute_full_address(self):

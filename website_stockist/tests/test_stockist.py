@@ -333,3 +333,70 @@ class TestOpeningHoursSpecification(TransactionCase):
         names = [o["itemOffered"]["name"] for o in data["makesOffer"]]
         self.assertIn("MJ49 Wrap", names)
         self.assertNotIn("MJ49", names)
+
+    def test_archived_product_is_not_listed(self):
+        """An archived product keeps its tags and must not come back."""
+        tag = self.env["product.tag"].create({"name": "MJ39"})
+        gone = self.env["product.template"].create({
+            "name": "MJ39 Withdrawn", "product_tag_ids": [(6, 0, [tag.id])],
+            "is_published": True})
+        self.stockist.range_ids = [(6, 0, [tag.id])]
+        self.assertIn(gone, self.stockist.product_ids)
+        gone.active = False
+        self.stockist.invalidate_recordset(["product_ids"])
+        self.assertNotIn(gone, self.stockist.product_ids)
+
+    def test_non_sellable_product_is_not_listed(self):
+        tag = self.env["product.tag"].create({"name": "MJFoot"})
+        internal = self.env["product.template"].create({
+            "name": "MJFoot Display Stand", "product_tag_ids": [(6, 0, [tag.id])],
+            "is_published": True, "sale_ok": False})
+        self.stockist.range_ids = [(6, 0, [tag.id])]
+        self.assertNotIn(internal, self.stockist.product_ids)
+
+    def test_product_from_another_website_is_not_listed(self):
+        """is_published is one boolean for the database, not one per site."""
+        other = self.env["website"].create({"name": "Some Other Site"})
+        mine = self.env["website"].create({"name": "This Site"})
+        tag = self.env["product.tag"].create({"name": "MJ89"})
+        theirs = self.env["product.template"].create({
+            "name": "MJ89 Other Site Only", "product_tag_ids": [(6, 0, [tag.id])],
+            "is_published": True, "website_id": other.id})
+        shared = self.env["product.template"].create({
+            "name": "MJ89 Everywhere", "product_tag_ids": [(6, 0, [tag.id])],
+            "is_published": True, "website_id": False})
+        self.stockist.website_ids = [(6, 0, [mine.id])]
+        self.stockist.range_ids = [(6, 0, [tag.id])]
+        self.assertNotIn(theirs, self.stockist.product_ids)
+        self.assertIn(shared, self.stockist.product_ids)
+
+    def test_one_range_cannot_swamp_the_strip(self):
+        """Products are taken from each range, not 24 from whichever sorts first."""
+        big = self.env["product.tag"].create({"name": "Big"})
+        small = self.env["product.tag"].create({"name": "Small"})
+        for i in range(40):
+            self.env["product.template"].create({
+                "name": "AAA Big %02d" % i, "product_tag_ids": [(6, 0, [big.id])],
+                "is_published": True})
+        only = self.env["product.template"].create({
+            "name": "ZZZ Small One", "product_tag_ids": [(6, 0, [small.id])],
+            "is_published": True})
+        self.stockist.range_ids = [(6, 0, [big.id, small.id])]
+        products = self.stockist.product_ids
+        self.assertIn(only, products, "the thin range was crowded out")
+        self.assertLessEqual(len(products), self.stockist.PRODUCT_DISPLAY_LIMIT)
+
+    def test_a_thin_range_does_not_leave_the_strip_short(self):
+        """Even sampling tops up rather than under-filling."""
+        big = self.env["product.tag"].create({"name": "Big2"})
+        small = self.env["product.tag"].create({"name": "Small2"})
+        for i in range(40):
+            self.env["product.template"].create({
+                "name": "Big2 %02d" % i, "product_tag_ids": [(6, 0, [big.id])],
+                "is_published": True})
+        self.env["product.template"].create({
+            "name": "Small2 only", "product_tag_ids": [(6, 0, [small.id])],
+            "is_published": True})
+        self.stockist.range_ids = [(6, 0, [big.id, small.id])]
+        self.assertEqual(len(self.stockist.product_ids),
+                         self.stockist.PRODUCT_DISPLAY_LIMIT)

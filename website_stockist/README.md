@@ -120,10 +120,29 @@ columns are unchanged (`website_stockist_product_tag_rel`), so every existing ro
 carried across without a migration.
 
 Ticking a range no longer just prints its code. `product_ids` is computed from
-`range_ids` — every **published** product carrying one of those tags, capped at
-`PRODUCT_DISPLAY_LIMIT` (24) — and the page renders those products with their images,
-linked to their own product pages. Unpublished products are excluded: a stockist page
-must not advertise something with no page to send the reader to.
+`range_ids` and the page renders those products with their images, linked to their own
+product pages.
+
+**The filtering lives in the module, not in how you tag.** Nobody should have to keep
+tags tidy so a public page stays honest — tag what is true about the product, and the
+compute decides what is fit to show. Three filters:
+
+| Filter | Why |
+|---|---|
+| `is_published` | a stockist page must never advertise something with no page to link to |
+| `sale_ok` and `active` | an archived or non-sellable product keeps its tags and would otherwise reappear after being deliberately withdrawn |
+| `website_id` | `is_published` is **one boolean for the whole database**, not one per site — without this, a product published only on another site in the group would be offered by a Mangrove Jacks page |
+
+The five ranges hold **299 published products** between them, so which ones show matters
+more than how many. Products are drawn evenly from each range in the merchandiser's own
+`website_sequence` order, then topped up from the whole set if a range is thin. Sorting
+by name instead would return 24 products all beginning with the same letter, all from
+whichever range sorts first. The cap is `PRODUCT_DISPLAY_LIMIT` (24).
+
+Because 24 of 299 needs an exit, each range badge links to `/shop?tags=<id>` and the
+strip carries a "Browse the full range" link with every tag. Both forms were checked
+against the live site — the multi-tag URL returns a different product set from a
+single-tag one, so the parameter is genuinely honoured.
 
 That is also what goes into `makesOffer` now. Previously the JSON-LD offered the tag,
 so a parser was told the store sells a thing called "MJ59". It now offers each product
