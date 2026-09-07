@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!--
+            The ACL grants public and portal users read on website.stockist because
+            the /web/image/website.stockist/<id>/image_1920 route checks model access
+            before serving a photo. Without the ACL, stockist photos 403.
+
+            That alone would also let a public user read UNPUBLISHED stockists. This
+            rule closes that at the row level: public and portal see published records
+            only, whatever route they arrive through.
+        -->
+        <record id="rule_website_stockist_public" model="ir.rule">
+            <field name="name">Stockist: public sees published only</field>
+            <field name="model_id" ref="model_website_stockist"/>
+            <field name="domain_force">[('is_published', '=', True)]</field>
+            <field name="groups" eval="[(4, ref('base.group_public')), (4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Internal users see everything; the controllers use sudo() and re-check
+             publication themselves, so this does not widen the public surface. -->
+        <record id="rule_website_stockist_internal" model="ir.rule">
+            <field name="name">Stockist: internal users see all</field>
+            <field name="model_id" ref="model_website_stockist"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+    </data>
+</odoo>

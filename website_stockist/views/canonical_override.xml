@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        website.layout emits <link rel="canonical"> in <head> unconditionally.
+        On the stockist pages we sometimes need a different canonical:
+
+          * a cross-domain one, when another website owns the stockist page;
+          * the unfiltered /stockists URL, on a ?state= filtered index.
+
+        The controller passes that URL as `stockist_canonical`, and the template
+        emits it into <head>. This override suppresses the layout's own canonical
+        exactly when we have provided one, so the page carries a single canonical
+        rather than two (two are read by Google as none).
+
+        When `stockist_canonical` is False — an ordinary single-website stockist
+        page, or the unfiltered index — the layout's self-canonical is left in
+        place, which is what those pages should have.
+
+        NOTE: this xpath adds a t-if to the layout's canonical link, which the
+        live 18.0 website.layout carries without one. If a future core change
+        gives that link its own t-if, this attribute replaces it — re-check on
+        upgrade.
+    -->
+    <template id="stockist_suppress_default_canonical"
+              inherit_id="website.layout"
+              name="Stockist: suppress default canonical when we set our own">
+        <xpath expr="//link[@rel='canonical']" position="attributes">
+            <attribute name="t-if">not stockist_canonical</attribute>
+        </xpath>
+    </template>
+</odoo>

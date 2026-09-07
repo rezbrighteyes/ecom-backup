@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_website_stockist_public,website.stockist.public,model_website_stockist,base.group_public,1,0,0,0
+access_website_stockist_portal,website.stockist.portal,model_website_stockist,base.group_portal,1,0,0,0
+access_website_stockist_user,website.stockist.user,model_website_stockist,base.group_user,1,0,0,0
+access_website_stockist_designer,website.stockist.designer,model_website_stockist,website.group_website_designer,1,1,1,1
+access_stockist_google_sync,website.stockist.google.sync,model_website_stockist_google_sync,website.group_website_designer,1,1,1,1

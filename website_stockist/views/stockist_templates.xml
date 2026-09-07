@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         INDEX  /stockists
+         Every stockist link is a plain server-rendered <a href>.
+         ============================================================ -->
+    <template id="stockist_index" name="Stockists">
+        <t t-call="website.layout">
+            <t t-set="additional_title">Stockists</t>
+
+            <!-- website.layout emits its own <link rel="canonical"> in <head>
+                 unconditionally. We must not add a second one — two canonicals
+                 are read as none. So we emit ours into `head` AND suppress the
+                 layout's via canonical_override.xml, which keys off this same
+                 stockist_canonical var. Set on filtered views only, pointing
+                 back at the unfiltered index. -->
+            <t t-if="stockist_canonical">
+                <t t-set="head">
+                    <t t-out="head or ''"/>
+                    <link rel="canonical" t-att-href="stockist_canonical"/>
+                </t>
+            </t>
+
+            <div id="wrap" class="oe_structure o_website_stockist">
+                <div class="container py-4">
+
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb bg-transparent px-0">
+                            <li class="breadcrumb-item"><a href="/">Home</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Stockists</li>
+                        </ol>
+                    </nav>
+
+                    <h1>Stockists</h1>
+                    <p t-if="total" class="text-muted">
+                        <t t-esc="total"/> <t t-esc="'stockist' if total == 1 else 'stockists'"/>.
+                    </p>
+
+                    <!-- State filter. Real links, so each is crawlable. -->
+                    <div t-if="states" class="mb-4 o_stockist_filters">
+                        <a href="/stockists"
+                           t-attf-class="btn btn-sm me-1 mb-1 #{'btn-primary' if not active_state else 'btn-outline-primary'}">
+                            All
+                        </a>
+                        <t t-foreach="states" t-as="st">
+                            <!-- rel=nofollow: these are filtered subsets, kept
+                                 usable for people without spending crawl budget
+                                 on them. The highlight test must use the same
+                                 value the href does, or a state with no code
+                                 never lights up. -->
+                            <a t-attf-href="/stockists?state=#{st.code or st.name}"
+                               rel="nofollow"
+                               t-attf-class="btn btn-sm me-1 mb-1 #{'btn-primary' if active_state and (st.code or st.name or '').lower() == active_state.lower() else 'btn-outline-primary'}"
+                               t-esc="st.name"/>
+                        </t>
+                    </div>
+
+                    <t t-if="not stockists">
+                        <p class="alert alert-info">No stockists are listed yet.</p>
+                    </t>
+
+                    <t t-foreach="grouped" t-as="group">
+                        <t t-set="state" t-value="group[0]"/>
+                        <t t-set="records" t-value="group[1]"/>
+                        <h2 t-if="state" class="h4 mt-4" t-esc="state.name"/>
+                        <h2 t-if="not state" class="h4 mt-4">Other</h2>
+
+                        <div class="row">
+                            <t t-foreach="records" t-as="stockist">
+                                <div class="col-12 col-md-6 col-lg-4 mb-3">
+                                    <div class="card h-100 o_stockist_card">
+                                        <div class="card-body">
+                                            <h3 class="h6 card-title mb-1">
+                                                <a t-att-href="stockist.website_url" t-esc="stockist.name"/>
+                                            </h3>
+                                            <p class="small text-muted mb-2" t-esc="stockist.full_address"/>
+                                            <p t-if="stockist.phone" class="small mb-1">
+                                                <a t-attf-href="tel:#{stockist.phone.replace(' ', '')}"
+                                                   t-esc="stockist.phone"/>
+                                            </p>
+                                            <p t-if="stockist.brand_ids" class="small text-muted mb-0">
+                                                <t t-foreach="stockist.brand_ids" t-as="brand"><t t-esc="brand.name"/><t t-if="not brand_last">, </t></t>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </t>
+
+                    <div t-if="pager" class="mt-4">
+                        <t t-call="website.pager"/>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ItemList, built in the controller. QWeb has no `json` in scope,
+                 and hand-concatenating JSON in a template ships invalid markup.
+                 t-out, not t-esc: the value is Markup and must reach the page
+                 unescaped, or every quote becomes an entity and the JSON dies. -->
+            <script t-if="json_ld" type="application/ld+json" t-out="json_ld"/>
+        </t>
+    </template>
+
+
+    <!-- ============================================================
+         DETAIL  /stockists/<slug>
+         ============================================================ -->
+    <template id="stockist_detail" name="Stockist">
+        <t t-call="website.layout">
+            <t t-set="additional_title" t-value="stockist.name"/>
+
+            <!-- Cross-domain canonical, set only when another website owns this
+                 page. Emitted into `head`; the layout's own unconditional
+                 canonical is suppressed by canonical_override.xml whenever
+                 stockist_canonical is set, so exactly one survives. On a
+                 single-website stockist this var is False, the layout's
+                 self-canonical stays, and that is correct. -->
+            <t t-if="stockist_canonical">
+                <t t-set="head">
+                    <t t-out="head or ''"/>
+                    <link rel="canonical" t-att-href="stockist_canonical"/>
+                </t>
+            </t>
+
+            <div id="wrap" class="oe_structure o_website_stockist_detail">
+                <div class="container py-4">
+
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb bg-transparent px-0">
+                            <li class="breadcrumb-item"><a href="/">Home</a></li>
+                            <li class="breadcrumb-item"><a href="/stockists">Stockists</a></li>
+                            <li class="breadcrumb-item active" aria-current="page" t-esc="stockist.name"/>
+                        </ol>
+                    </nav>
+
+                    <div class="row">
+                        <div class="col-lg-7">
+                            <h1 t-esc="stockist.name"/>
+
+                            <address class="mt-3">
+                                <span t-if="stockist.street" t-esc="stockist.street"/><br t-if="stockist.street"/>
+                                <span t-if="stockist.street2" t-esc="stockist.street2"/><br t-if="stockist.street2"/>
+                                <span t-if="stockist.city" t-esc="stockist.city"/>
+                                <span t-if="stockist.state_id" t-esc="stockist.state_id.code or stockist.state_id.name"/>
+                                <span t-if="stockist.zip" t-esc="stockist.zip"/>
+                            </address>
+
+                            <p t-if="stockist.phone">
+                                <strong>Phone: </strong>
+                                <a t-attf-href="tel:#{stockist.phone.replace(' ', '')}" t-esc="stockist.phone"/>
+                            </p>
+                            <p t-if="stockist.email">
+                                <strong>Email: </strong>
+                                <a t-attf-href="mailto:#{stockist.email}" t-esc="stockist.email"/>
+                            </p>
+                            <p t-if="stockist.stockist_url">
+                                <a t-att-href="stockist.stockist_url" rel="noopener" target="_blank">
+                                    Visit store page
+                                </a>
+                            </p>
+                            <p t-if="stockist.google_maps_url">
+                                <a t-att-href="stockist.google_maps_url" rel="noopener" target="_blank">
+                                    Directions
+                                </a>
+                            </p>
+
+                            <t t-if="opening_hours">
+                                <h2 class="h5 mt-4">Opening hours</h2>
+                                <ul class="list-unstyled">
+                                    <li t-foreach="opening_hours" t-as="line" t-esc="line"/>
+                                </ul>
+                            </t>
+
+                            <t t-if="stockist.brand_ids">
+                                <h2 class="h5 mt-4">Brands stocked</h2>
+                                <ul class="list-inline">
+                                    <li t-foreach="stockist.brand_ids" t-as="brand"
+                                        class="list-inline-item badge text-bg-light"
+                                        t-esc="brand.name"/>
+                                </ul>
+                            </t>
+
+                            <div t-if="stockist.description" class="mt-4" t-field="stockist.description"/>
+                        </div>
+
+                        <div class="col-lg-5">
+                            <img t-if="stockist.image_1920"
+                                 t-attf-src="/web/image/website.stockist/#{stockist.id}/image_1920"
+                                 t-att-alt="stockist.name"
+                                 class="img-fluid rounded"
+                                 loading="lazy"/>
+                        </div>
+                    </div>
+
+                    <p class="mt-4">
+                        <a href="/stockists">&#8592; All stockists</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- t-out, not t-esc: see the note on the index template. -->
+            <script t-if="json_ld" type="application/ld+json" t-out="json_ld"/>
+        </t>
+    </template>
+
+</odoo>

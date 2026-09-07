@@ -1,0 +1,179 @@
+# -*- coding: utf-8 -*-
+import json
+
+from odoo.tests import TransactionCase, tagged
+
+
+@tagged("post_install", "-at_install")
+class TestWebsiteStockist(TransactionCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.Stockist = cls.env["website.stockist"]
+        cls.websites = cls.env["website"].search([], limit=2)
+        cls.qld = cls.env["res.country.state"].search(
+            [("country_id.code", "=", "AU"), ("code", "=", "QLD")], limit=1
+        )
+
+    def _make(self, **kw):
+        vals = {"name": "Test Stockist", "is_published": True}
+        vals.update(kw)
+        return self.Stockist.create(vals)
+
+    # ------------------------------------------------------------------
+    def test_empty_website_ids_means_all_websites(self):
+        """The convention borrowed from product.template must hold."""
+        rec = self._make(website_ids=[(5, 0, 0)])
+        self.assertFalse(rec.website_ids)
+        for website in self.websites:
+            domain = self.Stockist._get_published_domain(website.id)
+            self.assertIn(
+                rec, self.Stockist.search(domain),
+                "A stockist with no website_ids must appear on every website.",
+            )
+
+    def test_website_ids_restricts(self):
+        if len(self.websites) < 2:
+            self.skipTest("needs at least two websites")
+        first, second = self.websites[0], self.websites[1]
+        rec = self._make(website_ids=[(6, 0, [first.id])])
+        self.assertIn(rec, self.Stockist.search(
+            self.Stockist._get_published_domain(first.id)))
+        self.assertNotIn(rec, self.Stockist.search(
+            self.Stockist._get_published_domain(second.id)))
+
+    def test_unpublished_never_listed(self):
+        rec = self._make(is_published=False)
+        domain = self.Stockist._get_published_domain(self.websites[0].id)
+        self.assertNotIn(rec, self.Stockist.search(domain))
+
+    # ------------------------------------------------------------------
+    def test_full_address_skips_missing_parts(self):
+        rec = self._make(street="16 Torres Cres", city="North Lakes",
+                         state_id=self.qld.id, zip="4509")
+        self.assertEqual(rec.full_address, "16 Torres Cres, North Lakes, QLD, 4509")
+        bare = self._make(name="No Address")
+        self.assertEqual(bare.full_address or "", "",
+                         "An address with no parts must be empty, not a run of commas.")
+
+    def test_blank_store_code_becomes_null(self):
+        """Two blank codes must not collide with the unique index."""
+        a = self._make(name="A", store_code="")
+        b = self._make(name="B", store_code="   ")
+        self.assertFalse(a.store_code)
+        self.assertFalse(b.store_code)
+
+    # ------------------------------------------------------------------
+    def test_json_ld_is_valid_and_omits_empty_address(self):
+        rec = self._make(street="16 Torres Cres", city="North Lakes",
+                         state_id=self.qld.id, zip="4509",
+                         phone="(07) 3733 1220",
+                         opening_hours="Mon-Fri: 9:00-17:30\n\nSat: 9:00-16:00\n")
+        payload = json.loads(rec._json_ld("https://example.com/"))
+        self.assertEqual(payload["@type"], "Store")
+        self.assertEqual(payload["address"]["addressLocality"], "North Lakes")
+        self.assertEqual(payload["openingHours"], ["Mon-Fri: 9:00-17:30", "Sat: 9:00-16:00"],
+                         "Blank lines must not become empty openingHours entries.")
+
+        bare = self._make(name="No Address JSON")
+        payload = json.loads(bare._json_ld("https://example.com/"))
+        self.assertNotIn("address", payload,
+                         "An address node holding only @type must not be emitted.")
+
+    def test_canonical_only_when_another_site_owns_it(self):
+        if len(self.websites) < 2:
+            self.skipTest("needs at least two websites")
+        first, second = self.websites[0], self.websites[1]
+        rec = self._make(canonical_website_id=first.id)
+        self.assertFalse(rec._canonical_url(first),
+                         "No canonical needed on the owning website.")
+        if first.domain:
+            self.assertTrue(rec._canonical_url(second))
+        no_owner = self._make(name="No Owner")
+        self.assertFalse(no_owner._canonical_url(second))
+
+    def test_json_ld_survives_the_template_layer(self):
+        """The block must reach the page as JSON, not as escaped entities.
+
+        A plain str goes through QWeb's escaper and every double quote becomes
+        an entity. Nothing decodes entities inside a script tag, so Google would
+        receive text that is not JSON at all.
+        """
+        from markupsafe import Markup, escape
+
+        rec = self._make(name='Smith & Sons "Optical" </script>')
+        payload = rec._json_ld("https://example.com/")
+
+        self.assertIsInstance(payload, Markup,
+                              "A plain str would be escaped by t-out and stop being JSON.")
+        self.assertEqual(escape(payload), payload,
+                         "Escaping Markup must be a no-op; if it is not, the page breaks.")
+        self.assertNotIn("</script>", payload,
+                         "A closing script tag in the data must not close the block.")
+        self.assertEqual(json.loads(payload)["name"], 'Smith & Sons "Optical" </script>',
+                         "Escaping must survive a round trip unchanged.")
+
+    def test_item_list_json_ld_is_markup(self):
+        from markupsafe import Markup
+
+        rec = self._make(name="List Member")
+        payload = self.Stockist._item_list_json_ld(rec, "https://example.com/")
+        self.assertIsInstance(payload, Markup)
+        self.assertEqual(json.loads(payload)["numberOfItems"], 1)
+
+    def test_website_url_is_stable(self):
+        rec = self._make(name="Cairns Central")
+        self.assertTrue(rec.website_url.startswith("/stockists/"))
+        self.assertIn(str(rec.id), rec.website_url)
+
+
+@tagged("post_install", "-at_install")
+class TestGooglePlacesParsing(TransactionCase):
+    """Pure parsers — no network, so these run anywhere."""
+
+    def setUp(self):
+        super().setUp()
+        from odoo.addons.website_stockist.models import google_places
+        self.gp = google_places
+        self.payload = {
+            "displayName": {"text": "BrightEyes Cairns Central"},
+            "addressComponents": [
+                {"longText": "GD-057", "shortText": "GD-057", "types": ["subpremise"]},
+                {"longText": "1-21", "shortText": "1-21", "types": ["street_number"]},
+                {"longText": "McLeod Street", "shortText": "McLeod St", "types": ["route"]},
+                {"longText": "Cairns City", "shortText": "Cairns City", "types": ["locality"]},
+                {"longText": "Queensland", "shortText": "QLD",
+                 "types": ["administrative_area_level_1"]},
+                {"longText": "4870", "shortText": "4870", "types": ["postal_code"]},
+                {"longText": "Australia", "shortText": "AU", "types": ["country"]},
+            ],
+            "location": {"latitude": -16.9219, "longitude": 145.77},
+            "nationalPhoneNumber": "(07) 4041 7341",
+            "regularOpeningHours": {"weekdayDescriptions": [
+                "Monday: 9:00 AM - 5:30 PM", "", "Sunday: Closed"]},
+        }
+
+    def test_subpremise_becomes_shop_number(self):
+        """AU shopping-centre addresses carry the shop number in subpremise."""
+        parsed = self.gp.parse_address_components(self.payload)
+        self.assertEqual(parsed["street"], "GD-057/1-21 McLeod Street")
+        self.assertEqual(parsed["city"], "Cairns City")
+        self.assertEqual(parsed["state_code"], "QLD")
+
+    def test_blank_weekday_lines_dropped(self):
+        hours = self.gp.parse_opening_hours(self.payload)
+        self.assertNotIn("", hours.split("\n"))
+
+    def test_empty_payload_never_raises(self):
+        self.assertEqual(self.gp.parse_location({}), (None, None))
+        self.assertEqual(self.gp.parse_opening_hours({}), "")
+        self.assertEqual(self.gp.parse_phone({}), "")
+        parsed = self.gp.parse_address_components({})
+        self.assertEqual(set(parsed.values()), {""})
+
+    def test_locality_falls_back(self):
+        parsed = self.gp.parse_address_components({"addressComponents": [
+            {"longText": "Westcourt", "shortText": "Westcourt",
+             "types": ["administrative_area_level_2"]}]})
+        self.assertEqual(parsed["city"], "Westcourt")

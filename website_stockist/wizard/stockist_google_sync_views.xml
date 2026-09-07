@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_stockist_google_sync_form" model="ir.ui.view">
+        <field name="name">website.stockist.google.sync.form</field>
+        <field name="model">website.stockist.google.sync</field>
+        <field name="arch" type="xml">
+            <form string="Sync from Google">
+                <div class="alert alert-info" role="status">
+                    Nothing has been written yet. Review the differences, untick anything
+                    you do not want, then Apply.
+                </div>
+                <group>
+                    <field name="stockist_id"/>
+                    <field name="matched_name"/>
+                    <field name="place_id"/>
+                    <field name="business_status"/>
+                </group>
+                <div class="alert alert-warning" role="alert"
+                     invisible="business_status in ('OPERATIONAL', False, '')">
+                    Google reports this place as <field name="business_status" nolabel="1" readonly="1" class="oe_inline"/>.
+                    Check the listing before applying anything.
+                </div>
+                <field name="diff_html" nolabel="1" readonly="1"/>
+                <group string="Apply">
+                    <group>
+                        <field name="apply_address"/>
+                        <field name="apply_phone"/>
+                    </group>
+                    <group>
+                        <field name="apply_hours"/>
+                        <field name="apply_coordinates"/>
+                    </group>
+                </group>
+                <group invisible="1">
+                    <field name="new_street"/><field name="new_street2"/>
+                    <field name="new_city"/><field name="new_state_id"/>
+                    <field name="new_zip"/><field name="new_country_id"/>
+                    <field name="new_phone"/><field name="new_hours"/>
+                    <field name="new_latitude"/><field name="new_longitude"/>
+                </group>
+                <footer>
+                    <button name="action_apply" type="object" string="Apply" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,19 @@
+.o_website_stockist {
+    .o_stockist_card {
+        transition: box-shadow .15s ease-in-out;
+
+        &:hover {
+            box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .1);
+        }
+    }
+
+    .o_stockist_filters .btn {
+        white-space: nowrap;
+    }
+}
+
+.o_website_stockist_detail {
+    address {
+        line-height: 1.6;
+    }
+}

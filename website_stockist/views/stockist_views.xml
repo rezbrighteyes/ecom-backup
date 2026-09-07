@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_website_stockist_list" model="ir.ui.view">
+        <field name="name">website.stockist.list</field>
+        <field name="model">website.stockist</field>
+        <field name="arch" type="xml">
+            <list string="Stockists" multi_edit="1">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="store_code" optional="show"/>
+                <field name="city" optional="show"/>
+                <field name="state_id" optional="show"/>
+                <field name="zip" optional="hide"/>
+                <field name="phone" optional="show"/>
+                <field name="ownership" optional="show"/>
+                <field name="website_ids" widget="many2many_tags" optional="show"/>
+                <field name="is_published" optional="show"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_website_stockist_form" model="ir.ui.view">
+        <field name="name">website.stockist.form</field>
+        <field name="model">website.stockist</field>
+        <field name="arch" type="xml">
+            <form string="Stockist">
+                <!-- Both buttons write to the stockist, and only website
+                     designers hold write access. Showing them to every internal
+                     user produces an access error on click instead of a button
+                     that is simply not there. -->
+                <header>
+                    <button name="action_fetch_from_google" type="object"
+                            string="Fetch from Google" class="btn-primary"
+                            groups="website.group_website_designer"
+                            help="Read address, phone, hours and coordinates from Google Places. Shows a diff first; writes nothing until you confirm."/>
+                    <button name="action_geolocate" type="object" string="Geolocate"
+                            class="btn-secondary"
+                            groups="website.group_website_designer"
+                            help="Fill latitude and longitude from the address."/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
+                            invisible="active"/>
+                    <field name="image_1920" widget="image" class="oe_avatar"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Stockist name"/></h1>
+                    </div>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_website" type="object"
+                                class="oe_stat_button" icon="fa-globe"
+                                invisible="not is_published">
+                            <span class="o_stat_text">View page</span>
+                        </button>
+                    </div>
+
+                    <group>
+                        <group string="Identity">
+                            <field name="store_code"/>
+                            <field name="ownership"/>
+                            <field name="active" invisible="1"/>
+                            <field name="is_published" widget="website_publish_button"/>
+                        </group>
+                        <group string="Websites">
+                            <field name="website_ids" widget="many2many_tags"
+                                   options="{'no_create': True}"
+                                   placeholder="Leave empty to show on ALL websites"/>
+                            <div class="text-muted small" colspan="2">
+                                Empty means every website — the same meaning an empty
+                                <code>website_ids</code> carries on products here.
+                            </div>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Address">
+                            <field name="street" placeholder="Street..."/>
+                            <field name="street2" placeholder="Street 2..."/>
+                            <field name="city" placeholder="City"/>
+                            <field name="state_id" options="{'no_create': True}"/>
+                            <field name="zip" placeholder="Postcode"/>
+                            <field name="country_id" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Contact">
+                            <field name="phone" widget="phone"/>
+                            <field name="email" widget="email"/>
+                            <field name="stockist_url" widget="url"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Location">
+                            <field name="partner_latitude"/>
+                            <field name="partner_longitude"/>
+                            <field name="google_place_id"/>
+                            <field name="google_maps_url" widget="url" readonly="1"/>
+                            <field name="google_sync_date"/>
+                        </group>
+                        <group string="Range">
+                            <field name="brand_ids" widget="many2many_tags"
+                                   options="{'no_create': True}"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Something specific to this location..."/>
+                        </page>
+                        <page string="Opening hours" name="hours">
+                            <field name="opening_hours"
+                                   placeholder="Mon-Fri: 9:00-17:30&#10;Sat: 9:00-16:00&#10;Sun: Closed"/>
+                        </page>
+                        <page string="SEO" name="seo">
+                            <group>
+                                <field name="website_meta_title"/>
+                                <field name="website_meta_description"/>
+                                <field name="website_meta_keywords"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_website_stockist_search" model="ir.ui.view">
+        <field name="name">website.stockist.search</field>
+        <field name="model">website.stockist</field>
+        <field name="arch" type="xml">
+            <search string="Stockists">
+                <field name="name" filter_domain="['|','|',('name','ilike',self),('city','ilike',self),('store_code','ilike',self)]"/>
+                <field name="state_id"/>
+                <field name="brand_ids"/>
+                <field name="website_ids"/>
+                <filter name="published" string="Published" domain="[('is_published','=',True)]"/>
+                <filter name="unpublished" string="Unpublished" domain="[('is_published','=',False)]"/>
+                <separator/>
+                <filter name="all_websites" string="On every website"
+                        domain="[('website_ids','=',False)]"/>
+                <separator/>
+                <filter name="no_coords" string="Missing coordinates"
+                        domain="['|',('partner_latitude','=',0),('partner_longitude','=',0)]"/>
+                <filter name="inactive" string="Archived" domain="[('active','=',False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="State" context="{'group_by':'state_id'}"/>
+                    <filter name="group_ownership" string="Ownership" context="{'group_by':'ownership'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_website_stockist" model="ir.actions.act_window">
+        <field name="name">Stockists</field>
+        <field name="res_model">website.stockist</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_website_stockist_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Add your first stockist</p>
+            <p>
+                Stockists are retailers that carry your product. Each one gets a
+                crawlable public page. Leave <b>Websites</b> empty to publish on
+                every site, or pick the ones it belongs to.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_website_stockist_root"
+              name="Stockists"
+              parent="website.menu_website_configuration"
+              action="action_website_stockist"
+              sequence="90"/>
+
+</odoo>
