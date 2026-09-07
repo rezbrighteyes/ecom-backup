@@ -145,6 +145,15 @@ def parse_address_components(payload):
     # for addresses inside large centres.
     city = long("locality") or long("postal_town") or long("administrative_area_level_2")
 
+    if not street:
+        # Google sometimes returns the street line as a component carrying NO
+        # types at all — "331 Yaamba Road" with nothing but longText. Looking
+        # components up by type then finds no street_number and no route, and
+        # the sync offers a blank address, which reads exactly like a listing
+        # that has no street. Seen on Stockland Rockhampton, 7 Sep 2026.
+        street = _street_from_formatted(payload, city_hint=city) \
+            or _untyped_street(payload)
+
     return {
         "street": street,
         "street2": long("neighborhood") if street else "",
@@ -153,6 +162,44 @@ def parse_address_components(payload):
         "zip": long("postal_code"),
         "country_code": short("country"),
     }
+
+
+def _untyped_street(payload):
+    """The longText of address components Google gave no types.
+
+    Only components appearing before the locality are considered — anything
+    after it is suburb, state or country, and gluing those onto the street
+    would produce a line no postal system recognises.
+    """
+    parts = []
+    for component in payload.get("addressComponents") or []:
+        types = component.get("types") or []
+        if "locality" in types or "postal_town" in types:
+            break
+        if not types:
+            text = (component.get("longText") or "").strip()
+            if text:
+                parts.append(text)
+    return ", ".join(parts)
+
+
+def _street_from_formatted(payload, city_hint=""):
+    """The part of formattedAddress that comes before the suburb.
+
+    Preferred over the untyped components because it keeps the shop number and
+    the centre name Google itself publishes — "Shop 96 Stockland Rockhampton,
+    331 Yaamba Road" rather than a bare "331 Yaamba Road". Returns "" unless
+    the suburb is actually found, so a surprising format degrades to the other
+    fallback instead of guessing.
+    """
+    formatted = (payload.get("formattedAddress") or "").strip()
+    if not formatted or not city_hint:
+        return ""
+    marker = ", %s" % city_hint
+    index = formatted.find(marker)
+    if index <= 0:
+        return ""
+    return formatted[:index].strip().rstrip(",")
 
 
 def parse_opening_hours(payload):

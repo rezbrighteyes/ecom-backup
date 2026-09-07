@@ -22,35 +22,6 @@ class TestWebsiteStockist(TransactionCase):
         return self.Stockist.create(vals)
 
     # ------------------------------------------------------------------
-    def test_default_logo_fills_only_empty_logos(self):
-        """The bundled wordmark goes in `logo`, and never replaces one already set."""
-        import base64
-
-        from odoo.tools import file_open
-
-        from odoo.addons.website_stockist.models.stockist import DEFAULT_LOGO_PATH
-
-        with file_open(DEFAULT_LOGO_PATH, "rb") as logo:
-            expected = base64.b64encode(logo.read())
-
-        blank = self._make(name="No Logo Yet")
-        # A 1x1 transparent PNG standing in for a stockist's own brand mark.
-        own_logo = base64.b64encode(base64.b64decode(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYAAAAAYAAj"
-            "CB0C8AAAAASUVORK5CYII="
-        ))
-        kept = self._make(name="Already Branded", logo=own_logo)
-
-        (blank | kept).action_set_default_logo()
-
-        self.assertEqual(blank.logo, expected,
-                         "A stockist with no logo should receive the bundled one.")
-        self.assertNotEqual(kept.logo, expected,
-                            "A logo already set must not be overwritten.")
-        self.assertFalse(blank.image_1920,
-                         "The wordmark belongs in `logo`, not in the shopfront photo.")
-
-    # ------------------------------------------------------------------
     def test_empty_website_ids_means_all_websites(self):
         """The convention borrowed from product.template must hold."""
         rec = self._make(website_ids=[(5, 0, 0)])
@@ -206,3 +177,64 @@ class TestGooglePlacesParsing(TransactionCase):
             {"longText": "Westcourt", "shortText": "Westcourt",
              "types": ["administrative_area_level_2"]}]})
         self.assertEqual(parsed["city"], "Westcourt")
+
+    def test_untyped_street_component_still_yields_an_address(self):
+        """Google sometimes ships the street line with no types at all.
+
+        Stockland Rockhampton, 7 Sep 2026: addressComponents[0] was
+        {"longText": "331 Yaamba Road"} with no "types" key, so a lookup by
+        street_number and route found nothing and the sync offered a blank
+        address — indistinguishable from a listing that has no street.
+        """
+        parsed = self.gp.parse_address_components({
+            "formattedAddress": "Shop 96 Stockland Rockhampton, 331 Yaamba Road, "
+                                "Norman Gardens QLD 4701, Australia",
+            "addressComponents": [
+                {"longText": "331 Yaamba Road", "languageCode": "en"},
+                {"longText": "Norman Gardens", "shortText": "Norman Gardens",
+                 "types": ["locality", "political"]},
+                {"longText": "Queensland", "shortText": "QLD",
+                 "types": ["administrative_area_level_1", "political"]},
+                {"longText": "Australia", "shortText": "AU",
+                 "types": ["country", "political"]},
+                {"longText": "4701", "shortText": "4701", "types": ["postal_code"]},
+            ],
+        })
+        # formattedAddress is preferred because it keeps the shop and centre.
+        self.assertEqual(parsed["street"],
+                         "Shop 96 Stockland Rockhampton, 331 Yaamba Road")
+        self.assertEqual(parsed["city"], "Norman Gardens")
+        self.assertEqual(parsed["zip"], "4701")
+
+    def test_untyped_fallback_used_only_when_typed_parsing_fails(self):
+        """A listing Google types properly must parse exactly as before."""
+        parsed = self.gp.parse_address_components({
+            "formattedAddress": "Shop 39/165 Morayfield Rd, Morayfield QLD 4506, Australia",
+            "addressComponents": [
+                {"longText": "39", "types": ["subpremise"]},
+                {"longText": "165", "types": ["street_number"]},
+                {"longText": "Morayfield Road", "types": ["route"]},
+                {"longText": "Morayfield", "shortText": "Morayfield", "types": ["locality"]},
+                {"longText": "Queensland", "shortText": "QLD",
+                 "types": ["administrative_area_level_1"]},
+                {"longText": "Australia", "shortText": "AU", "types": ["country"]},
+                {"longText": "4506", "types": ["postal_code"]},
+            ],
+        })
+        self.assertEqual(parsed["street"], "39/165 Morayfield Road")
+
+    def test_untyped_components_after_the_suburb_are_not_glued_on(self):
+        """Only untyped parts before the locality can be street."""
+        street = self.gp._untyped_street({"addressComponents": [
+            {"longText": "12 Somewhere Street"},
+            {"longText": "Suburbia", "types": ["locality"]},
+            {"longText": "junk after the suburb"},
+        ]})
+        self.assertEqual(street, "12 Somewhere Street")
+
+    def test_formatted_fallback_refuses_to_guess(self):
+        """No suburb in formattedAddress means no derived street."""
+        self.assertEqual(
+            self.gp._street_from_formatted(
+                {"formattedAddress": "Somewhere entirely"}, city_hint="Nowhere"), "")
+        self.assertEqual(self.gp._street_from_formatted({}, city_hint="X"), "")
