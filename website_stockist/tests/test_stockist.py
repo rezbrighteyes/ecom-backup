@@ -835,3 +835,15 @@ class TestStockistApplication(TransactionCase):
         self.stockist._sync_content_rows()
         self.assertEqual(len(self.stockist.content_ids.filtered(
             lambda c: c.website_id == rockos)), 1)
+
+    def test_supplying_a_title_must_not_strip_the_description(self):
+        """website.layout computes website_meta from seo_object before it
+        defaults seo_object to main_object, and that default sits inside the
+        `t-if="not title"` block. Passing a title skips it, so the controller
+        has to pass seo_object too or every meta description disappears."""
+        import inspect
+        from odoo.addons.website_stockist.controllers import main
+        source = inspect.getsource(main.WebsiteStockistController.stockist_detail)
+        self.assertIn('"title"', source)
+        self.assertIn('"seo_object"', source,
+                      "passing title without seo_object empties website_meta")

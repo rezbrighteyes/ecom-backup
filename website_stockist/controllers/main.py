@@ -154,6 +154,14 @@ class WebsiteStockistController(http.Controller):
                 # whatever single string is stored on the record.
                 "title": stockist._meta_title(
                     request.env["website"].get_current_website()),
+                # seo_object MUST be passed alongside title. The layout computes
+                #   website_meta = seo_object and seo_object.get_website_meta()
+                # BEFORE it defaults seo_object to main_object, and that default
+                # lives inside the same `t-if="not title"` block. Supplying a
+                # title therefore skips it, website_meta comes back empty, and
+                # every meta description and og tag disappears — which is
+                # exactly what happened to all 127 stockist pages.
+                "seo_object": stockist,
                 "stockist_canonical": stockist._canonical_url(website) or False,
                 "opening_hours": stockist._opening_hours_list(),
             },
