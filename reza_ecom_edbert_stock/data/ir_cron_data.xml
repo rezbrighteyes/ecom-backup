@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        noupdate="1" so that the schedule and the on/off switch stay where an
+        administrator puts them. Without it every upgrade of this module would
+        put them back to the values below.
+    -->
+    <data noupdate="1">
+        <record id="ir_cron_reza_edbert_stock" model="ir.cron">
+            <field name="name">Edbert Stock: refresh figures on ecom products</field>
+            <field name="model_id" ref="model_reza_edbert_stock_sync" />
+            <field name="state">code</field>
+            <field name="code">model.cron_sync_edbert_stock()</field>
+            <field name="user_id" ref="base.user_root" />
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="nextcall"
+                eval="(DateTime.now() + timedelta(hours=1)).strftime('%Y-%m-%d %H:00:00')" />
+            <!--
+                Ships switched off on purpose. Installing a module should not
+                start reading another production database and writing thousands
+                of product rows unannounced. Run it once by hand, read the
+                result, then switch it on.
+            -->
+            <field name="active" eval="False" />
+        </record>
+    </data>
+</odoo>

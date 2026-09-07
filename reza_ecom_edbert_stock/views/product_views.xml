@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="product_template_form_view_reza_edbert_stock" model="ir.ui.view">
+        <field name="name">product.template.form.reza.edbert.stock</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page name="reza_edbert_stock" string="Edbert Stock"
+                    groups="base.group_user">
+                    <group>
+                        <group string="What Edbert holds">
+                            <field name="reza_edbert_total_free_qty" />
+                            <field name="reza_edbert_unmatched_count" />
+                            <field name="reza_edbert_last_sync" />
+                        </group>
+                    </group>
+                    <div class="text-muted">
+                        <p>
+                            These figures are read from the wholesale database on a
+                            schedule. They are shown to staff only. No ecom stock,
+                            valuation or website availability depends on them.
+                        </p>
+                        <p>
+                            The total counts only the variants that could be matched
+                            to an Edbert product and proved to be the same product.
+                            If the unmatched count is above zero the total is short.
+                            The list below says which variant, and why.
+                        </p>
+                    </div>
+                    <field name="product_variant_ids" readonly="1">
+                        <list string="Variants" create="false" delete="false">
+                            <field name="default_code" string="Reference" />
+                            <field name="reza_edbert_stock_state" string="Match" />
+                            <field name="reza_edbert_code" string="Edbert Reference" />
+                            <field name="reza_edbert_free_qty" string="Edbert Free Qty" />
+                            <field name="reza_edbert_stock_date" string="Changed" />
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_tree_view_reza_edbert_stock" model="ir.ui.view">
+        <field name="name">product.template.list.reza.edbert.stock</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <field name="reza_edbert_total_free_qty" optional="hide"
+                    string="Edbert Free Qty" groups="base.group_user" />
+                <field name="reza_edbert_unmatched_count" optional="hide"
+                    string="Edbert Unmatched" groups="base.group_user" />
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_product_tree_view_reza_edbert_stock" model="ir.ui.view">
+        <field name="name">product.product.list.reza.edbert.stock</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_product_tree_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <field name="reza_edbert_free_qty" optional="hide"
+                    string="Edbert Free Qty" groups="base.group_user" />
+                <field name="reza_edbert_stock_state" optional="hide"
+                    string="Edbert Match" groups="base.group_user" />
+                <field name="reza_edbert_code" optional="hide"
+                    string="Edbert Reference" groups="base.group_user" />
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_search_view_reza_edbert_stock" model="ir.ui.view">
+        <field name="name">product.template.search.reza.edbert.stock</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator />
+                <filter name="reza_edbert_has_stock" string="Edbert has stock"
+                    domain="[('reza_edbert_total_free_qty', '&gt;', 0)]"
+                    groups="base.group_user" />
+                <!--
+                    "Edbert has none" must exclude the products nobody could
+                    match, or it answers two different questions at once: a
+                    stock question for purchasing and a data question for
+                    whoever owns the mapping. A quantity of zero alone cannot
+                    tell them apart.
+                -->
+                <filter name="reza_edbert_no_stock" string="Edbert has none"
+                    domain="[('reza_edbert_total_free_qty', '&lt;=', 0),
+                             ('reza_edbert_unmatched_count', '=', 0)]"
+                    groups="base.group_user" />
+                <separator />
+                <filter name="reza_edbert_unmatched"
+                    string="Some variants not matched to Edbert"
+                    domain="[('reza_edbert_unmatched_count', '&gt;', 0)]"
+                    groups="base.group_user" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
