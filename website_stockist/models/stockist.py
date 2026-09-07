@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import base64
 import json
 import re
 from urllib.parse import quote
@@ -7,6 +8,11 @@ from markupsafe import Markup
 
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
+from odoo.tools import file_open
+
+# Shipped in the module so the fallback logo is version-controlled rather than
+# re-uploaded by hand on every new store.
+DEFAULT_LOGO_PATH = "website_stockist/static/src/img/brighteyes_logo.png"
 
 
 class WebsiteStockist(models.Model):
@@ -392,6 +398,38 @@ class WebsiteStockist(models.Model):
             "res_id": wizard.id,
             "view_mode": "form",
             "target": "new",
+        }
+
+    def action_set_default_logo(self):
+        """Give every selected stockist that has no logo the BrightEyes wordmark.
+
+        This writes `logo`, not `image_1920`. The two are different slots: `logo`
+        renders small beside the name and feeds the `logo` property of the Store
+        JSON-LD, while `image_1920` is a photograph of the shopfront and feeds
+        `image`. A wordmark in the photo slot is what that field's help warns
+        against.
+
+        Records that already carry a logo are **skipped**, not overwritten, because
+        this runs from a list selection where "select all" is one click. To replace
+        one, clear it first.
+        """
+        targets = self.filtered(lambda rec: not rec.logo)
+        if targets:
+            with file_open(DEFAULT_LOGO_PATH, "rb") as logo_file:
+                encoded = base64.b64encode(logo_file.read())
+            targets.write({"logo": encoded})
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "type": "success" if targets else "warning",
+                "message": _(
+                    "Logo applied to %(done)s stockist(s). %(skipped)s already had one.",
+                    done=len(targets),
+                    skipped=len(self) - len(targets),
+                ),
+                "next": {"type": "ir.actions.act_window_close"},
+            },
         }
 
     def action_open_website(self):

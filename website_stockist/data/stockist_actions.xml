@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+      Available from the Stockists list and form as Actions -> Set BrightEyes logo.
+      Bound to the model rather than added as a form button because the point is to
+      stamp a whole selection in one pass; the form button would be 27 clicks.
+    -->
+    <record id="action_stockist_set_default_logo" model="ir.actions.server">
+        <field name="name">Set BrightEyes logo</field>
+        <field name="model_id" ref="model_website_stockist"/>
+        <field name="binding_model_id" ref="model_website_stockist"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_set_default_logo()</field>
+    </record>
+</odoo>
