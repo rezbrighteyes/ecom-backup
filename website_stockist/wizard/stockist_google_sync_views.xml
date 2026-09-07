@@ -30,6 +30,8 @@
                     <group>
                         <field name="apply_hours"/>
                         <field name="apply_coordinates"/>
+                        <field name="apply_website"/>
+                        <field name="apply_photo"/>
                     </group>
                 </group>
                 <group invisible="1">

@@ -39,7 +39,13 @@ DETAIL_MASK = ",".join([
     "regularOpeningHours",
     "websiteUri",
     "businessStatus",
+    "photos",
 ])
+
+# Google's photo endpoint bills per call and returns bytes, not JSON. Ask for a
+# width a page can actually use; a 4000px original costs the same to fetch and
+# is thrown away by the resize.
+PHOTO_MAX_WIDTH = 1200
 
 SEARCH_MASK = ",".join([
     "places.id",
@@ -171,3 +177,59 @@ def parse_phone(payload):
     return (payload.get("nationalPhoneNumber")
             or payload.get("internationalPhoneNumber")
             or "")
+
+
+def parse_website(payload):
+    """The listing's own website, or None.
+
+    Google returns this as websiteUri. It is frequently the only public URL a
+    stockist has, so it is worth carrying even when it points at a chain's
+    national site rather than the branch.
+    """
+    return (payload.get("websiteUri") or "").strip() or None
+
+
+def first_photo_name(payload):
+    """Resource name of the listing's first photo, or None.
+
+    Google orders photos by its own relevance ranking and the first is normally
+    the shopfront. Nothing here fetches bytes — see fetch_photo.
+    """
+    photos = payload.get("photos") or []
+    for photo in photos:
+        name = (photo.get("name") or "").strip()
+        if name:
+            return name
+    return None
+
+
+def fetch_photo(api_key, photo_name, max_width=PHOTO_MAX_WIDTH):
+    """Download one photo and return raw bytes, or None.
+
+    A missing or unreadable photo is not worth failing a sync over, so this
+    swallows its own errors and returns None. Every other call in this module
+    raises, deliberately — an address that silently does not update is a bug,
+    a photo that silently does not update is a photo.
+    """
+    if not photo_name:
+        return None
+    try:
+        response = requests.get(
+            "%s/%s/media" % (BASE, photo_name),
+            headers={"X-Goog-Api-Key": api_key},
+            params={"maxWidthPx": max_width, "skipHttpRedirect": "false"},
+            timeout=TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        _logger.warning("Places photo fetch failed for %s: %s", photo_name, exc)
+        return None
+    if response.status_code != 200:
+        _logger.warning("Places photo fetch returned %s for %s",
+                        response.status_code, photo_name)
+        return None
+    content = response.content or b""
+    if not content.startswith((b"\xff\xd8", b"\x89PNG", b"RIFF", b"GIF8")):
+        _logger.warning("Places photo for %s is not an image (%s bytes)",
+                        photo_name, len(content))
+        return None
+    return content

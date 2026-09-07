@@ -78,8 +78,8 @@ on top later, but it must never be the only route to a stockist.
 
 Rather than typing an address twice and letting it drift, press **Fetch from Google** on
 the stockist form. It calls the Places API (New), then shows a **diff** — what the site
-holds beside what Google holds — with tick boxes for address, phone, opening hours and
-coordinates. **Nothing is written until you press Apply.**
+holds beside what Google holds — with tick boxes for address, phone, opening hours,
+coordinates, **website** and **photo**. **Nothing is written until you press Apply.**
 
 That is deliberate. Of the 8 BrightEyes stores whose website and Google addresses disagree,
 some are formatting but Rockhampton's Google address names a **different suburb**. A silent
@@ -87,6 +87,35 @@ overwrite would change how a store is described with nobody reading it.
 
 Two more guards: a field Google has no value for is never blanked, and a place Google marks
 `CLOSED_PERMANENTLY` or `CLOSED_TEMPORARILY` raises a banner before you can apply.
+
+### Logo and photo are two different things
+
+A stockist has two image fields and they are not interchangeable:
+
+| Field | What it is | Where it renders | Filled by |
+|---|---|---|---|
+| **Logo** | the brand mark | 64px high beside the name, `width:auto` | you |
+| **Photo** | the shopfront or interior | the right-hand column, capped at 420px high | Google, or you |
+
+A logo dropped into **Photo** renders at the full width of a five-column block, which is why
+a large upload looked enormous. Both are now served through `/web/image/.../<field>/WxH`, so
+the file you upload is resized on the way out and its dimensions no longer decide the layout.
+
+The photo comes from the listing's first Places photo, which is normally the shopfront. The
+sync **only ever fills an empty photo, or replaces one a previous sync put there** —
+`image_source` records which, and a photo you uploaded by hand is never overwritten. Google
+bills per photo fetch, so the wizard decides whether it would apply one *before* it downloads
+anything.
+
+In the page's Store JSON-LD they stay separate: the photo is `image`, the logo is `logo`.
+Google reads those as different claims, and a shopfront photo in the logo slot is worse than
+no logo at all.
+
+### Website
+
+`websiteUri` was always in the field mask and was being thrown away. It now maps to
+**Website** (`stockist_url`) — the link on the page and `sameAs` in the JSON-LD. Read it
+before applying: for a chain, Google often holds the national site rather than the branch.
 
 ### Setup
 
@@ -147,8 +176,11 @@ The decisions, from `MJ/README.md`:
 * **The store-finder page is the correct address.** `address_of_record` is set on all 27 records,
   parsed from the live `/d/` page string into street / suburb / state / postcode plus a single
   `formatted` citation line.
-* **Where the store-finder and GBP disagree, GBP is what gets edited**, not the website. Two records
-  still carry `address_conflict` (down from 8); fix those in GBP alongside tasks 03, 07 and 44.
+* **Where the store-finder and GBP disagree, GBP is what gets edited**, not the website. All eight
+  are resolved and no `address_conflict` records remain — the last two, Gateway Palmerston and
+  Karratha City, were verified against a rendered `google.com/maps?cid=` page on 7 Sep 2026 and both
+  already carry the street number. The `gbp_address` field is not a safe baseline: it was captured
+  from DataForSEO, which drops street numbers in favour of cross-street strings.
 * **For the four unusable strings, GBP's street is used**, keeping the shop number and centre name
   from the store-finder because GBP mangles them ("Shop 070 T111", "Shop 184/13").
 

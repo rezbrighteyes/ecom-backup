@@ -43,7 +43,9 @@
                 <sheet>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
                             invisible="active"/>
-                    <field name="image_1920" widget="image" class="oe_avatar"/>
+                    <field name="image_1920" widget="image" class="oe_avatar"
+                           options="{'preview_image': 'image_128'}"/>
+                    <field name="image_source" invisible="1"/>
                     <div class="oe_title">
                         <label for="name"/>
                         <h1><field name="name" placeholder="Stockist name"/></h1>
@@ -107,6 +109,26 @@
                     <notebook>
                         <page string="Description" name="description">
                             <field name="description" placeholder="Something specific to this location..."/>
+                        </page>
+                        <page string="Images" name="images">
+                            <group>
+                                <group string="Logo">
+                                    <field name="logo" widget="image" nolabel="1"
+                                           options="{'size': [180, 180]}"/>
+                                    <div class="text-muted">
+                                        The brand mark. Rendered at a fixed 64px height beside
+                                        the stockist name, so upload size does not affect the page.
+                                    </div>
+                                </group>
+                                <group string="Photo">
+                                    <field name="image_1920" widget="image" nolabel="1"
+                                           options="{'size': [260, 260]}"/>
+                                    <div class="text-muted">
+                                        The shopfront. Filled from Google when the listing has one.
+                                        Uploading here marks it as yours and a sync will not replace it.
+                                    </div>
+                                </group>
+                            </group>
                         </page>
                         <page string="Opening hours" name="hours">
                             <field name="opening_hours"

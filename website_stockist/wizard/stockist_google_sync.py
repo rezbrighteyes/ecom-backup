@@ -7,6 +7,7 @@ the eight address conflicts found on 26 Aug are not all formatting — Rockhampt
 Google address names a different suburb than the website does — so a silent
 overwrite would change how stores are described with nobody reading it.
 """
+import base64
 import logging
 
 from odoo import api, fields, models, _
@@ -33,6 +34,13 @@ class StockistGoogleSync(models.TransientModel):
     apply_phone = fields.Boolean(string="Apply phone", default=True)
     apply_hours = fields.Boolean(string="Apply opening hours", default=True)
     apply_coordinates = fields.Boolean(string="Apply coordinates", default=True)
+    apply_website = fields.Boolean(string="Apply website", default=True)
+    apply_photo = fields.Boolean(
+        string="Apply photo",
+        default=True,
+        help="Only ever fills an empty photo, or replaces one that a previous sync "
+             "put there. A photo uploaded by hand is never overwritten.",
+    )
 
     # Staged values, filled by the fetch, applied on confirm.
     new_street = fields.Char(readonly=True)
@@ -45,6 +53,9 @@ class StockistGoogleSync(models.TransientModel):
     new_hours = fields.Text(readonly=True)
     new_latitude = fields.Float(digits=(10, 7), readonly=True)
     new_longitude = fields.Float(digits=(10, 7), readonly=True)
+    new_website = fields.Char(readonly=True)
+    new_photo = fields.Image(readonly=True, max_width=1920, max_height=1920)
+    photo_blocked_reason = fields.Char(readonly=True)
 
     # ------------------------------------------------------------------
     @api.model
@@ -106,7 +117,25 @@ class StockistGoogleSync(models.TransientModel):
             "new_hours": google_places.parse_opening_hours(payload),
             "new_latitude": lat or 0.0,
             "new_longitude": lng or 0.0,
+            "new_website": google_places.parse_website(payload) or "",
         }
+
+        # A hand-uploaded photo is the operator's decision and outranks Google.
+        # Fetching one we would refuse to apply spends a billed call for nothing,
+        # so decide first, then fetch.
+        if stockist.image_1920 and stockist.image_source != "google":
+            values["photo_blocked_reason"] = _("a photo was uploaded by hand")
+        else:
+            photo_name = google_places.first_photo_name(payload)
+            if not photo_name:
+                values["photo_blocked_reason"] = _("the listing has no photo")
+            else:
+                raw = google_places.fetch_photo(key, photo_name)
+                if raw:
+                    values["new_photo"] = base64.b64encode(raw)
+                else:
+                    values["photo_blocked_reason"] = _("the photo could not be downloaded")
+
         wizard = self.create(values)
         wizard.diff_html = wizard._build_diff_html()
         return wizard
@@ -127,6 +156,11 @@ class StockistGoogleSync(models.TransientModel):
             ("Opening hours", s.opening_hours, self.new_hours),
             ("Latitude", s.partner_latitude or "", self.new_latitude or ""),
             ("Longitude", s.partner_longitude or "", self.new_longitude or ""),
+            ("Website", s.stockist_url, self.new_website),
+            ("Photo", _("set") if s.image_1920 else "",
+             _("new photo from Google") if self.new_photo
+             else (_("not applied — %s") % self.photo_blocked_reason
+                   if self.photo_blocked_reason else "")),
         ]
 
     def _build_diff_html(self):
@@ -187,6 +221,11 @@ class StockistGoogleSync(models.TransientModel):
         if self.apply_coordinates and self.new_latitude and self.new_longitude:
             vals["partner_latitude"] = self.new_latitude
             vals["partner_longitude"] = self.new_longitude
+        if self.apply_website:
+            vals["stockist_url"] = keep(self.new_website, stockist.stockist_url)
+        if self.apply_photo and self.new_photo:
+            vals["image_1920"] = self.new_photo
+            vals["image_source"] = "google"
 
         stockist.write(vals)
         stockist.message_post(body=_(
@@ -196,5 +235,7 @@ class StockistGoogleSync(models.TransientModel):
             "phone" if self.apply_phone else None,
             "hours" if self.apply_hours else None,
             "coordinates" if self.apply_coordinates else None,
+            "website" if self.apply_website and self.new_website else None,
+            "photo" if self.apply_photo and self.new_photo else None,
         ])) or "nothing"))
         return {"type": "ir.actions.act_window_close"}

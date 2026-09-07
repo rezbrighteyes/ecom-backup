@@ -121,7 +121,28 @@ class WebsiteStockist(models.Model):
         help="One line per day, e.g. 'Mon-Fri: 9:00-17:30'. Rendered verbatim and "
              "emitted as openingHours in the page's Store JSON-LD.",
     )
-    image_1920 = fields.Image(string="Photo", max_width=1920, max_height=1920)
+    image_1920 = fields.Image(
+        string="Photo",
+        max_width=1920,
+        max_height=1920,
+        help="A photograph of the shopfront or interior. Pulled from Google when the "
+             "listing has one. This is not the place for a logo — use the Logo field, "
+             "which renders small beside the name.",
+    )
+    logo = fields.Image(
+        string="Logo",
+        max_width=512,
+        max_height=512,
+        help="The stockist's brand mark. Rendered at a fixed small size beside the "
+             "name, so a large upload is scaled down rather than filling the page.",
+    )
+    image_source = fields.Selection(
+        [("manual", "Uploaded here"), ("google", "Google Business Profile")],
+        string="Photo source",
+        default="manual",
+        help="Set to Google when the photo came from the listing, so a later sync "
+             "knows it may replace it. A photo uploaded here is never overwritten.",
+    )
     brand_ids = fields.Many2many(
         "product.tag",
         "website_stockist_product_tag_rel",
@@ -331,6 +352,12 @@ class WebsiteStockist(models.Model):
             data["sameAs"] = [self.stockist_url]
         if self.image_1920:
             data["image"] = "%s/web/image/website.stockist/%s/image_1920" % (
+                base_url.rstrip("/"), self.id,
+            )
+        if self.logo:
+            # Google reads logo separately from image; a shopfront photo in the
+            # logo slot is worse than no logo at all.
+            data["logo"] = "%s/web/image/website.stockist/%s/logo" % (
                 base_url.rstrip("/"), self.id,
             )
         if self.google_maps_url:
