@@ -22,6 +22,35 @@ class TestWebsiteStockist(TransactionCase):
         return self.Stockist.create(vals)
 
     # ------------------------------------------------------------------
+    def test_default_logo_fills_only_empty_logos(self):
+        """The bundled wordmark goes in `logo`, and never replaces one already set."""
+        import base64
+
+        from odoo.tools import file_open
+
+        from odoo.addons.website_stockist.models.stockist import DEFAULT_LOGO_PATH
+
+        with file_open(DEFAULT_LOGO_PATH, "rb") as logo:
+            expected = base64.b64encode(logo.read())
+
+        blank = self._make(name="No Logo Yet")
+        # A 1x1 transparent PNG standing in for a stockist's own brand mark.
+        own_logo = base64.b64encode(base64.b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYAAAAAYAAj"
+            "CB0C8AAAAASUVORK5CYII="
+        ))
+        kept = self._make(name="Already Branded", logo=own_logo)
+
+        (blank | kept).action_set_default_logo()
+
+        self.assertEqual(blank.logo, expected,
+                         "A stockist with no logo should receive the bundled one.")
+        self.assertNotEqual(kept.logo, expected,
+                            "A logo already set must not be overwritten.")
+        self.assertFalse(blank.image_1920,
+                         "The wordmark belongs in `logo`, not in the shopfront photo.")
+
+    # ------------------------------------------------------------------
     def test_empty_website_ids_means_all_websites(self):
         """The convention borrowed from product.template must hold."""
         rec = self._make(website_ids=[(5, 0, 0)])

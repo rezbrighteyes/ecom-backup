@@ -186,3 +186,68 @@ The decisions, from `MJ/README.md`:
 
 So the import is a straightforward load from that file. Verified 7 Sep 2026:
 `address_of_record` populated on 27 of 27, ownership 24 corporate + 3 franchise.
+
+## Loading the BrightEyes stores
+
+`data/brighteyes_stores.csv` holds all 27 BrightEyes locations scraped from
+`https://www.brighteyes.com.au/store-finder/` and its 27 `/d/{slug}/{id}` detail pages on
+7 Sep 2026 — name, address, suburb, state, postcode, phone, email, opening hours.
+
+It is **not** in the manifest. Stockist records are business data that staff edit; a data
+file in the manifest is reloaded on every module update and would silently revert those
+edits. Import it once instead:
+
+**Website → Configuration → Stockists → ⚙ → Import records**, upload the CSV, load.
+
+The `id` column carries an external id per store, so a re-import of a corrected file
+**updates** the existing record rather than creating a second one. Keep the column.
+
+What the file deliberately leaves for you:
+
+- **`store_code` is empty.** It is the Neto warehouse code (101 = Cairns Earlville) and the
+  store finder does not expose it. Paste the codes in before importing, or leave blank —
+  the unique index treats blank as NULL, so 27 empty codes do not collide.
+- **`website_ids` is absent**, which means every stockist publishes on all 7 websites. If
+  these should appear on the BrightEyes site alone, add a `website_ids` column with that
+  website's name before importing.
+- **`stockist_url` points at the old brighteyes.com.au store page.** Fine while that site is
+  live; clear the column if these pages are being replaced by `/stockists/...`.
+
+Coordinates, tidy address components and the Google place id are not in the file. Run
+**Fetch from Google** per store after import to fill them.
+
+### Store photos
+
+`static/src/img/brighteyes_logo.png` is the BrightEyes wordmark, taken from
+`brighteyes.com.au/assets/website_logo.png` (495x121). It ships in the module so the
+fallback photo is version-controlled instead of re-uploaded by hand for each new store.
+
+To stamp it: **Stockists list → select the stores → Actions → Set BrightEyes logo.**
+
+It writes the **`logo`** field, not `image_1920`. Those are different slots: `logo` renders
+small beside the store name and feeds the `logo` property of the Store JSON-LD, while
+`image_1920` is a photograph of the shopfront and feeds `image`. A wordmark in the photo
+slot is exactly what that field's help warns against.
+
+The action **skips any stockist that already has a logo** — Morayfield keeps the one it
+carries. To replace a logo, clear it first, then re-run.
+
+This leaves `image_1920` empty on all 27 stores, so the pages still have no shopfront
+photo. **Fetch from Google** pulls one where the listing has it; the rest need real
+photography.
+
+### Data caveats from the scrape
+
+- **Stockland Townsville has no email** on its page. Every other store follows
+  `suburb@brighteyes.net.au`; the address was not guessed.
+- **Castletown Townsville** uses `@brighteyes.com.au`, not `.net.au`. Kept verbatim — it may
+  be a typo on the source page worth checking.
+- **Three stores name a shop number instead of a store name** on their detail page ("Shop 96
+  Stockland Rockhampton"). The store finder's own label was used for `name` and the shop
+  number moved into `street`, where it belongs.
+- **Gateway Palmerston** lists Palmerston in the address and Yarrawonga in the hours block;
+  the centre is in Yarrawonga 0830, which is what the file carries.
+- **Caneland Mackay** gave "Mackay Caneland" as the suburb, which is not a suburb. Set to
+  Mackay.
+- Postcodes 0800, 0810, 0830 and 0870 have a leading zero. Do not open the CSV in Excel and
+  re-save it — Excel drops the zero and Odoo will store "800".
