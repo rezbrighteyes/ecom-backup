@@ -226,59 +226,45 @@ fishing despite sitting beside the tackle tags. **Fishing Apparel** is shirts an
 gaiters, so it is apparel rather than tackle. Read a few product names before classifying
 a tag.
 
-### Titles and meta descriptions
+### Titles and meta descriptions — generated, not stored
 
-The title is written to `website_meta_title` on each record and follows one pattern:
-
-```
-Mangrove Jacks at BrightEyes Morayfield
-Mangrove Jacks at Anaconda Rockdale
-```
-
-Measured against all 126 stockists it runs 32-60 characters and **never overruns 60**.
-Four other patterns were measured and rejected: putting "Sunglasses" in the title
-overruns on 13, "| Mangrove Jacks Stockist" on 7, and leading with the suburb produces
-"Mangrove Jacks Banksia | Anaconda Rockdale" because a chain's store name and its
-suburb frequently disagree.
-
-Worth being honest about what this title is for. There is **no meaningful search
-demand** to win here: "mangrove jack" is a fish (590/mo for fishing, 320 for lures,
-nothing for the sunglasses brand), local retail demand is thin, and each retailer's own
-store page already ranks for its own name. These pages exist to be the machine-readable
-record that the brand is stocked in 126 named shops. So the title states that claim
-rather than chasing a query.
-
-**The description is computed, never written.** It is built from the stockist's ranges
-through `stockist_category` on each tag, so a store that gets hats tagged next week
-starts saying so without anyone editing 126 pages:
+Both are **computed per website**, and neither is kept on the stockist record.
 
 ```
-Find Mangrove Jacks sunglasses at BrightEyes Morayfield, Morayfield 4506.
-Call (07) 5495 3133 to check what's in stock.
+Mangrove Jacks at BrightEyes Morayfield        on mangrovejacks.net.au
+Rocko's at BrightEyes Morayfield               on rockos.com.au
+```
 
-Find Mangrove Jacks sunglasses, hats and footwear at BrightEyes Morayfield,
+```
+Find Mangrove Jacks sunglasses and footwear at BrightEyes Morayfield,
 Morayfield 4506. Call (07) 5495 3133 to check what's in stock.
 ```
 
-Categories read in a fixed order (sunglasses, hats, footwear, apparel, accessories)
-rather than whatever order the tags were ticked in. A range nobody has classified still
-shows on the page and simply adds no word. Checked against all 127 records in every
-combination: nothing exceeds 155 characters, and where four categories make the opening
-too long the phone sentence shortens to "Call 07 xxxx xxxx." rather than dropping — the
-number is the action, the invitation around it is not.
+The title pattern was chosen by measuring five against all 126 stockists: it runs 32-60
+characters and never overruns 60, where putting "Sunglasses" in the title overruns on 13 and
+leading with the suburb produces "Mangrove Jacks Banksia | Anaconda Rockdale", because a
+chain's store name and its suburb frequently disagree.
 
-It is supplied through `_default_website_meta`, so anything typed into the SEO tab by
-hand still wins. Set it there when a store deserves something specific.
+**Why generated rather than stored.** 127 records were once written with
+`website_meta_title = "Mangrove Jacks at <store>"`. That string is static, so on a second
+brand's site every page would have carried the wrong brand — the same defect as the
+hardcoded brand in the JSON-LD, sitting in data instead of code. It also could not be
+overridden: `website.layout` prefers a stored `website_meta_title` to anything computed, so
+it would have silently beaten the generator. The 18.0.9.0.0 migration clears the ones this
+module generated and leaves anything hand-written alone.
 
-**So the SEO tab reads as empty even though the page is right.** Only the title is stored
-on the record; description, `og:description` and `twitter:description` are produced at
-render. Odoo's "is SEO optimized" indicator reads the stored fields, so it will stay off.
-That is the cost of a description that follows the ranges instead of freezing.
+The title reaches the page through the render context rather than the record, because
+`website.layout` only computes a title when the context has not already supplied one.
 
-`og:image` and `twitter:image` are set to the stockist's own shopfront, falling back to
-its logo. Without that, all 127 pages share one social image — the site logo — so every
-shared link looks identical. With no image of its own the field is left unset and Odoo's
-own fallback applies; duplicating that here would only be a second way to get it wrong.
+**Where to put a bespoke title or description:** the per-website content row. That is the
+only place a hand-written string belongs, because it is the only place that knows which site
+it is for.
+
+Descriptions read in a fixed category order — sunglasses, headwear, footwear, apparel,
+fishing tackle, accessories — rather than the order tags were ticked, and a range nobody has
+classified adds no word. Checked against all 127 records in every combination: nothing
+exceeds 155 characters, and where four categories leave no room the phone sentence shortens
+to "Call 07 xxxx xxxx." rather than being dropped, because the number is the action.
 
 ### Website
 

@@ -349,6 +349,23 @@ class WebsiteStockist(models.Model):
             return words[0]
         return "%s and %s" % (", ".join(words[:-1]), words[-1])
 
+    def _meta_title(self, website=None):
+        """The page title for this site.
+
+        Generated rather than stored, for the same reason the description is.
+        A stored title is static: 127 records were written with "Mangrove Jacks
+        at <store>" baked in, and on a second site every one of them would have
+        titled the page with the wrong brand. Odoo's layout also prefers a
+        stored website_meta_title over anything computed, so leaving them in
+        place would have silently beaten this method.
+        """
+        self.ensure_one()
+        content = self._content_for(website)
+        if content and content.website_meta_title:
+            return content.website_meta_title
+        brand = self._brand_for(website)
+        return "%s at %s" % (brand, self.name) if brand else self.name
+
     def _meta_description(self, website=None):
         """What this stockist sells, where it is, and how to check stock.
 
@@ -383,11 +400,11 @@ class WebsiteStockist(models.Model):
         res = super()._default_website_meta()
         website = self.env["website"].get_current_website()
         for stockist in self:
-            content = stockist._content_for(website)
-            if content and content.website_meta_title:
-                res["default_meta_title"] = content.website_meta_title
-                res["default_opengraph"]["og:title"] = content.website_meta_title
-                res["default_twitter"]["twitter:title"] = content.website_meta_title
+            title = stockist._meta_title(website)
+            if title:
+                res["default_meta_title"] = title
+                res["default_opengraph"]["og:title"] = title
+                res["default_twitter"]["twitter:title"] = title
             description = stockist._meta_description(website)
             res["default_meta_description"] = description
             res["default_opengraph"]["og:description"] = description

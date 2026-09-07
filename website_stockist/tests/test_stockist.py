@@ -754,3 +754,30 @@ class TestStockistApplication(TransactionCase):
         lonely = self.env["website"].create({"name": "No Team Site"})
         lonely.company_id = self.env["res.company"].create({"name": "Empty Co"})
         self.assertFalse(lonely._stockist_team())
+
+    def test_title_names_the_brand_of_the_site_it_is_on(self):
+        """A stored title would have carried one brand onto every site."""
+        rockos, mj = self._two_sites()
+        self.env["website.stockist.content"].create([
+            {"stockist_id": self.stockist.id, "website_id": rockos.id,
+             "brand_name": "Rocko's"},
+            {"stockist_id": self.stockist.id, "website_id": mj.id,
+             "brand_name": "Mangrove Jacks"},
+        ])
+        self.assertEqual(self.stockist._meta_title(rockos),
+                         "Rocko's at %s" % self.stockist.name)
+        self.assertEqual(self.stockist._meta_title(mj),
+                         "Mangrove Jacks at %s" % self.stockist.name)
+
+    def test_title_override_on_the_row_wins(self):
+        rockos, _ = self._two_sites()
+        self.env["website.stockist.content"].create({
+            "stockist_id": self.stockist.id, "website_id": rockos.id,
+            "brand_name": "Rocko's",
+            "website_meta_title": "Rocko's thongs in Morayfield"})
+        self.assertEqual(self.stockist._meta_title(rockos),
+                         "Rocko's thongs in Morayfield")
+
+    def test_title_falls_back_to_the_name_with_no_brand(self):
+        lonely = self.env["website"].create({"name": ""})
+        self.assertEqual(self.stockist._meta_title(lonely), self.stockist.name)

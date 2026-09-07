@@ -149,6 +149,11 @@ class WebsiteStockistController(http.Controller):
                 "base_url": request.httprequest.url_root,
                 "json_ld": stockist._json_ld(request.httprequest.url_root,
                                                   request.env["website"].get_current_website()),
+                # website.layout assigns `title` only when the context has not.
+                # Passing it here is what makes the title per-website instead of
+                # whatever single string is stored on the record.
+                "title": stockist._meta_title(
+                    request.env["website"].get_current_website()),
                 "stockist_canonical": stockist._canonical_url(website) or False,
                 "opening_hours": stockist._opening_hours_list(),
             },
