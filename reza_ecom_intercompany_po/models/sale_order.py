@@ -105,6 +105,7 @@ import psycopg2
 
 from odoo import _, fields, models
 from odoo.exceptions import AccessError
+from odoo.osv import expression
 
 _logger = logging.getLogger(__name__)
 
@@ -156,6 +157,15 @@ class SaleOrder(models.Model):
     reza_edbert_note = fields.Char(
         string="Edbert Note", copy=False, readonly=True,
         help="Why it was not raised, or which lines were skipped.",
+    )
+    reza_edbert_transfer_done = fields.Boolean(
+        string="Edbert Transfer Complete", copy=False, readonly=True,
+        default=False, index=True,
+        help="Whether Edbert's delivery and this company's receipt were both "
+        "closed. The purchase order can be raised while the transfer is not, "
+        "so this is a separate question from the status beside it -- and "
+        "without it a transfer that failed would keep its note and never be "
+        "tried again.",
     )
     reza_edbert_attempts = fields.Integer(
         string="Edbert Attempts", copy=False, readonly=True, default=0,
@@ -219,16 +229,41 @@ class SaleOrder(models.Model):
         # orders and WhatYouNeed 240, so that backlog exists from day one.
         ok = self.env["res.company"].sudo().search(
             [("external_api_url", "!=", False), ("external_api_db", "!=", False)])
+
+        # Raised AFTER dispatch, not on confirmation. Ecom and Edbert share one
+        # physical shed, so the goods leave when ecom ships them and the
+        # paperwork follows. Raising on confirmation instead creates Edbert
+        # orders for goods that may never go, and for quantities that may not
+        # match what did.
+        #
+        # `full` is the only delivered state this waits for. Measured on ecom
+        # 2026-09-07 across every confirmed order on the three bridge
+        # companies: 559 full, 0 partial, 0 started. A part-shipped order is
+        # not a real shape here, so it is deliberately left for a person rather
+        # than given machinery nothing exercises.
+        base = [
+            ("state", "in", ("sale", "done")),
+            ("company_id", "in", ok.ids),
+            ("delivery_status", "=", "full"),
+        ]
+        waiting = [("reza_edbert_status", "=", "pending")]
+        retry = [
+            ("reza_edbert_status", "=", "failed"),
+            ("reza_edbert_attempts", "<", MAX_ATTEMPTS),
+        ]
+        # A purchase order can be raised while its transfer is still open --
+        # `_reza_settle_pickings` never raises, so a failure leaves the order
+        # marked `raised` with only a note. Without this branch nothing ever
+        # goes back to it and both warehouses keep a picking open for good.
+        unsettled = [
+            ("reza_edbert_status", "in", ("raised", "partial")),
+            ("reza_edbert_transfer_done", "=", False),
+            ("reza_edbert_attempts", "<", MAX_ATTEMPTS),
+        ]
+        # Built with AND/OR rather than written in prefix form: a mis-nested
+        # domain here does not fail, it silently selects the wrong orders.
         orders = self.search(
-            [
-                "&", "&",
-                ("state", "in", ("sale", "done")),
-                ("company_id", "in", ok.ids),
-                "|",
-                ("reza_edbert_status", "=", "pending"),
-                "&", ("reza_edbert_status", "=", "failed"),
-                ("reza_edbert_attempts", "<", MAX_ATTEMPTS),
-            ],
+            expression.AND([base, expression.OR([waiting, retry, unsettled])]),
             order="id asc", limit=limit,
         )
         # Kept as a safety net so the domain leaf above and _reza_api_company
@@ -420,7 +455,7 @@ class SaleOrder(models.Model):
 
         confirmed = self._reza_confirm(purchase)
         if confirmed:
-            self._reza_settle_pickings(purchase)
+            self._reza_settle_and_record(purchase)
         return confirmed
 
     # ---------------------------------------------------------- the recovery
@@ -457,6 +492,10 @@ class SaleOrder(models.Model):
                     % purchase.name, bump=True)
                 return False
             self._reza_mark_done(purchase)
+            # The order was already linked and confirmed, so the only thing
+            # that can still be outstanding is the transfer. Without this a
+            # settle that failed once is never attempted again.
+            self._reza_settle_and_record(purchase)
             return purchase
 
         if purchase.state not in ("draft", "sent"):
@@ -500,13 +539,14 @@ class SaleOrder(models.Model):
                     purchase.name, remote["name"])
         confirmed = self._reza_confirm(purchase)
         if confirmed:
-            self._reza_settle_pickings(purchase)
             # The create path marks BEFORE it confirms, so it needs no mark
             # here. The resume path does: without this an order recovered from
             # `failed` keeps that status and its stale note, and goes on showing
             # "The Edbert purchase order was not raised" over a purchase order
-            # that is confirmed and pushed.
+            # that is confirmed and pushed. Mark first, then settle, so a note
+            # the settle leaves is not overwritten by the mark.
             self._reza_mark_done(purchase)
+            self._reza_settle_and_record(purchase)
         return confirmed
 
     def _reza_mark_done(self, purchase):
@@ -536,6 +576,21 @@ class SaleOrder(models.Model):
             self._reza_mark("partial", "; ".join(notes[:4]), purchase)
         else:
             self._reza_mark("raised", False, purchase)
+
+    def _reza_settle_and_record(self, purchase):
+        """Settle the transfer and remember whether it closed.
+
+        `_reza_settle_pickings` deliberately never raises -- the purchase order
+        is already raised and committed, and a transfer that could not be
+        closed must not report the order as failed. The cost of that is that a
+        failure leaves nothing to act on but a note. This records the outcome,
+        so the cron can come back to it.
+        """
+        self.ensure_one()
+        done = bool(self._reza_settle_pickings(purchase))
+        if done != self.reza_edbert_transfer_done:
+            self.sudo().reza_edbert_transfer_done = done
+        return done
 
     def _reza_settle_pickings(self, purchase):
         """Complete the transfer `d3_external_api` could not.
@@ -644,7 +699,19 @@ class SaleOrder(models.Model):
         return purchase
 
     def _reza_lines(self):
-        """Which sale lines Edbert must supply, and against which product."""
+        """Which sale lines Edbert must supply, and against which product.
+
+        The quantity is what ecom DELIVERED, not what the customer ordered.
+        The purchase order is raised after dispatch, so this is the paperwork
+        for goods that have already physically left the shared shed, and it
+        must match them.
+
+        That also handles a case no separate check would catch: a delivery
+        validated with no backorder CANCELS the unpicked moves, and the order
+        then reads `delivery_status = full` with a line short. Buying the
+        ordered quantity would bill Edbert for goods that never moved; buying
+        the delivered quantity is right either way.
+        """
         self.ensure_one()
         out, skipped = [], []
         for line in self.order_line:
@@ -655,13 +722,16 @@ class SaleOrder(models.Model):
             # a combo is a wrapper whose components are their own lines.
             if product.type in ("service", "combo"):
                 continue
-            if line.product_uom_qty <= 0:
+            # Measured on ecom 2026-09-07: every waiting order carried the
+            # shipping line at qty_delivered 0, which this drops. Edbert does
+            # not supply freight.
+            if line.qty_delivered <= 0:
                 continue
             if not product.external_api_id:
                 skipped.append(_("%s: not mapped to wholesale") % product.display_name)
                 continue
             out.append({"product": product,
-                        "qty": line.product_uom_qty,
+                        "qty": line.qty_delivered,
                         "uom": line.product_uom,
                         "wholesale_id": product.external_api_id})
         return out, skipped

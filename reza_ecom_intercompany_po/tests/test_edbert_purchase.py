@@ -91,6 +91,31 @@ class TestEdbertPurchase(TransactionCase):
             vals["company_id"] = company.id
         return self.env["sale.order"].with_company(company or self.company).create(vals)
 
+    def _dispatch(self, order, qty=None):
+        """Leave the order looking the way a real ecom dispatch leaves it.
+
+        `qty_delivered` is a stored compute declared `readonly=False`, so it
+        can be written directly. `delivery_status` is stored and NOT writable,
+        so it is set in SQL: these tests are about which orders the worker
+        selects and what it buys, not about Odoo's own delivery computation,
+        and driving a real picking would need stock, a warehouse and a
+        validation for every case.
+        """
+        # Flush BEFORE the raw update. `delivery_status` is computed from the
+        # PICKING states, and confirming the order leaves that recompute
+        # pending -- so an UPDATE written first is overwritten the moment
+        # anything flushes, and the order silently reads `pending` again.
+        self.env.flush_all()
+        for line in order.order_line:
+            line.qty_delivered = line.product_uom_qty if qty is None else qty
+        self.env.flush_all()
+        self.env.cr.execute(
+            "UPDATE sale_order SET delivery_status = 'full' WHERE id = %s", (order.id,))
+        order.invalidate_recordset(["delivery_status"])
+        self.assertEqual(order.delivery_status, "full",
+                         "the fixture did not take -- the test would prove nothing")
+        return order
+
     def _raise(self, order, costs=None, remote=None):
         """Run the worker with the two remote calls stubbed out.
 
@@ -111,6 +136,14 @@ class TestEdbertPurchase(TransactionCase):
             purchases.filtered(lambda p: not p.external_api_sale).write(
                 {"external_api_sale": 987654})
             return True
+
+        # The worker now buys what ecom DELIVERED, so an order nobody has
+        # shipped has nothing to buy. Every test that is about the push itself
+        # rather than about the trigger would otherwise assert against an empty
+        # purchase order. Tests about the undelivered case dispatch explicitly,
+        # or check the cron selection instead.
+        if not any(order.order_line.mapped("qty_delivered")):
+            self._dispatch(order)
 
         Purchase = type(self.env["purchase.order"])
         with patch.object(type(order), "_reza_edbert_costs",
@@ -354,6 +387,7 @@ class TestEdbertPurchase(TransactionCase):
         drop the order out of the cron domain for good."""
         order = self._order()
         order.action_confirm()
+        self._dispatch(order)      # the worker only buys what shipped
         Purchase = type(self.env["purchase.order"])
         with patch.object(type(order), "_reza_edbert_costs",
                           return_value={105811: 3.3610}), \
@@ -385,34 +419,121 @@ class TestEdbertPurchase(TransactionCase):
         self.assertFalse(order.reza_edbert_purchase_id)
 
     # ------------------------------------------------------------- the cron
-    def test_the_cron_picks_pending_and_retryable_failures_only(self):
+    def _cron_selection(self):
+        seen = []
+        with patch.object(type(self.env["sale.order"]), "_reza_raise_edbert_purchase",
+                          autospec=True, side_effect=lambda rec: seen.append(rec.id)):
+            self.env["sale.order"]._reza_cron_raise_edbert_purchases(limit=200)
+        return seen
+
+    def test_the_cron_picks_dispatched_orders_and_retryable_failures(self):
         pending = self._order()
         pending.action_confirm()
+        self._dispatch(pending)
 
         retryable = self._order()
         retryable.action_confirm()
+        self._dispatch(retryable)
         retryable.sudo().write({"reza_edbert_status": "failed",
                                 "reza_edbert_attempts": MAX_ATTEMPTS - 1})
 
         exhausted = self._order()
         exhausted.action_confirm()
+        self._dispatch(exhausted)
         exhausted.sudo().write({"reza_edbert_status": "failed",
                                 "reza_edbert_attempts": MAX_ATTEMPTS})
 
-        done = self._order()
-        done.action_confirm()
-        done.sudo().write({"reza_edbert_status": "raised"})
+        settled = self._order()
+        settled.action_confirm()
+        self._dispatch(settled)
+        settled.sudo().write({"reza_edbert_status": "raised",
+                              "reza_edbert_transfer_done": True})
 
-        seen = []
-        with patch.object(type(pending), "_reza_raise_edbert_purchase", autospec=True,
-                          side_effect=lambda rec: seen.append(rec.id)):
-            self.env["sale.order"]._reza_cron_raise_edbert_purchases(limit=200)
-
-        self.assertIn(pending.id, seen, "a pending order must be picked up")
+        seen = self._cron_selection()
+        self.assertIn(pending.id, seen, "a dispatched order must be picked up")
         self.assertIn(retryable.id, seen, "a failure under the cap must be retried")
         self.assertNotIn(exhausted.id, seen,
                          "a failure at the cap must stop, or it starves the queue")
-        self.assertNotIn(done.id, seen, "a raised order must not be touched again")
+        self.assertNotIn(settled.id, seen,
+                         "an order whose transfer closed must be left alone")
+
+    def test_an_order_that_has_not_shipped_is_not_bought_yet(self):
+        """The paperwork follows the goods.
+
+        Raising on confirmation instead would create Edbert orders for goods
+        that may never leave, and for quantities that may not match what did.
+        """
+        waiting = self._order()
+        waiting.action_confirm()
+        self.assertNotEqual(waiting.delivery_status, "full")
+        self.assertNotIn(waiting.id, self._cron_selection())
+
+        self._dispatch(waiting)
+        self.assertIn(waiting.id, self._cron_selection(),
+                      "once it has shipped it must be picked up")
+
+    def test_a_raised_order_whose_transfer_never_closed_is_tried_again(self):
+        """`_reza_settle_pickings` never raises, so a failure leaves only a note.
+
+        Without this branch nothing goes back to it and both warehouses keep a
+        picking open for good.
+        """
+        stuck = self._order()
+        stuck.action_confirm()
+        self._dispatch(stuck)
+        stuck.sudo().write({"reza_edbert_status": "raised",
+                            "reza_edbert_transfer_done": False})
+        self.assertIn(stuck.id, self._cron_selection())
+
+    def test_a_stuck_transfer_stops_being_retried_at_the_cap(self):
+        """It must not become a permanent job that starves the queue."""
+        stuck = self._order()
+        stuck.action_confirm()
+        self._dispatch(stuck)
+        stuck.sudo().write({"reza_edbert_status": "raised",
+                            "reza_edbert_transfer_done": False,
+                            "reza_edbert_attempts": MAX_ATTEMPTS})
+        self.assertNotIn(stuck.id, self._cron_selection())
+
+    def test_the_purchase_covers_what_shipped_not_what_was_ordered(self):
+        """A short ship must not bill Edbert for goods that never moved.
+
+        A delivery validated with no backorder cancels the unpicked moves, and
+        the order then reads `full` with a line short. Buying the delivered
+        quantity is right either way.
+        """
+        order = self._order(qty=5.0)
+        order.action_confirm()
+        self._dispatch(order, qty=3.0)
+        wanted, skipped = order._reza_lines()
+        self.assertEqual(len(wanted), 1)
+        self.assertEqual(wanted[0]["qty"], 3.0)
+        self.assertFalse(skipped)
+
+    def test_a_line_that_never_shipped_is_left_off(self):
+        """Every waiting order on ecom carried its shipping line at zero."""
+        order = self._order(qty=5.0)
+        order.action_confirm()
+        self._dispatch(order, qty=0.0)
+        wanted, skipped = order._reza_lines()
+        self.assertFalse(wanted, "nothing shipped, so there is nothing to buy")
+        self.assertFalse(skipped, "an unshipped line is not a mapping problem")
+
+    def test_the_settle_outcome_is_recorded_both_ways(self):
+        order = self._order()
+        order.action_confirm()
+        self._dispatch(order)
+        purchase = self.env["purchase.order"].create({"partner_id": self.vendor.id})
+
+        with patch.object(type(order), "_reza_settle_pickings", autospec=True,
+                          return_value=False):
+            self.assertFalse(order._reza_settle_and_record(purchase))
+        self.assertFalse(order.reza_edbert_transfer_done)
+
+        with patch.object(type(order), "_reza_settle_pickings", autospec=True,
+                          return_value=True):
+            self.assertTrue(order._reza_settle_and_record(purchase))
+        self.assertTrue(order.reza_edbert_transfer_done)
 
     def test_a_confirmed_purchase_order_with_no_stamp_is_not_called_raised(self):
         """`d3_external_api` stamps external_api_sale immediately after it
@@ -504,8 +625,10 @@ class TestEdbertPurchase(TransactionCase):
 
         blocked = self._order(company=other)         # lower id, and unraisable
         blocked.action_confirm()
+        self._dispatch(blocked)
         processable = self._order()                  # higher id, and raisable
         processable.action_confirm()
+        self._dispatch(processable)
 
         seen = []
         with patch.object(type(blocked), "_reza_raise_edbert_purchase", autospec=True,
