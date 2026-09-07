@@ -238,3 +238,13 @@ class TestGooglePlacesParsing(TransactionCase):
             self.gp._street_from_formatted(
                 {"formattedAddress": "Somewhere entirely"}, city_hint="Nowhere"), "")
         self.assertEqual(self.gp._street_from_formatted({}, city_hint="X"), "")
+
+    def test_suburb_inside_the_street_line_is_not_a_cut_point(self):
+        """Stockland Hervey Bay's street contains its own suburb name."""
+        self.assertEqual(
+            self.gp._street_from_formatted(
+                {"formattedAddress": "Stockland Hervey Bay Shopping Centre 6 Central "
+                                     "Avenue Shop 63 Hervey Bay, Hervey Bay QLD 4655, "
+                                     "Australia"},
+                city_hint="Hervey Bay"),
+            "Stockland Hervey Bay Shopping Centre 6 Central Avenue Shop 63 Hervey Bay")

@@ -196,7 +196,10 @@ def _street_from_formatted(payload, city_hint=""):
     if not formatted or not city_hint:
         return ""
     marker = ", %s" % city_hint
-    index = formatted.find(marker)
+    # The LAST occurrence, not the first: Stockland Hervey Bay's street line is
+    # itself "... Shop 63 Hervey Bay", so cutting at the first ", Hervey Bay"
+    # would throw away part of the street.
+    index = formatted.rfind(marker)
     if index <= 0:
         return ""
     return formatted[:index].strip().rstrip(",")
