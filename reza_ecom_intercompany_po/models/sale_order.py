@@ -167,6 +167,12 @@ class SaleOrder(models.Model):
         "without it a transfer that failed would keep its note and never be "
         "tried again.",
     )
+    reza_edbert_invoiced = fields.Boolean(
+        string="Edbert Invoiced", copy=False, readonly=True, default=False, index=True,
+        help="Whether Edbert's customer invoice and this company's vendor bill "
+        "were both raised and posted. Separate from the transfer: the goods can "
+        "have moved while the money has not been recorded.",
+    )
     reza_edbert_attempts = fields.Integer(
         string="Edbert Attempts", copy=False, readonly=True, default=0,
         help="Failed passes so far. The cron stops re-trying at %d." % MAX_ATTEMPTS,
@@ -257,8 +263,13 @@ class SaleOrder(models.Model):
         # goes back to it and both warehouses keep a picking open for good.
         unsettled = [
             ("reza_edbert_status", "in", ("raised", "partial")),
-            ("reza_edbert_transfer_done", "=", False),
             ("reza_edbert_attempts", "<", MAX_ATTEMPTS),
+            "|",
+            ("reza_edbert_transfer_done", "=", False),
+            # The goods can have moved while the money has not been recorded,
+            # so an order whose transfer closed still needs revisiting until
+            # both documents exist.
+            ("reza_edbert_invoiced", "=", False),
         ]
         # Built with AND/OR rather than written in prefix form: a mis-nested
         # domain here does not fail, it silently selects the wrong orders.
@@ -610,6 +621,136 @@ class SaleOrder(models.Model):
         else:
             self._reza_mark("raised", False, purchase)
 
+    def _reza_invoice(self, purchase):
+        """Raise and post BOTH documents, once the goods have actually moved.
+
+        Edbert invoices the ecom brand company; that company records the
+        matching vendor bill, carrying Edbert's invoice number as its
+        reference. That number is the only thing tying the two together across
+        two databases.
+
+        `d3_external_api` already asks wholesale to raise its invoice, from its
+        own override of `action_create_invoice` -- so that call is reused rather
+        than duplicated. What it does not do is post either document, check that
+        they agree, or say anything when its remote call fails (it ends in a
+        bare `except: return False`). This adds all three.
+
+        NOTHING IS POSTED UNTIL THE TWO AGREE. Until 2026-09-07 the two sides
+        read the same `price_unit` with different tax treatments and were out by
+        1/11 on every line; posting into that would have put the error in both
+        ledgers automatically. Both documents are left in draft instead, and the
+        difference is named on the order.
+
+        Like the transfer, it NEVER raises. The goods have gone and the purchase
+        order is committed; a money document that could not be raised is a thing
+        to report and retry, not a reason to fail the order.
+        """
+        self.ensure_one()
+        if self.reza_edbert_invoiced:
+            return True
+        if not purchase.external_api_sale:
+            return False
+        try:
+            proxy, db, uid, pwd = self._reza_wholesale_proxy(self._reza_api_company())
+            remote_id = purchase.external_api_sale
+            ctx = {"skip_reza_fuel_surcharge_sync": True, "skip_tax_update": True}
+
+            # 1. The vendor bill here. Its creation is also what asks wholesale
+            #    to raise its own invoice.
+            bill = purchase.invoice_ids.filtered(lambda m: m.state != "cancel")
+            if not bill:
+                # Core RAISES here rather than returning quietly when nothing is
+                # invoiceable (purchase/models/purchase_order.py:694). Caught by
+                # the blanket handler below, that turns an ordinary "the goods
+                # are not recorded as received yet" into a reported failure, so
+                # it is tested for first.
+                if purchase.invoice_status != "to invoice":
+                    self._reza_note(
+                        _("%(po)s is %(status)s, so there is nothing to bill yet.")
+                        % {"po": purchase.name, "status": purchase.invoice_status})
+                    return False
+                purchase.sudo().action_create_invoice()
+                purchase.invalidate_recordset(["invoice_ids"])
+                bill = purchase.invoice_ids.filtered(lambda m: m.state != "cancel")
+            if not bill:
+                self._reza_note(_("No vendor bill could be created for %s.") % purchase.name)
+                return False
+            bill = bill[0]
+
+            # 2. Wholesale's invoice. The vendor module swallows its own
+            #    failures, so if it produced nothing, ask for it here.
+            remote = proxy.execute_kw(db, uid, pwd, "sale.order", "read", [[remote_id]],
+                                      {"fields": ["name", "invoice_ids", "invoice_status"]})[0]
+            if not remote["invoice_ids"]:
+                wiz = proxy.execute_kw(
+                    db, uid, pwd, "sale.advance.payment.inv", "create",
+                    [{"advance_payment_method": "delivered"}],
+                    {"context": dict(ctx, active_model="sale.order",
+                                     active_ids=[remote_id], active_id=remote_id)})
+                proxy.execute_kw(db, uid, pwd, "sale.advance.payment.inv",
+                                 "create_invoices", [[wiz]], {"context": ctx})
+                remote = proxy.execute_kw(db, uid, pwd, "sale.order", "read", [[remote_id]],
+                                          {"fields": ["name", "invoice_ids"]})[0]
+            if not remote["invoice_ids"]:
+                self._reza_note(_("Wholesale %s produced no invoice.") % remote["name"])
+                return False
+
+            inv = proxy.execute_kw(db, uid, pwd, "account.move", "read",
+                                   [remote["invoice_ids"][:1]],
+                                   {"fields": ["name", "state", "amount_untaxed",
+                                               "amount_total"]})[0]
+
+            # 3. Agreement, BEFORE either document is posted.
+            gap = abs(bill.amount_untaxed - inv["amount_untaxed"])
+            if gap > 0.01:
+                self._reza_note(
+                    _("Edbert invoice %(n)s is %(theirs).2f ex GST but this bill is "
+                      "%(ours).2f. Neither was posted.")
+                    % {"n": inv["name"], "theirs": inv["amount_untaxed"],
+                       "ours": bill.amount_untaxed})
+                _logger.warning(
+                    "reza_ecom_intercompany_po: %s -- invoice %s %.2f vs bill %.2f",
+                    self.name, inv["name"], inv["amount_untaxed"], bill.amount_untaxed)
+                return False
+
+            # 4. They agree. Post both.
+            if inv["state"] == "draft":
+                proxy.execute_kw(db, uid, pwd, "account.move", "action_post",
+                                 [[inv["id"]]], {"context": ctx})
+                inv = proxy.execute_kw(db, uid, pwd, "account.move", "read", [[inv["id"]]],
+                                       {"fields": ["name", "state", "amount_untaxed",
+                                                   "amount_total"]})[0]
+            if inv["state"] != "posted":
+                self._reza_note(_("Edbert invoice %(n)s is %(s)s, so the bill was not "
+                                  "posted.") % {"n": inv["name"], "s": inv["state"]})
+                return False
+
+            if bill.state == "draft":
+                bill.sudo().write({"ref": inv["name"],
+                                   "invoice_date": bill.invoice_date or fields.Date.today()})
+                bill.sudo().action_post()
+            if bill.state != "posted":
+                self._reza_note(_("Vendor bill %(b)s for Edbert invoice %(n)s is %(s)s.")
+                                % {"b": bill.name, "n": inv["name"], "s": bill.state})
+                return False
+
+            _logger.info(
+                "reza_ecom_intercompany_po: %s billed %s against Edbert invoice %s (%.2f ex)",
+                self.name, bill.name, inv["name"], inv["amount_untaxed"])
+            return True
+        except Exception:  # noqa: BLE001
+            _logger.exception("reza_ecom_intercompany_po: could not invoice %s", self.name)
+            self._reza_note(_("The goods moved, but the invoice could not be raised. "
+                              "It will be tried again."))
+            return False
+
+    def _reza_invoice_and_record(self, purchase):
+        self.ensure_one()
+        done = bool(self._reza_invoice(purchase))
+        if done != self.reza_edbert_invoiced:
+            self.sudo().reza_edbert_invoiced = done
+        return done
+
     def _reza_settle_and_record(self, purchase):
         """Settle the transfer and remember whether it closed.
 
@@ -623,6 +764,10 @@ class SaleOrder(models.Model):
         done = bool(self._reza_settle_pickings(purchase))
         if done != self.reza_edbert_transfer_done:
             self.sudo().reza_edbert_transfer_done = done
+        if done:
+            # Only after the transfer closes. Invoicing goods that have not
+            # moved would bill for something neither warehouse has recorded.
+            self._reza_invoice_and_record(purchase)
         return done
 
     def _reza_settle_pickings(self, purchase):

@@ -182,6 +182,183 @@ class TestEdbertPurchase(TransactionCase):
         return purchase
 
     # ------------------------------------------------------------------ price
+    # ---------------------------------------------------------------- invoice
+    class _FakeWholesale:
+        """Stands in for the Edbert database for the invoicing calls."""
+
+        def __init__(self, invoice, order_name="EBH000000001"):
+            self.invoice = dict(invoice)
+            self.order_name = order_name
+            self.posted = False
+
+        def execute_kw(self, db, uid, pwd, model, method, args, kw=None):
+            if model == "sale.advance.payment.inv":
+                return 1 if method == "create" else True
+            if model == "sale.order" and method == "read":
+                return [{"id": args[0][0], "name": self.order_name,
+                         "invoice_ids": [self.invoice["id"]],
+                         "invoice_status": "to invoice",
+                         "amount_untaxed": self.invoice["amount_untaxed"],
+                         "amount_total": self.invoice["amount_total"]}]
+            if model == "account.move" and method == "read":
+                return [dict(self.invoice)]
+            if model == "account.move" and method == "action_post":
+                self.posted = True
+                self.invoice["state"] = "posted"
+                return True
+            raise AssertionError("unexpected remote call %s.%s" % (model, method))
+
+    def _receive(self, purchase):
+        """Receive the goods, so there is something to bill.
+
+        Odoo bills a purchase order on what was RECEIVED, so a bill cannot
+        exist before the receipt is validated. A receipt needs no stock -- it
+        is incoming -- so this is a real validation, not a fixture shortcut.
+        """
+        for picking in purchase.picking_ids.filtered(lambda p: p.state not in ("done", "cancel")):
+            picking.action_assign()
+            for move in picking.move_ids:
+                move.quantity = move.product_uom_qty
+                move.picked = True
+            picking.button_validate()
+        purchase.invalidate_recordset()
+        return purchase
+
+    def _stub_remote(self, invoice):
+        fake = self._FakeWholesale(invoice)
+        self.patch(type(self.env["sale.order"]), "_reza_wholesale_proxy",
+                   lambda self, api: (fake, "db", 1, "pwd"))
+        return fake
+
+    def test_the_money_waits_for_the_goods(self):
+        """Invoicing goods that have not moved bills for nothing."""
+        order = self._order()
+        order.action_confirm()
+        self._dispatch(order)
+        purchase = self.env["purchase.order"].create({"partner_id": self.vendor.id})
+        with patch.object(type(order), "_reza_settle_pickings", autospec=True,
+                          return_value=False), \
+                patch.object(type(order), "_reza_invoice_and_record", autospec=True) as inv:
+            order._reza_settle_and_record(purchase)
+        inv.assert_not_called()
+        self.assertFalse(order.reza_edbert_invoiced)
+
+    def _no_vendor_remote_call(self):
+        """d3_external_api hooks action_create_invoice and calls wholesale.
+
+        In a test that reaches a real socket, so it is stubbed out. The bridge
+        asks wholesale for the invoice itself when the vendor produced none,
+        which is the path these tests exercise.
+        """
+        self.patch(type(self.env["purchase.order"]), "invoice_external_api_sale",
+                   lambda self: True)
+
+    def test_a_disagreement_refuses_to_bill(self):
+        """The guard that would have caught the tax bug.
+
+        Until 2026-09-07 the two sides read the same price with different tax
+        treatments and were out by 1/11 on every line. Posting into that would
+        have put the error in both ledgers automatically.
+        """
+        self._no_vendor_remote_call()
+        tax = self._excl_tax()
+        order = self._order()
+        order.action_confirm()
+        self._dispatch(order)
+        self._raise(order)
+        purchase = order.reza_edbert_purchase_id
+        self.assertTrue(purchase)
+        self._receive(purchase)
+        self._stub_remote({"id": 55, "name": "INVEDB000999", "state": "posted",
+                           "move_type": "out_invoice",
+                           "amount_untaxed": purchase.amount_untaxed + 5.0,
+                           "amount_total": purchase.amount_total + 5.5})
+        fake = self._stub_remote({"id": 55, "name": "INVEDB000999", "state": "draft",
+                                  "amount_untaxed": purchase.amount_untaxed + 5.0,
+                                  "amount_total": purchase.amount_total + 5.5})
+        self.assertFalse(order._reza_invoice(purchase))
+        # The bill may exist -- it is what the amounts are compared against --
+        # but NEITHER document may be posted while they disagree.
+        self.assertFalse(fake.posted, "Edbert's invoice must not be posted")
+        for bill in purchase.invoice_ids:
+            self.assertEqual(bill.state, "draft")
+        self.assertIn("INVEDB000999", order.reza_edbert_note or "")
+        self.assertIn("neither was posted", (order.reza_edbert_note or "").lower())
+
+    def test_nothing_received_yet_is_not_reported_as_a_failure(self):
+        """Core raises rather than returning quietly when nothing is billable.
+
+        Swallowed by the blanket handler, that turns an ordinary state into
+        "the invoice could not be raised", which sends someone looking for a
+        fault that is not there.
+        """
+        self._no_vendor_remote_call()
+        order = self._order()
+        order.action_confirm()
+        self._dispatch(order)
+        self._raise(order)
+        purchase = order.reza_edbert_purchase_id
+        # Nothing is received, so there is nothing to bill. The remote is
+        # stubbed only so the run reaches that check rather than dying on the
+        # connection first.
+        self._stub_remote({"id": 57, "name": "INVEDB000777", "state": "posted",
+                           "amount_untaxed": 0.0, "amount_total": 0.0})
+        self.assertFalse(order._reza_invoice(purchase))
+        note = order.reza_edbert_note or ""
+        self.assertIn("nothing to bill", note.lower())
+        self.assertNotIn("could not be raised", note)
+
+    def test_matching_documents_are_billed_and_posted(self):
+        """Both documents raised, both posted, and linked by Edbert's number."""
+        self._no_vendor_remote_call()
+        tax = self._excl_tax()
+        order = self._order()
+        order.action_confirm()
+        self._dispatch(order)
+        self._raise(order)
+        purchase = order.reza_edbert_purchase_id
+        self._receive(purchase)
+        self.assertTrue(any(l.qty_received for l in purchase.order_line),
+                        "nothing was received, so there would be nothing to bill")
+        self._stub_remote({"id": 56, "name": "INVEDB000123", "state": "posted",
+                           "move_type": "out_invoice",
+                           "amount_untaxed": purchase.amount_untaxed,
+                           "amount_total": purchase.amount_total})
+        self.assertTrue(order._reza_invoice(purchase))
+        bill = purchase.invoice_ids
+        self.assertTrue(bill, "a vendor bill must exist")
+        self.assertEqual(bill[0].state, "posted")
+        self.assertEqual(bill[0].ref, "INVEDB000123",
+                         "the Edbert invoice number is the only link across the two databases")
+
+    def test_it_never_bills_twice(self):
+        order = self._order()
+        order.sudo().reza_edbert_invoiced = True
+        purchase = self.env["purchase.order"].create({"partner_id": self.vendor.id})
+        self.assertTrue(order._reza_invoice(purchase))
+        self.assertFalse(purchase.invoice_ids)
+
+    def test_the_invoice_outcome_is_recorded_both_ways(self):
+        order = self._order()
+        purchase = self.env["purchase.order"].create({"partner_id": self.vendor.id})
+        with patch.object(type(order), "_reza_invoice", autospec=True, return_value=False):
+            self.assertFalse(order._reza_invoice_and_record(purchase))
+        self.assertFalse(order.reza_edbert_invoiced)
+        with patch.object(type(order), "_reza_invoice", autospec=True, return_value=True):
+            self.assertTrue(order._reza_invoice_and_record(purchase))
+        self.assertTrue(order.reza_edbert_invoiced)
+
+    def test_the_cron_revisits_an_order_that_shipped_but_never_billed(self):
+        order = self._order()
+        order.action_confirm()
+        self._dispatch(order)
+        order.sudo().write({"reza_edbert_status": "raised",
+                            "reza_edbert_transfer_done": True,
+                            "reza_edbert_invoiced": False})
+        self.assertIn(order.id, self._cron_selection())
+        order.sudo().reza_edbert_invoiced = True
+        self.assertNotIn(order.id, self._cron_selection())
+
     # -------------------------------------------------------------------- tax
     def _excl_tax(self, company=None, name=None):
         company = company or self.company
@@ -199,6 +376,7 @@ class TestEdbertPurchase(TransactionCase):
         Measured on production 2026-09-07: every one of the nine bridge orders
         was out by exactly 1/11, and the bill could never match the invoice.
         """
+        self._no_vendor_remote_call()
         tax = self._excl_tax()
         order = self._order()
         order.action_confirm()
@@ -500,7 +678,8 @@ class TestEdbertPurchase(TransactionCase):
         settled.action_confirm()
         self._dispatch(settled)
         settled.sudo().write({"reza_edbert_status": "raised",
-                              "reza_edbert_transfer_done": True})
+                              "reza_edbert_transfer_done": True,
+                              "reza_edbert_invoiced": True})
 
         seen = self._cron_selection()
         self.assertIn(pending.id, seen, "a dispatched order must be picked up")
