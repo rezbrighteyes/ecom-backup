@@ -177,6 +177,18 @@ category** filter on the product tag list.
 The category is **Headwear**, not "Hats": MJHat is one range of several, and the group
 counts caps, beanies and visors in the same category.
 
+The categories are sunglasses, headwear, footwear, apparel, **fishing tackle** and
+accessories, and they read in that fixed order rather than the order tags were ticked.
+Fishing tackle earns its own word: 288 distinct publishable products sit behind Lures,
+Hooks, Jigs, Line & Tackle and the rest — close to the whole sunglasses catalogue — and
+none of it is apparel or an accessory.
+
+Two traps found while classifying, both of which a name-based guess would have got wrong:
+**Stalkers** is clip-on sunglasses and **Obsession** is a sunglasses brand, so neither is
+fishing despite sitting beside the tackle tags. **Fishing Apparel** is shirts and neck
+gaiters, so it is apparel rather than tackle. Read a few product names before classifying
+a tag.
+
 ### Titles and meta descriptions
 
 The title is written to `website_meta_title` on each record and follows one pattern:

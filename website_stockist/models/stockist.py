@@ -215,7 +215,10 @@ class WebsiteStockist(models.Model):
     # ------------------------------------------------------------------
     # Compute / constraints
     # ------------------------------------------------------------------
-    CATEGORY_ORDER = ["sunglasses", "headwear", "footwear", "apparel", "accessories"]
+    # The order categories read in a sentence and on the badge row. Fixed, so a
+    # page does not reshuffle because tags were ticked in a different order.
+    CATEGORY_ORDER = ["sunglasses", "headwear", "footwear", "apparel",
+                      "fishing", "accessories"]
 
     def _stock_domain(self):
         """Products this stockist carries: published, sellable, on its websites."""

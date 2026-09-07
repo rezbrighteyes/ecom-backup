@@ -611,3 +611,19 @@ class TestOpeningHoursSpecification(TransactionCase):
         # And the categories follow the stock, so only one of them claims footwear.
         self.assertIn("Footwear", [l for l, _ in self.stockist._category_groups()])
         self.assertNotIn("Footwear", [l for l, _ in other._category_groups()])
+
+    def test_fishing_tackle_reads_as_its_own_category(self):
+        """Tackle is not apparel and not an accessory; it needed its own word."""
+        tackle = self.env["product.tag"].create(
+            {"name": "Lures", "stockist_category": "fishing"})
+        shirt = self.env["product.tag"].create(
+            {"name": "Fishing Apparel", "stockist_category": "apparel"})
+        retailer = self.env["product.tag"].create({"name": "BERz"})
+        for name, other in (("Hard Body Minnow", tackle), ("Kids Fishing Shirt", shirt)):
+            self.env["product.template"].create({
+                "name": name, "is_published": True,
+                "product_tag_ids": [(6, 0, [retailer.id, other.id])]})
+        self.stockist.stockist_tag_ids = [(6, 0, [retailer.id])]
+        labels = [l for l, _ in self.stockist._category_groups()]
+        self.assertEqual(labels, ["Apparel", "Fishing tackle"])
+        self.assertIn("apparel and fishing tackle", self.stockist._meta_description())

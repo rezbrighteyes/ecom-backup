@@ -18,6 +18,7 @@ NAME_HINTS = (
     ("footwear", ("mjfoot", "mjpluggers", "mjfishshoe", "mjnobbies")),
     ("headwear", ("mjhat", "hats", "caps", "beanie", "visor")),
     ("apparel", ("mjshirt",)),
+    ("fishing", ("mjtackle",)),
 )
 
 
@@ -30,6 +31,7 @@ class ProductTag(models.Model):
             ("footwear", "Footwear"),
             ("headwear", "Headwear"),
             ("apparel", "Apparel"),
+            ("fishing", "Fishing tackle"),
             ("accessories", "Accessories"),
         ],
         string="Stockist category",
