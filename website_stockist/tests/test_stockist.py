@@ -542,3 +542,21 @@ class TestOpeningHoursSpecification(TransactionCase):
             "product_tag_ids": [(6, 0, [retailer.id, rare.id])]})
         self.stockist.range_ids = [(6, 0, [retailer.id])]
         self.assertIn("Apparel", [l for l, _ in self.stockist._range_groups()])
+
+    def test_social_image_prefers_the_shopfront(self):
+        import base64
+        png = base64.b64encode(
+            b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
+        self.stockist.write({"image_1920": png, "logo": png})
+        self.assertIn("/image_1920", self.stockist._social_image_url())
+
+    def test_social_image_falls_back_to_the_logo(self):
+        import base64
+        png = base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
+        self.stockist.write({"image_1920": False, "logo": png})
+        self.assertIn("/logo", self.stockist._social_image_url())
+
+    def test_no_images_means_odoo_default_not_a_broken_url(self):
+        """Falling through to the site logo is Odoo's job, not ours."""
+        self.stockist.write({"image_1920": False, "logo": False})
+        self.assertIsNone(self.stockist._social_image_url())

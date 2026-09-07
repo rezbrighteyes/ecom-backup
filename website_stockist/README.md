@@ -228,6 +228,16 @@ number is the action, the invitation around it is not.
 It is supplied through `_default_website_meta`, so anything typed into the SEO tab by
 hand still wins. Set it there when a store deserves something specific.
 
+**So the SEO tab reads as empty even though the page is right.** Only the title is stored
+on the record; description, `og:description` and `twitter:description` are produced at
+render. Odoo's "is SEO optimized" indicator reads the stored fields, so it will stay off.
+That is the cost of a description that follows the ranges instead of freezing.
+
+`og:image` and `twitter:image` are set to the stockist's own shopfront, falling back to
+its logo. Without that, all 127 pages share one social image — the site logo — so every
+shared link looks identical. With no image of its own the field is left unset and Odoo's
+own fallback applies; duplicating that here would only be a second way to get it wrong.
+
 ### Website
 
 `websiteUri` was always in the field mask and was being thrown away. It now maps to

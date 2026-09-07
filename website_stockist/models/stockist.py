@@ -313,7 +313,28 @@ class WebsiteStockist(models.Model):
             res["default_meta_description"] = description
             res["default_opengraph"]["og:description"] = description
             res["default_twitter"]["twitter:description"] = description
+            # Without this every stockist shares one social image: the site
+            # logo. A shopfront tells someone which shop the link is about, and
+            # each stockist already has one where Google's listing had a photo.
+            image = stockist._social_image_url()
+            if image:
+                res["default_opengraph"]["og:image"] = image
+                res["default_twitter"]["twitter:image"] = image
         return res
+
+    def _social_image_url(self):
+        """Absolute URL of the best image to represent this stockist, or None.
+
+        The shopfront first, the stockist's own logo second, and nothing third —
+        falling through to the site logo is what Odoo already does, and doing it
+        here would only duplicate that.
+        """
+        self.ensure_one()
+        field = "image_1920" if self.image_1920 else ("logo" if self.logo else None)
+        if not field:
+            return None
+        base = self.env["website"].get_current_website().get_base_url()
+        return "%s/web/image/website.stockist/%s/%s" % (base.rstrip("/"), self.id, field)
 
     @api.depends("range_ids", "website_ids")
     def _compute_product_ids(self):
