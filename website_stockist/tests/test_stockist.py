@@ -293,16 +293,43 @@ class TestOpeningHoursSpecification(TransactionCase):
         self.assertIn("openingHoursSpecification", data)
         self.assertNotIn("openingHours", data)
 
-    def test_range_appears_in_json_ld(self):
-        import json
-        tag = self.env["product.tag"].create({"name": "MJ59"})
-        self.stockist.brand_ids = [(6, 0, [tag.id])]
-        data = json.loads(self.stockist._json_ld("https://example.com").strip())
-        offers = data["makesOffer"]
-        self.assertEqual(offers[0]["itemOffered"]["name"], "MJ59")
-        self.assertEqual(offers[0]["itemOffered"]["brand"]["name"], "Mangrove Jacks")
 
     def test_no_range_means_no_offer_block(self):
         import json
         data = json.loads(self.stockist._json_ld("https://example.com").strip())
         self.assertNotIn("makesOffer", data)
+
+    def test_products_follow_the_ranges(self):
+        """The product list is computed, not a snapshot taken at setup."""
+        tag = self.env["product.tag"].create({"name": "MJ59"})
+        product = self.env["product.template"].create({
+            "name": "MJ59 Polarised", "product_tag_ids": [(6, 0, [tag.id])],
+            "is_published": True})
+        self.stockist.range_ids = [(6, 0, [tag.id])]
+        self.assertIn(product, self.stockist.product_ids)
+
+    def test_unpublished_products_are_not_listed(self):
+        """A stockist page must not advertise something with no page to link to."""
+        tag = self.env["product.tag"].create({"name": "MJ89"})
+        hidden = self.env["product.template"].create({
+            "name": "MJ89 Draft", "product_tag_ids": [(6, 0, [tag.id])],
+            "is_published": False})
+        self.stockist.range_ids = [(6, 0, [tag.id])]
+        self.assertNotIn(hidden, self.stockist.product_ids)
+
+    def test_no_ranges_means_no_products(self):
+        self.stockist.range_ids = [(5, 0, 0)]
+        self.assertFalse(self.stockist.product_ids)
+
+    def test_offers_name_products_not_ranges(self):
+        """makesOffer must carry what a customer can buy, not an internal code."""
+        import json
+        tag = self.env["product.tag"].create({"name": "MJ49"})
+        self.env["product.template"].create({
+            "name": "MJ49 Wrap", "product_tag_ids": [(6, 0, [tag.id])],
+            "is_published": True})
+        self.stockist.range_ids = [(6, 0, [tag.id])]
+        data = json.loads(self.stockist._json_ld("https://example.com").strip())
+        names = [o["itemOffered"]["name"] for o in data["makesOffer"]]
+        self.assertIn("MJ49 Wrap", names)
+        self.assertNotIn("MJ49", names)

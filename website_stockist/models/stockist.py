@@ -17,6 +17,9 @@ class WebsiteStockist(models.Model):
     _inherit = ["website.seo.metadata", "website.published.mixin", "mail.thread"]
     _order = "state_id, city, name"
 
+    # How many products a stockist page will list before it stops.
+    PRODUCT_DISPLAY_LIMIT = 24
+
     # ------------------------------------------------------------------
     # Identity
     # ------------------------------------------------------------------
@@ -143,14 +146,26 @@ class WebsiteStockist(models.Model):
         help="Set to Google when the photo came from the listing, so a later sync "
              "knows it may replace it. A photo uploaded here is never overwritten.",
     )
-    brand_ids = fields.Many2many(
+    # The relation table and column names are deliberately unchanged from when
+    # this was called brand_ids: an m2m is stored by table, not by field name,
+    # so the rename carries every existing row across without a migration.
+    range_ids = fields.Many2many(
         "product.tag",
         "website_stockist_product_tag_rel",
         "stockist_id",
         "tag_id",
-        string="Brands stocked",
-        help="Only name a brand this stockist genuinely carries. A locator that "
-             "lists brands a store does not hold sends customers to a dead end.",
+        string="Ranges stocked",
+        help="Mangrove Jacks is one brand; MJ59 and MJ89 are ranges within it. "
+             "Only tick a range this stockist genuinely carries — a locator that "
+             "lists stock a store does not hold sends customers to a dead end.",
+    )
+    product_ids = fields.Many2many(
+        "product.template",
+        string="Products in those ranges",
+        compute="_compute_product_ids",
+        help="Every published product carrying one of the ranges above. Computed, "
+             "never stored: the answer has to follow the catalogue rather than a "
+             "snapshot of it taken when the stockist was created.",
     )
 
     # ------------------------------------------------------------------
@@ -194,6 +209,24 @@ class WebsiteStockist(models.Model):
     # ------------------------------------------------------------------
     # Compute / constraints
     # ------------------------------------------------------------------
+    @api.depends("range_ids")
+    def _compute_product_ids(self):
+        """Published products carrying any of this stockist's ranges.
+
+        Capped: a page listing several hundred products is neither useful to a
+        reader nor a good structured-data payload, and the cap keeps one badly
+        tagged range from swamping the page.
+        """
+        for stockist in self:
+            if not stockist.range_ids:
+                stockist.product_ids = False
+                continue
+            stockist.product_ids = self.env["product.template"].search(
+                [("product_tag_ids", "in", stockist.range_ids.ids),
+                 ("is_published", "=", True)],
+                order="name", limit=self.PRODUCT_DISPLAY_LIMIT,
+            )
+
     @api.depends("street", "street2", "city", "state_id", "zip")
     def _compute_full_address(self):
         for rec in self:
@@ -436,7 +469,7 @@ class WebsiteStockist(models.Model):
             data["logo"] = "%s/web/image/website.stockist/%s/logo" % (
                 base_url.rstrip("/"), self.id,
             )
-        if self.brand_ids:
+        if self.product_ids:
             # The range is the only thing this page holds that the retailer's own
             # store page does not. On the page it is a row of badges; without
             # this it is invisible to anything parsing the document, which is the
@@ -445,11 +478,12 @@ class WebsiteStockist(models.Model):
                 "@type": "Offer",
                 "itemOffered": {
                     "@type": "Product",
-                    "name": brand.name,
+                    "name": product.name,
                     "brand": {"@type": "Brand", "name": "Mangrove Jacks"},
+                    "url": "%s%s" % (base_url.rstrip("/"), product.website_url),
                 },
                 "availableAtOrFrom": {"@id": data["@id"]},
-            } for brand in self.brand_ids]
+            } for product in self.product_ids]
         if self.google_maps_url:
             data["hasMap"] = self.google_maps_url
         return self._json_ld_dump(data)

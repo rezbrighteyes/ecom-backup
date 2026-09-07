@@ -79,8 +79,8 @@
                                                 <a t-attf-href="tel:#{stockist.phone.replace(' ', '')}"
                                                    t-esc="stockist.phone"/>
                                             </p>
-                                            <p t-if="stockist.brand_ids" class="small text-muted mb-0">
-                                                <t t-foreach="stockist.brand_ids" t-as="brand"><t t-esc="brand.name"/><t t-if="not brand_last">, </t></t>
+                                            <p t-if="stockist.range_ids" class="small text-muted mb-0">
+                                                <t t-foreach="stockist.range_ids" t-as="rng"><t t-esc="rng.name"/><t t-if="not rng_last">, </t></t>
                                             </p>
                                         </div>
                                     </div>
@@ -180,12 +180,12 @@
                                 </ul>
                             </t>
 
-                            <t t-if="stockist.brand_ids">
-                                <h2 class="h5 mt-4">Brands stocked</h2>
+                            <t t-if="stockist.range_ids">
+                                <h2 class="h5 mt-4">Ranges stocked</h2>
                                 <ul class="list-inline">
-                                    <li t-foreach="stockist.brand_ids" t-as="brand"
+                                    <li t-foreach="stockist.range_ids" t-as="rng"
                                         class="list-inline-item badge text-bg-light"
-                                        t-esc="brand.name"/>
+                                        t-esc="rng.name"/>
                                 </ul>
                             </t>
 
@@ -201,6 +201,31 @@
                                  loading="lazy"/>
                         </div>
                     </div>
+
+                    <t t-if="stockist.product_ids">
+                        <h2 class="h5 mt-5" t-attf-id="range">
+                            Mangrove Jacks stocked at <t t-esc="stockist.name"/>
+                        </h2>
+                        <div class="o_stockist_range_strip d-flex gap-3 mt-1 pb-2">
+                            <div t-foreach="stockist.product_ids" t-as="product"
+                                 class="o_stockist_range_item flex-shrink-0">
+                                <a t-att-href="product.website_url"
+                                   class="text-decoration-none text-reset d-block h-100">
+                                    <img t-if="product.image_1920"
+                                         t-attf-src="/web/image/product.template/#{product.id}/image_512/400x400"
+                                         t-att-alt="product.name"
+                                         class="img-fluid rounded mb-2"
+                                         style="aspect-ratio:1;object-fit:cover;width:100%;"
+                                         loading="lazy"/>
+                                    <span class="small d-block" t-esc="product.name"/>
+                                </a>
+                            </div>
+                        </div>
+                        <p class="small text-muted mt-2">
+                            Stock varies by store — call
+                            <t t-esc="stockist.phone"/> to check availability.
+                        </p>
+                    </t>
 
                     <p class="mt-4">
                         <a href="/stockists">&#8592; All stockists</a>

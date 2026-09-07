@@ -17,3 +17,36 @@
         line-height: 1.6;
     }
 }
+
+// The range strip.
+//
+// A horizontal scroller rather than an auto-scrolling marquee: motion that
+// moves a product name out from under the reader costs more than the space it
+// saves, and an auto-marquee cannot be paused by a touch user mid-read. This
+// scrolls on swipe and on trackpad, snaps to each item, and degrades to a
+// plain row if scroll-snap is unsupported.
+.o_stockist_range_strip {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+
+    .o_stockist_range_item {
+        width: 150px;
+        scroll-snap-align: start;
+
+        @media (min-width: 768px) {
+            width: 180px;
+        }
+    }
+
+    // Keep the scrollbar from sitting on top of the last row of text.
+    &::-webkit-scrollbar {
+        height: 6px;
+    }
+    &::-webkit-scrollbar-thumb {
+        border-radius: 3px;
+        background: rgba(0, 0, 0, .25);
+    }
+}

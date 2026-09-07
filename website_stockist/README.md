@@ -111,6 +111,28 @@ In the page's Store JSON-LD they stay separate: the photo is `image`, the logo i
 Google reads those as different claims, and a shopfront photo in the logo slot is worse than
 no logo at all.
 
+### Ranges and the products in them
+
+Mangrove Jacks is **one brand**; MJ59, MJ89, MJ49 and MJFoot are **ranges within
+it**. The field was called `brand_ids` and said "Brands stocked", which was wrong on
+both counts — it is now `range_ids`, "Ranges stocked". The m2m relation table and its
+columns are unchanged (`website_stockist_product_tag_rel`), so every existing row
+carried across without a migration.
+
+Ticking a range no longer just prints its code. `product_ids` is computed from
+`range_ids` — every **published** product carrying one of those tags, capped at
+`PRODUCT_DISPLAY_LIMIT` (24) — and the page renders those products with their images,
+linked to their own product pages. Unpublished products are excluded: a stockist page
+must not advertise something with no page to send the reader to.
+
+That is also what goes into `makesOffer` now. Previously the JSON-LD offered the tag,
+so a parser was told the store sells a thing called "MJ59". It now offers each product
+by name with its URL, which is a claim that means something.
+
+The strip scrolls horizontally rather than auto-scrolling. A marquee moves a product
+name out from under whoever is reading it and a touch user cannot pause one mid-read;
+scroll-snap gets the same compactness and stays under the reader's control.
+
 ### Website
 
 `websiteUri` was always in the field mask and was being thrown away. It now maps to
