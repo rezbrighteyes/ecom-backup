@@ -22,35 +22,6 @@ class TestWebsiteStockist(TransactionCase):
         return self.Stockist.create(vals)
 
     # ------------------------------------------------------------------
-    def test_default_logo_fills_only_empty_logos(self):
-        """The bundled wordmark goes in `logo`, and never replaces one already set."""
-        import base64
-
-        from odoo.tools import file_open
-
-        from odoo.addons.website_stockist.models.stockist import DEFAULT_LOGO_PATH
-
-        with file_open(DEFAULT_LOGO_PATH, "rb") as logo_file:
-            expected = base64.b64encode(logo_file.read())
-
-        blank = self._make(name="No Logo Yet")
-        # A 1x1 transparent PNG standing in for a stockist's own brand mark.
-        own_logo = base64.b64encode(base64.b64decode(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYAAAAAYAAj"
-            "CB0C8AAAAASUVORK5CYII="
-        ))
-        kept = self._make(name="Already Branded", logo=own_logo)
-
-        (blank | kept).action_set_default_logo()
-
-        self.assertEqual(blank.logo, expected,
-                         "A stockist with no logo should receive the bundled one.")
-        self.assertNotEqual(kept.logo, expected,
-                            "A logo already set must not be overwritten.")
-        self.assertFalse(blank.image_1920,
-                         "The wordmark belongs in `logo`, not in the shopfront photo.")
-
-    # ------------------------------------------------------------------
     def test_empty_website_ids_means_all_websites(self):
         """The convention borrowed from product.template must hold."""
         rec = self._make(website_ids=[(5, 0, 0)])
@@ -277,3 +248,61 @@ class TestGooglePlacesParsing(TransactionCase):
                                      "Australia"},
                 city_hint="Hervey Bay"),
             "Stockland Hervey Bay Shopping Centre 6 Central Avenue Shop 63 Hervey Bay")
+
+
+class TestOpeningHoursSpecification(TransactionCase):
+    """Google's weekdayDescriptions are prose and schema.org's are not."""
+
+    def setUp(self):
+        super().setUp()
+        self.stockist = self.env["website.stockist"].create({
+            "name": "Test Store",
+            "opening_hours": "Monday: 9:00 AM – 5:30 PM\n"
+                             "Thursday: 9:00 AM – 8:00 PM\n"
+                             "Sunday: Closed",
+        })
+
+    def test_prose_hours_become_structured(self):
+        spec = self.stockist._opening_hours_specification()
+        self.assertEqual(len(spec), 3)
+        self.assertEqual(spec[0], {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": "https://schema.org/Monday",
+            "opens": "09:00", "closes": "17:30"})
+        self.assertEqual(spec[1]["closes"], "20:00")
+
+    def test_closed_day_has_no_times(self):
+        """schema.org expresses a closed day as a day with no opens/closes."""
+        spec = self.stockist._opening_hours_specification()
+        self.assertEqual(spec[2], {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": "https://schema.org/Sunday"})
+
+    def test_unparseable_hours_fall_back_to_the_raw_text(self):
+        """Never emit a half-parsed week; keep the prose rather than lie."""
+        self.stockist.opening_hours = "Whenever we feel like it"
+        self.assertEqual(self.stockist._opening_hours_specification(), [])
+        import json
+        data = json.loads(self.stockist._json_ld("https://example.com").strip())
+        self.assertIn("openingHours", data)
+        self.assertNotIn("openingHoursSpecification", data)
+
+    def test_structured_hours_replace_the_prose_in_json_ld(self):
+        import json
+        data = json.loads(self.stockist._json_ld("https://example.com").strip())
+        self.assertIn("openingHoursSpecification", data)
+        self.assertNotIn("openingHours", data)
+
+    def test_range_appears_in_json_ld(self):
+        import json
+        tag = self.env["product.tag"].create({"name": "MJ59"})
+        self.stockist.brand_ids = [(6, 0, [tag.id])]
+        data = json.loads(self.stockist._json_ld("https://example.com").strip())
+        offers = data["makesOffer"]
+        self.assertEqual(offers[0]["itemOffered"]["name"], "MJ59")
+        self.assertEqual(offers[0]["itemOffered"]["brand"]["name"], "Mangrove Jacks")
+
+    def test_no_range_means_no_offer_block(self):
+        import json
+        data = json.loads(self.stockist._json_ld("https://example.com").strip())
+        self.assertNotIn("makesOffer", data)

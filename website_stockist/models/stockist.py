@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import base64
 import json
 import re
 from urllib.parse import quote
@@ -8,11 +7,6 @@ from markupsafe import Markup
 
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
-from odoo.tools import file_open
-
-# Shipped in the module so the fallback logo is version-controlled rather than
-# re-uploaded by hand on every new store.
-DEFAULT_LOGO_PATH = "website_stockist/static/src/img/brighteyes_logo.png"
 
 
 class WebsiteStockist(models.Model):
@@ -292,6 +286,74 @@ class WebsiteStockist(models.Model):
             return []
         return [line.strip() for line in self.opening_hours.splitlines() if line.strip()]
 
+    _DAY_URIS = {
+        "monday": "https://schema.org/Monday",
+        "tuesday": "https://schema.org/Tuesday",
+        "wednesday": "https://schema.org/Wednesday",
+        "thursday": "https://schema.org/Thursday",
+        "friday": "https://schema.org/Friday",
+        "saturday": "https://schema.org/Saturday",
+        "sunday": "https://schema.org/Sunday",
+    }
+
+    @staticmethod
+    def _to_24h(text):
+        """"9:00 AM" -> "09:00". Returns None if it is not a time at all."""
+        import re
+        match = re.match(r"^\s*(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\.?\s*$",
+                         text.strip().lower())
+        if not match:
+            match = re.match(r"^\s*(\d{1,2}):(\d{2})\s*$", text.strip())
+            if not match:
+                return None
+            hour, minute = int(match.group(1)), match.group(2)
+            return "%02d:%s" % (hour, minute) if 0 <= hour <= 23 else None
+        hour = int(match.group(1))
+        minute = match.group(2) or "00"
+        if hour == 12:
+            hour = 0
+        if match.group(3) == "p":
+            hour += 12
+        return "%02d:%s" % (hour, minute)
+
+    def _opening_hours_specification(self):
+        """Structured OpeningHoursSpecification, or [] if the text will not parse.
+
+        Google Places returns weekdayDescriptions as prose — "Thursday: 9:00 AM -
+        8:00 PM" — separated by an en dash and padded with U+202F narrow no-break
+        spaces. Emitting that as schema.org openingHours produces a value nothing
+        can read. A day marked closed is emitted with no opens/closes, which is
+        how schema.org expresses a closed day.
+        """
+        import re
+        spec = []
+        for line in self._opening_hours_list():
+            if ":" not in line:
+                continue
+            day_part, _, times = line.partition(":")
+            day = self._DAY_URIS.get(day_part.strip().lower())
+            if not day:
+                return []
+            # Normalise the whitespace and dashes Google uses.
+            times = re.sub(r"[\u2009\u202f\u00a0]", " ", times)
+            times = re.sub(r"[\u2013\u2014]", "-", times).strip()
+            if re.match(r"(?i)^closed$", times):
+                spec.append({"@type": "OpeningHoursSpecification", "dayOfWeek": day})
+                continue
+            parts = [p for p in times.split("-") if p.strip()]
+            if len(parts) != 2:
+                return []
+            opens, closes = self._to_24h(parts[0]), self._to_24h(parts[1])
+            if not opens or not closes:
+                return []
+            spec.append({
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": day,
+                "opens": opens,
+                "closes": closes,
+            })
+        return spec
+
     @staticmethod
     def _json_ld_dump(data):
         """Serialise structured data for a <script type="application/ld+json"> block.
@@ -353,7 +415,15 @@ class WebsiteStockist(models.Model):
             }
         hours = self._opening_hours_list()
         if hours:
-            data["openingHours"] = hours
+            # Schema.org openingHours wants "Mo-Fr 09:00-17:30", not the human
+            # line Google Places hands us ("Monday: 9:00 AM - 5:30 PM", with
+            # narrow no-break spaces and an en dash). The raw line is not
+            # parseable and was being emitted verbatim on every stockist.
+            spec = self._opening_hours_specification()
+            if spec:
+                data["openingHoursSpecification"] = spec
+            else:
+                data["openingHours"] = hours
         if self.stockist_url:
             data["sameAs"] = [self.stockist_url]
         if self.image_1920:
@@ -366,6 +436,20 @@ class WebsiteStockist(models.Model):
             data["logo"] = "%s/web/image/website.stockist/%s/logo" % (
                 base_url.rstrip("/"), self.id,
             )
+        if self.brand_ids:
+            # The range is the only thing this page holds that the retailer's own
+            # store page does not. On the page it is a row of badges; without
+            # this it is invisible to anything parsing the document, which is the
+            # entire reason the directory exists.
+            data["makesOffer"] = [{
+                "@type": "Offer",
+                "itemOffered": {
+                    "@type": "Product",
+                    "name": brand.name,
+                    "brand": {"@type": "Brand", "name": "Mangrove Jacks"},
+                },
+                "availableAtOrFrom": {"@id": data["@id"]},
+            } for brand in self.brand_ids]
         if self.google_maps_url:
             data["hasMap"] = self.google_maps_url
         return self._json_ld_dump(data)
@@ -398,38 +482,6 @@ class WebsiteStockist(models.Model):
             "res_id": wizard.id,
             "view_mode": "form",
             "target": "new",
-        }
-
-    def action_set_default_logo(self):
-        """Give every selected stockist that has no logo the BrightEyes wordmark.
-
-        This writes `logo`, not `image_1920`. The two are different slots: `logo`
-        renders small beside the name and feeds the `logo` property of the Store
-        JSON-LD, while `image_1920` is a photograph of the shopfront and feeds
-        `image`. A wordmark in the photo slot is what that field's help warns
-        against.
-
-        Records that already carry a logo are **skipped**, not overwritten, because
-        this runs from a list selection where "select all" is one click. To replace
-        one, clear it first.
-        """
-        targets = self.filtered(lambda rec: not rec.logo)
-        if targets:
-            with file_open(DEFAULT_LOGO_PATH, "rb") as logo_file:
-                encoded = base64.b64encode(logo_file.read())
-            targets.write({"logo": encoded})
-        return {
-            "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "type": "success" if targets else "warning",
-                "message": _(
-                    "Logo applied to %(done)s stockist(s). %(skipped)s already had one.",
-                    done=len(targets),
-                    skipped=len(self) - len(targets),
-                ),
-                "next": {"type": "ir.actions.act_window_close"},
-            },
         }
 
     def action_open_website(self):

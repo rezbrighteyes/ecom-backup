@@ -6,15 +6,6 @@
         <field name="model">website.stockist</field>
         <field name="arch" type="xml">
             <list string="Stockists" multi_edit="1">
-                <!-- Acts on the selection, so it appears once records are ticked.
-                     Same permission rule as the form buttons: only designers can
-                     write, so only they are shown a button that writes. -->
-                <header>
-                    <button name="action_set_default_logo" type="object"
-                            string="Set BrightEyes logo"
-                            groups="website.group_website_designer"
-                            help="Give every selected stockist without a logo the bundled BrightEyes wordmark. Records that already have one are left alone."/>
-                </header>
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="store_code" optional="show"/>
@@ -48,12 +39,6 @@
                             class="btn-secondary"
                             groups="website.group_website_designer"
                             help="Fill latitude and longitude from the address."/>
-                    <button name="action_set_default_logo" type="object"
-                            string="Set BrightEyes logo"
-                            class="btn-secondary"
-                            invisible="logo"
-                            groups="website.group_website_designer"
-                            help="Use the bundled BrightEyes wordmark as this stockist's logo."/>
                 </header>
                 <sheet>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
