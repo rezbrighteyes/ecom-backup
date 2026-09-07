@@ -1,21 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="product_tag_view_form_stockist" model="ir.ui.view">
+    <!-- The base view identifiers are product_tag_form_view and
+         product_tag_tree_view, NOT product_tag_view_form/_tree, and neither
+         carries a `color` field. Both were checked against the live database
+         before this file was written; guessing them costs a failed build. -->
+
+    <record id="product_tag_form_view_stockist" model="ir.ui.view">
         <field name="name">product.tag.form.stockist</field>
         <field name="model">product.tag</field>
-        <field name="inherit_id" ref="product.product_tag_view_form"/>
+        <field name="inherit_id" ref="product.product_tag_form_view"/>
         <field name="arch" type="xml">
-            <field name="color" position="after">
+            <field name="name" position="after">
                 <field name="stockist_category"/>
             </field>
         </field>
     </record>
 
-    <record id="product_tag_view_tree_stockist" model="ir.ui.view">
+    <record id="product_tag_tree_view_stockist" model="ir.ui.view">
         <field name="name">product.tag.list.stockist</field>
         <field name="model">product.tag</field>
-        <field name="inherit_id" ref="product.product_tag_view_tree"/>
+        <field name="inherit_id" ref="product.product_tag_tree_view"/>
         <field name="arch" type="xml">
             <field name="name" position="after">
                 <field name="stockist_category" optional="show"/>
@@ -23,19 +28,26 @@
         </field>
     </record>
 
-    <record id="product_tag_view_search_stockist" model="ir.ui.view">
+    <!-- The product module ships no search view for product.tag, so this is a
+         new one rather than an inherit. An unclassified range still sells its
+         products on a stockist page, it just cannot describe itself — this is
+         how you find the ones still to classify. -->
+    <record id="product_tag_search_view_stockist" model="ir.ui.view">
         <field name="name">product.tag.search.stockist</field>
         <field name="model">product.tag</field>
-        <field name="inherit_id" ref="product.product_tag_view_search"/>
         <field name="arch" type="xml">
-            <field name="name" position="after">
+            <search string="Product Tags">
+                <field name="name"/>
                 <field name="stockist_category"/>
-                <!-- An unclassified range still sells products on a stockist page,
-                     it just cannot describe itself. This is how you find them. -->
                 <filter name="needs_stockist_category"
                         string="Needs a stockist category"
                         domain="[('stockist_category', '=', False)]"/>
-            </field>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_stockist_category"
+                            string="Stockist category"
+                            context="{'group_by': 'stockist_category'}"/>
+                </group>
+            </search>
         </field>
     </record>
 
