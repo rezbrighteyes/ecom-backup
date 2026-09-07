@@ -217,8 +217,7 @@
                                     <img t-if="product.image_1920"
                                          t-attf-src="/web/image/product.template/#{product.id}/image_512/400x400"
                                          t-att-alt="product.name"
-                                         class="img-fluid rounded mb-2"
-                                         style="aspect-ratio:1;object-fit:cover;width:100%;"
+                                         class="img-fluid rounded mb-2 o_stockist_range_img"
                                          loading="lazy"/>
                                     <span class="small d-block" t-esc="product.name"/>
                                 </a>

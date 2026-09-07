@@ -50,3 +50,25 @@
         background: rgba(0, 0, 0, .25);
     }
 }
+
+// Product tiles are a fixed shape so the strip reads as one clean row, but the
+// image inside is CONTAINED, never cropped.
+//
+// The catalogue is not shot to one ratio, and it does not split by range: MJ59
+// and MJ49 arrive 1000x1000, MJ89 arrives 1250x622, and MJ39 has both. So there
+// is no per-range rule to apply — only a tile that has to hold either.
+//
+// object-fit: cover on a square tile crops a 2:1 photo to the middle sixth of
+// its frame, which is why one range looked violently zoomed and the rest looked
+// fine. contain letterboxes instead, so a pair of glasses is shown whole
+// whatever shape it was shot at.
+//
+// 4:3 rather than 1:1 because it wastes less on both: a square image gives up
+// 25% of the width, a 2:1 image 33% of the height. A square tile would have
+// left a 2:1 photo filling only half of it.
+.o_stockist_range_img {
+    aspect-ratio: 4 / 3;
+    width: 100%;
+    object-fit: contain;
+    background: rgba(0, 0, 0, .02);
+}
