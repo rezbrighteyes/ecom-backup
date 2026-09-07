@@ -76,7 +76,16 @@ of the few things that genuinely damages local search, and duplicating this modu
 the other obvious approach — guarantees it, as well as guaranteeing that a fix lands in one
 copy and not the others.
 
-**Adding a website is adding a row.** Never another copy of the module.
+**Adding a website is adding a row — and the module adds it for you.** Put a website in
+`website_ids` and its content row appears, seeded from the record-level tag. Take the website
+away and the row **stays**: the copy on it was written by a person, and a publishing change
+is not consent to delete it.
+
+**There is one place to set the tag, and it is the row.** The record still has
+`stockist_tag_ids` as a fallback for anything written before this model existed, but it is no
+longer editable on the form. Two fields setting one thing is how it gets set in the wrong
+one — and a tag on the record applies to every site at once, which is precisely what the
+per-website model exists to stop.
 
 Every resolver takes an optional `website` and falls back to the record-level fields when
 there is no row, so a stockist that predates the model keeps working. The 18.0.7.0.0

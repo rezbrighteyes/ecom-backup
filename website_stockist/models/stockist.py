@@ -203,11 +203,18 @@ class WebsiteStockist(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             self._normalise_store_code(vals)
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records._sync_content_rows()
+        return records
 
     def write(self, vals):
         self._normalise_store_code(vals)
-        return super().write(vals)
+        result = super().write(vals)
+        # Only when the publishing set moved. Doing it on every write would run
+        # a search per save for no reason.
+        if "website_ids" in vals:
+            self._sync_content_rows()
+        return result
 
     @staticmethod
     def _normalise_store_code(vals):
@@ -236,6 +243,30 @@ class WebsiteStockist(models.Model):
     # is what the backend and any pre-existing caller sees. That fallback is why
     # adding this model did not have to change every call site at once.
     # ------------------------------------------------------------------
+
+    def _sync_content_rows(self):
+        """Give every website this stockist appears on a content row.
+
+        Without this, adding a website leaves the new site with no row, the
+        resolver quietly falls back to the record-level tag, and that site shows
+        another brand's products until somebody notices. Rows are only ever
+        added here — removing a website leaves its row alone, because the copy
+        on it was written by a person and a publishing change is not consent to
+        delete it.
+        """
+        Content = self.env["website.stockist.content"]
+        for stockist in self:
+            # Empty website_ids means every website, the same meaning it carries
+            # on products here and in _get_published_domain.
+            websites = stockist.website_ids or self.env["website"].search([])
+            existing = stockist.content_ids.mapped("website_id")
+            for website in websites - existing:
+                Content.create({
+                    "stockist_id": stockist.id,
+                    "website_id": website.id,
+                    "stockist_tag_ids": [(6, 0, stockist.stockist_tag_ids.ids)],
+                })
+
     def _content_for(self, website=None):
         """The content row for a website, or an empty recordset."""
         self.ensure_one()

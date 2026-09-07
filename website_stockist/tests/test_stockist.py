@@ -802,3 +802,36 @@ class TestStockistApplication(TransactionCase):
         self.website.stockist_cta_label = "Stock Rocko's"
         self.assertEqual(self.website._stockist_apply_heading(), "Become a stockist")
         self.assertEqual(self.website._stockist_submit_label(), "Send application")
+
+    def test_adding_a_website_creates_its_content_row(self):
+        """Otherwise the new site silently shows another brand's products.
+
+        With no row the resolver falls back to the record-level tag, so a
+        stockist added to Rocko's would have shown Mangrove Jacks stock until
+        somebody noticed.
+        """
+        rockos, mj = self._two_sites()
+        self.stockist.website_ids = [(6, 0, [mj.id])]
+        self.assertEqual(self.stockist.content_ids.mapped("website_id"), mj)
+        self.stockist.website_ids = [(6, 0, [mj.id, rockos.id])]
+        self.assertIn(rockos, self.stockist.content_ids.mapped("website_id"))
+
+    def test_removing_a_website_keeps_its_row(self):
+        """Copy on a row was written by a person; unpublishing is not consent
+        to delete it."""
+        rockos, mj = self._two_sites()
+        self.stockist.website_ids = [(6, 0, [mj.id, rockos.id])]
+        row = self.stockist.content_ids.filtered(
+            lambda c: c.website_id == rockos)
+        row.website_meta_description = "Written by hand."
+        self.stockist.website_ids = [(6, 0, [mj.id])]
+        self.assertTrue(row.exists())
+        self.assertEqual(row.website_meta_description, "Written by hand.")
+
+    def test_rows_are_not_duplicated_on_repeated_writes(self):
+        rockos, _ = self._two_sites()
+        self.stockist.website_ids = [(6, 0, [rockos.id])]
+        self.stockist.website_ids = [(6, 0, [rockos.id])]
+        self.stockist._sync_content_rows()
+        self.assertEqual(len(self.stockist.content_ids.filtered(
+            lambda c: c.website_id == rockos)), 1)

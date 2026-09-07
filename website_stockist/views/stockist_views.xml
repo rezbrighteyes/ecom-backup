@@ -100,12 +100,20 @@
                             <field name="google_maps_url" widget="url" readonly="1"/>
                             <field name="google_sync_date"/>
                         </group>
-                        <group string="Stockist tags">
-                            <field name="stockist_tag_ids" widget="many2many_tags"
-                                   options="{'no_create': True}"/>
+                        <group string="Range">
+                            <!-- The editable tag lives on the Per-website content
+                                 tab, not here. Two places to set one tag is how it
+                                 gets set in the wrong one: a tag here applies to
+                                 every site at once, which is the opposite of what
+                                 the per-website model is for. -->
                             <field name="product_ids" widget="many2many_tags"
                                    readonly="1"
-                                   help="Every published product carrying this stockist's tag. Computed, so it follows the catalogue."/>
+                                   string="Products shown"
+                                   help="Every published product carried across all of this stockist's websites. Computed. Set the tags per site on the Per-website content tab."/>
+                            <div class="text-muted small" colspan="2">
+                                Set which products each site shows on the
+                                <strong>Per-website content</strong> tab.
+                            </div>
                         </group>
                     </group>
 
@@ -192,7 +200,6 @@
             <search string="Stockists">
                 <field name="name" filter_domain="['|','|',('name','ilike',self),('city','ilike',self),('store_code','ilike',self)]"/>
                 <field name="state_id"/>
-                <field name="stockist_tag_ids"/>
                 <field name="website_ids"/>
                 <filter name="published" string="Published" domain="[('is_published','=',True)]"/>
                 <filter name="unpublished" string="Unpublished" domain="[('is_published','=',False)]"/>
