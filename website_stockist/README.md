@@ -152,6 +152,50 @@ The strip scrolls horizontally rather than auto-scrolling. A marquee moves a pro
 name out from under whoever is reading it and a touch user cannot pause one mid-read;
 scroll-snap gets the same compactness and stays under the reader's control.
 
+### Titles and meta descriptions
+
+The title is written to `website_meta_title` on each record and follows one pattern:
+
+```
+Mangrove Jacks at BrightEyes Morayfield
+Mangrove Jacks at Anaconda Rockdale
+```
+
+Measured against all 126 stockists it runs 32-60 characters and **never overruns 60**.
+Four other patterns were measured and rejected: putting "Sunglasses" in the title
+overruns on 13, "| Mangrove Jacks Stockist" on 7, and leading with the suburb produces
+"Mangrove Jacks Banksia | Anaconda Rockdale" because a chain's store name and its
+suburb frequently disagree.
+
+Worth being honest about what this title is for. There is **no meaningful search
+demand** to win here: "mangrove jack" is a fish (590/mo for fishing, 320 for lures,
+nothing for the sunglasses brand), local retail demand is thin, and each retailer's own
+store page already ranks for its own name. These pages exist to be the machine-readable
+record that the brand is stocked in 126 named shops. So the title states that claim
+rather than chasing a query.
+
+**The description is computed, never written.** It is built from the stockist's ranges
+through `stockist_category` on each tag, so a store that gets hats tagged next week
+starts saying so without anyone editing 126 pages:
+
+```
+Find Mangrove Jacks sunglasses at BrightEyes Morayfield, Morayfield 4506.
+Call (07) 5495 3133 to check what's in stock.
+
+Find Mangrove Jacks sunglasses, hats and footwear at BrightEyes Morayfield,
+Morayfield 4506. Call (07) 5495 3133 to check what's in stock.
+```
+
+Categories read in a fixed order (sunglasses, hats, footwear, apparel, accessories)
+rather than whatever order the tags were ticked in. A range nobody has classified still
+shows on the page and simply adds no word. Checked against all 127 records in every
+combination: nothing exceeds 155 characters, and where four categories make the opening
+too long the phone sentence shortens to "Call 07 xxxx xxxx." rather than dropping — the
+number is the action, the invitation around it is not.
+
+It is supplied through `_default_website_meta`, so anything typed into the SEO tab by
+hand still wins. Set it there when a store deserves something specific.
+
 ### Website
 
 `websiteUri` was always in the field mask and was being thrown away. It now maps to

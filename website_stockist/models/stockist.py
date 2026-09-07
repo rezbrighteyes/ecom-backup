@@ -209,6 +209,56 @@ class WebsiteStockist(models.Model):
     # ------------------------------------------------------------------
     # Compute / constraints
     # ------------------------------------------------------------------
+    def _stocked_categories(self):
+        """Category words for this stockist, in a stable, readable order."""
+        order = ["sunglasses", "hats", "footwear", "apparel", "accessories"]
+        labels = dict(self.env["product.tag"]._fields["stockist_category"].selection)
+        held = {t.stockist_category for t in self.range_ids if t.stockist_category}
+        return [labels[c].lower() for c in order if c in held]
+
+    @staticmethod
+    def _join_readable(words):
+        """['a', 'b', 'c'] -> 'a, b and c'."""
+        if not words:
+            return ""
+        if len(words) == 1:
+            return words[0]
+        return "%s and %s" % (", ".join(words[:-1]), words[-1])
+
+    def _meta_description(self):
+        """What this stockist sells, where it is, and how to check stock.
+
+        Built from the ranges rather than written once, so a store that gets
+        hats tagged next week starts saying so without anyone editing 126 pages.
+        Capped at 155 characters, the point past which Google truncates.
+        """
+        self.ensure_one()
+        what = self._join_readable(self._stocked_categories()) or "sunglasses"
+        where = " ".join(p for p in [self.city, self.zip] if p)
+        text = "Find Mangrove Jacks %s at %s" % (what, self.name)
+        if where:
+            text += ", %s" % where
+        text += "."
+        if self.phone:
+            # The phone number is the action; the invitation around it is not.
+            # A store carrying four categories has a long enough opening that
+            # the full sentence will not fit, so shorten rather than drop it.
+            for tail in (" Call %s to check what's in stock." % self.phone,
+                         " Call %s." % self.phone):
+                if len(text) + len(tail) <= 155:
+                    text += tail
+                    break
+        return text[:155]
+
+    def _default_website_meta(self):
+        res = super()._default_website_meta()
+        for stockist in self:
+            description = stockist._meta_description()
+            res["default_meta_description"] = description
+            res["default_opengraph"]["og:description"] = description
+            res["default_twitter"]["twitter:description"] = description
+        return res
+
     @api.depends("range_ids", "website_ids")
     def _compute_product_ids(self):
         """Published, sellable products carrying this stockist's ranges.

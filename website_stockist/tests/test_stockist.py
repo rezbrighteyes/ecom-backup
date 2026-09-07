@@ -400,3 +400,55 @@ class TestOpeningHoursSpecification(TransactionCase):
         self.stockist.range_ids = [(6, 0, [big.id, small.id])]
         self.assertEqual(len(self.stockist.product_ids),
                          self.stockist.PRODUCT_DISPLAY_LIMIT)
+
+    def test_meta_names_only_the_categories_stocked(self):
+        sun = self.env["product.tag"].create(
+            {"name": "MJ49", "stockist_category": "sunglasses"})
+        hat = self.env["product.tag"].create(
+            {"name": "MJHat", "stockist_category": "hats"})
+        self.stockist.range_ids = [(6, 0, [sun.id, hat.id])]
+        self.stockist.city, self.stockist.zip = "Morayfield", "4506"
+        description = self.stockist._meta_description()
+        self.assertIn("sunglasses and hats", description)
+        self.assertNotIn("footwear", description)
+
+    def test_meta_order_is_stable_not_tag_order(self):
+        """Categories read in a fixed order however the tags were ticked."""
+        foot = self.env["product.tag"].create(
+            {"name": "MJPluggers", "stockist_category": "footwear"})
+        sun = self.env["product.tag"].create(
+            {"name": "MJ59", "stockist_category": "sunglasses"})
+        self.stockist.range_ids = [(6, 0, [foot.id, sun.id])]
+        self.assertIn("sunglasses and footwear", self.stockist._meta_description())
+
+    def test_unclassified_range_adds_no_word(self):
+        """A tag nobody has categorised must not put a blank in the sentence."""
+        plain = self.env["product.tag"].create({"name": "MJMystery"})
+        self.stockist.range_ids = [(6, 0, [plain.id])]
+        description = self.stockist._meta_description()
+        self.assertIn("Find Mangrove Jacks sunglasses at", description)
+        self.assertNotIn("  ", description)
+
+    def test_meta_never_exceeds_the_truncation_point(self):
+        cats = ["sunglasses", "hats", "footwear", "apparel", "accessories"]
+        tags = [self.env["product.tag"].create({"name": "T%s" % c,
+                                                "stockist_category": c}) for c in cats]
+        self.stockist.write({
+            "name": "A Very Long Retailer Name At A Large Shopping Centre",
+            "city": "Somewhere With A Long Name", "zip": "4000",
+            "phone": "(07) 1234 5678",
+            "range_ids": [(6, 0, [t.id for t in tags])]})
+        self.assertLessEqual(len(self.stockist._meta_description()), 155)
+
+    def test_phone_is_shortened_rather_than_dropped(self):
+        """The number is the action; the sentence around it is not."""
+        cats = ["sunglasses", "hats", "footwear", "apparel"]
+        tags = [self.env["product.tag"].create({"name": "P%s" % c,
+                                                "stockist_category": c}) for c in cats]
+        self.stockist.write({
+            "name": "Anaconda Adventure HQ Chullora Superstore",
+            "city": "Chullora", "zip": "2190", "phone": "(02) 9782 0276",
+            "range_ids": [(6, 0, [t.id for t in tags])]})
+        description = self.stockist._meta_description()
+        self.assertIn("(02) 9782 0276", description)
+        self.assertLessEqual(len(description), 155)

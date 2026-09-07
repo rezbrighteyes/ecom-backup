@@ -28,7 +28,8 @@ def _root_menu(env, website):
 
 
 def post_init_hook(env):
-    """Add a Stockists entry to every existing website's menu."""
+    """Add a Stockists entry to every website, and classify the ranges."""
+    env["product.tag"]._seed_stockist_categories()
     Menu = env["website.menu"]
     created = 0
     for website in env["website"].search([]):
