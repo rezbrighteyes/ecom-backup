@@ -72,3 +72,9 @@
     object-fit: contain;
     background: rgba(0, 0, 0, .02);
 }
+
+// The call to action. Sized so it reads as an invitation next to the page
+// heading rather than a primary shop action competing with the product strip.
+.o_stockist_cta {
+    white-space: nowrap;
+}

@@ -326,6 +326,34 @@ Google's public copy. It needs OAuth plus an access application to Google, which
 part; worth applying for in parallel. This module is Places-first precisely so nothing waits
 on that queue.
 
+## Become a stockist
+
+Every stockist page carries an invitation, and the wording is **per website** —
+Website > Configuration > Settings > Stockists. "Become a stockist", "Stock Rocko's",
+"Wholesale enquiries": whatever suits that brand. The same sentence on five sites is what
+makes a group of brands read as one template.
+
+`/stockists/apply` takes the application and creates a **helpdesk ticket** on the team that
+belongs to that site. Routing tries three things in order:
+
+1. the team set explicitly in settings
+2. a team whose `website_id` is this website
+3. a team whose `company_id` is this website's company
+
+Step three is the one that resolves today: only two of the seven teams carry a `website_id`,
+while every brand site has its own company and its own Customer Care team. If none of the
+three finds a team the submission is **logged as an error rather than silently dropped** — a
+retailer who fills in a form and hears nothing has been told the brand does not want them.
+
+**Spam defence is layered, because reCAPTCHA is not configured on this database.** A honeypot
+field and the required-field checks work with no setup at all; the reCAPTCHA check is wired
+in and joins automatically if keys are ever added. Odoo returns `no_secret` when the keys are
+unset, and that is treated as a pass — treating it as a failure would reject every genuine
+application on a database that has never had keys.
+
+The form page is indexable on purpose. "Become a stockist" and wholesale enquiries are real
+B2B searches, and this is the page that answers them.
+
 ## Sitemap
 
 Published stockists appear in `/sitemap.xml` for every website they are assigned to, via

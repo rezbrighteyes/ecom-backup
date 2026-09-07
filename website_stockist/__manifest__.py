@@ -22,7 +22,7 @@ Key points
 * Per-record SEO metadata via ``website.seo.metadata``.
 * Stockists appear in the XML sitemap of every website they are assigned to.
 """,
-    "version": "18.0.7.0.0",
+    "version": "18.0.8.0.0",
     "category": "Website",
     "author": "BrightEyes Group",
     "license": "OPL-1",
@@ -34,6 +34,10 @@ Key points
         # build depends on load order rather than on anything declared.
         "product",
         "base_geolocalize",
+        # The "become a stockist" form turns a submission into a helpdesk
+        # ticket, so helpdesk.ticket and helpdesk.team must exist before this
+        # module's controller is loaded.
+        "helpdesk",
     ],
     "data": [
         "security/ir.model.access.csv",
@@ -42,6 +46,8 @@ Key points
         "views/product_tag_views.xml",
         "views/stockist_views.xml",
         "views/stockist_templates.xml",
+        "views/stockist_apply_templates.xml",
+        "views/res_config_settings_views.xml",
         "views/canonical_override.xml",
     ],
     "assets": {

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Website > Configuration > Settings, under the Shop/Website block.
+         Per-website by design: these settings are read off the current website
+         record, which is how each brand gets its own wording. -->
+    <record id="res_config_settings_view_form_stockist" model="ir.ui.view">
+        <field name="name">res.config.settings.form.stockist</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="website.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='website_info_settings']" position="after">
+                <block title="Stockists" name="stockist_settings">
+                    <setting id="stockist_cta_setting"
+                             string="Become a stockist"
+                             help="The invitation shown on the stockist pages, and where
+                                   applications from this site land.">
+                        <field name="stockist_cta_enabled"/>
+                        <div class="content-group mt-2" invisible="not stockist_cta_enabled">
+                            <div class="row">
+                                <label for="stockist_cta_label" class="col-lg-4 o_light_label"/>
+                                <field name="stockist_cta_label"
+                                       placeholder="Become a stockist"/>
+                            </div>
+                            <div class="row">
+                                <label for="stockist_helpdesk_team_id" class="col-lg-4 o_light_label"/>
+                                <field name="stockist_helpdesk_team_id"
+                                       placeholder="found from the website's company"/>
+                            </div>
+                            <div class="row">
+                                <label for="stockist_cta_intro" class="col-lg-4 o_light_label"/>
+                                <field name="stockist_cta_intro"
+                                       placeholder="Who you are looking for, and what happens next."/>
+                            </div>
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

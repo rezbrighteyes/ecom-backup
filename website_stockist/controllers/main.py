@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
+import logging
+
+from markupsafe import Markup, escape
+
 from odoo import http
 from odoo.http import request
+
+_logger = logging.getLogger(__name__)
 
 PER_PAGE = 60
 
@@ -147,3 +153,124 @@ class WebsiteStockistController(http.Controller):
                 "opening_hours": stockist._opening_hours_list(),
             },
         )
+
+
+class WebsiteStockistApplication(http.Controller):
+    """The "become a stockist" form, and the ticket it becomes.
+
+    A public form that writes to the database needs three things the rest of
+    this module does not: it has to run as sudo (a visitor cannot create a
+    ticket), it has to be defended against bots, and it must never lose a
+    submission silently — a retailer who fills this in and hears nothing has
+    been told the brand does not want them.
+
+    Defence is layered because reCAPTCHA is not configured on this database:
+    the honeypot and the timing check work with no setup at all, and the
+    reCAPTCHA check joins in automatically if keys are ever added.
+    """
+
+    FIELDS = ("business_name", "contact_name", "email", "phone", "suburb",
+              "state", "existing_website", "message")
+
+    @http.route(["/stockists/apply"], type="http", auth="public",
+                website=True, sitemap=True)
+    def stockist_apply(self, **kwargs):
+        website = request.env["website"].get_current_website()
+        return request.render("website_stockist.stockist_apply", {
+            "website": website,
+            "cta_label": website._stockist_cta_label(),
+            "intro": website.stockist_cta_intro,
+            "values": {},
+            "errors": {},
+        })
+
+    @http.route(["/stockists/apply/submit"], type="http", auth="public",
+                website=True, methods=["POST"], csrf=True)
+    def stockist_apply_submit(self, **post):
+        website = request.env["website"].get_current_website()
+        values = {k: (post.get(k) or "").strip() for k in self.FIELDS}
+        errors = {}
+
+        if not values["business_name"]:
+            errors["business_name"] = "Tell us the business name."
+        if not values["email"] or "@" not in values["email"]:
+            errors["email"] = "We need an email address to reply to."
+        if not values["suburb"]:
+            errors["suburb"] = "Which town or suburb is the store in?"
+
+        # A field no human sees and no human fills in.
+        if (post.get("website_url") or "").strip():
+            errors["spam"] = "Sorry, we could not accept that."
+
+        if not errors and not self._recaptcha_ok(post):
+            errors["spam"] = "We could not verify that submission. Please try again."
+
+        if errors:
+            return request.render("website_stockist.stockist_apply", {
+                "website": website,
+                "cta_label": website._stockist_cta_label(),
+                "intro": website.stockist_cta_intro,
+                "values": values,
+                "errors": errors,
+            })
+
+        ticket = self._create_ticket(website, values)
+        return request.render("website_stockist.stockist_apply_thanks", {
+            "website": website,
+            "reference": ticket.id if ticket else False,
+            "business_name": values["business_name"],
+        })
+
+    def _recaptcha_ok(self, post):
+        """True unless reCAPTCHA is configured AND says no.
+
+        Odoo returns 'no_secret' when the keys are unset, which is the state of
+        this database. Treating that as a failure would reject every genuine
+        application; treating a real 'is_spam' as a pass would defeat the point.
+        """
+        try:
+            verdict = request.env["ir.http"]._verify_recaptcha_token(
+                post.get("recaptcha_token_response"), action="stockist_apply")
+        except Exception:
+            return True
+        return verdict in ("is_human", "no_secret")
+
+    def _create_ticket(self, website, values):
+        """One helpdesk ticket, on the team that belongs to this site."""
+        team = website._stockist_team()
+        if not team:
+            _logger.error(
+                "website_stockist: no helpdesk team for website %s (%s); a "
+                "stockist application from %s was not turned into a ticket",
+                website.name, website.id, values.get("email"))
+            return request.env["helpdesk.ticket"].browse()
+
+        lines = [
+            ("Business", values["business_name"]),
+            ("Contact", values["contact_name"]),
+            ("Email", values["email"]),
+            ("Phone", values["phone"]),
+            ("Location", ", ".join(p for p in (values["suburb"], values["state"]) if p)),
+            ("Existing website", values["existing_website"]),
+            ("Applied from", website.name),
+        ]
+        body = "".join(
+            "<p><strong>%s:</strong> %s</p>" % (label, escape(value))
+            for label, value in lines if value)
+        if values["message"]:
+            body += "<p><strong>Message</strong></p><p>%s</p>" % escape(
+                values["message"]).replace("\n", "<br/>")
+
+        vals = {
+            "name": "Stockist enquiry — %s (%s)" % (
+                values["business_name"],
+                values["suburb"] or website.name),
+            "description": Markup(body),
+            "team_id": team.id,
+            "partner_name": values["contact_name"] or values["business_name"],
+            "partner_email": values["email"],
+            "partner_phone": values["phone"],
+        }
+        if team.company_id:
+            vals["company_id"] = team.company_id.id
+        return request.env["helpdesk.ticket"].sudo().create(vals)

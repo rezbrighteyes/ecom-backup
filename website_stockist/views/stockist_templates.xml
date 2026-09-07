@@ -32,7 +32,10 @@
                         </ol>
                     </nav>
 
-                    <h1>Stockists</h1>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <h1 class="mb-0">Stockists</h1>
+                        <t t-call="website_stockist.stockist_cta_button"/>
+                    </div>
                     <p t-if="total" class="text-muted">
                         <t t-esc="total"/> <t t-esc="'stockist' if total == 1 else 'stockists'"/>.
                     </p>
@@ -233,8 +236,9 @@
                         </p>
                     </t>
 
-                    <p class="mt-4">
+                    <p class="mt-4 d-flex flex-wrap align-items-center gap-3">
                         <a href="/stockists">&#8592; All stockists</a>
+                        <t t-call="website_stockist.stockist_cta_button"/>
                     </p>
                 </div>
             </div>

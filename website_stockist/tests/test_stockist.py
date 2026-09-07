@@ -711,3 +711,46 @@ class TestOpeningHoursSpecification(TransactionCase):
             self.env["website.stockist.content"].create(
                 {"stockist_id": self.stockist.id, "website_id": rockos.id})
             self.env.flush_all()
+
+
+class TestStockistApplication(TransactionCase):
+    """The become-a-stockist form, and the ticket it becomes."""
+
+    def setUp(self):
+        super().setUp()
+        self.company = self.env["res.company"].create({"name": "Test Brand Co"})
+        self.website = self.env["website"].create(
+            {"name": "Test Brand", "company_id": self.company.id})
+        self.team = self.env["helpdesk.team"].create(
+            {"name": "Customer Care", "company_id": self.company.id})
+
+    def test_label_defaults_but_can_speak_per_brand(self):
+        self.assertEqual(self.website._stockist_cta_label(), "Become a stockist")
+        self.website.stockist_cta_label = "Stock Rocko's"
+        self.assertEqual(self.website._stockist_cta_label(), "Stock Rocko's")
+
+    def test_blank_label_does_not_render_an_empty_button(self):
+        self.website.stockist_cta_label = "   "
+        self.assertEqual(self.website._stockist_cta_label(), "Become a stockist")
+
+    def test_team_found_from_the_company_when_none_is_set(self):
+        """Only two of the seven teams carry a website_id, so the company
+        fallback is the one that actually resolves for the brand sites."""
+        self.assertEqual(self.website._stockist_team(), self.team)
+
+    def test_explicit_team_wins(self):
+        other = self.env["helpdesk.team"].create(
+            {"name": "Wholesale", "company_id": self.company.id})
+        self.website.stockist_helpdesk_team_id = other
+        self.assertEqual(self.website._stockist_team(), other)
+
+    def test_website_team_beats_the_company_fallback(self):
+        pointed = self.env["helpdesk.team"].create(
+            {"name": "Pointed", "website_id": self.website.id})
+        self.assertEqual(self.website._stockist_team(), pointed)
+
+    def test_no_team_anywhere_returns_empty_rather_than_raising(self):
+        """A missing team must not 500 on a visitor mid-application."""
+        lonely = self.env["website"].create({"name": "No Team Site"})
+        lonely.company_id = self.env["res.company"].create({"name": "Empty Co"})
+        self.assertFalse(lonely._stockist_team())

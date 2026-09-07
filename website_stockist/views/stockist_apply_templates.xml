@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- The button. Wording comes from the website so each brand asks in its
+         own voice; the same sentence on five sites is what makes a group of
+         brands read as one template. -->
+    <template id="stockist_cta_button" name="Stockist call to action">
+        <t t-if="website.stockist_cta_enabled">
+            <a href="/stockists/apply"
+               class="btn btn-primary o_stockist_cta"
+               t-esc="website._stockist_cta_label()"/>
+        </t>
+    </template>
+
+    <template id="stockist_apply" name="Become a stockist">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container py-4" style="max-width:46rem">
+
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb bg-transparent px-0">
+                            <li class="breadcrumb-item"><a href="/">Home</a></li>
+                            <li class="breadcrumb-item"><a href="/stockists">Stockists</a></li>
+                            <li class="breadcrumb-item active" aria-current="page"
+                                t-esc="cta_label"/>
+                        </ol>
+                    </nav>
+
+                    <h1 t-esc="cta_label"/>
+                    <p t-if="intro" class="lead" t-esc="intro"/>
+                    <p t-else="" class="lead">
+                        Tell us about your store and we will be in touch about
+                        stocking the range.
+                    </p>
+
+                    <div t-if="errors.get('spam')" class="alert alert-danger"
+                         t-esc="errors['spam']"/>
+
+                    <form action="/stockists/apply/submit" method="post" class="mt-4">
+                        <input type="hidden" name="csrf_token"
+                               t-att-value="request.csrf_token()"/>
+
+                        <!-- Honeypot. Hidden from people, irresistible to bots.
+                             Named website_url because that is the sort of field
+                             a form filler expects to find. -->
+                        <div class="d-none" aria-hidden="true">
+                            <label for="website_url">Leave this field empty</label>
+                            <input type="text" name="website_url" id="website_url"
+                                   tabindex="-1" autocomplete="off"/>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="business_name">Business name *</label>
+                                <input type="text" class="form-control" id="business_name"
+                                       name="business_name" required="required"
+                                       t-att-value="values.get('business_name')"/>
+                                <div t-if="errors.get('business_name')" class="text-danger small"
+                                     t-esc="errors['business_name']"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="contact_name">Your name</label>
+                                <input type="text" class="form-control" id="contact_name"
+                                       name="contact_name" t-att-value="values.get('contact_name')"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="email">Email *</label>
+                                <input type="email" class="form-control" id="email"
+                                       name="email" required="required"
+                                       t-att-value="values.get('email')"/>
+                                <div t-if="errors.get('email')" class="text-danger small"
+                                     t-esc="errors['email']"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="phone">Phone</label>
+                                <input type="tel" class="form-control" id="phone"
+                                       name="phone" t-att-value="values.get('phone')"/>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label" for="suburb">Town or suburb *</label>
+                                <input type="text" class="form-control" id="suburb"
+                                       name="suburb" required="required"
+                                       t-att-value="values.get('suburb')"/>
+                                <div t-if="errors.get('suburb')" class="text-danger small"
+                                     t-esc="errors['suburb']"/>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="state">State</label>
+                                <select class="form-select" id="state" name="state">
+                                    <option value="">—</option>
+                                    <t t-foreach="['QLD','NSW','VIC','SA','WA','TAS','NT','ACT']"
+                                       t-as="code">
+                                        <option t-att-value="code" t-esc="code"
+                                                t-att-selected="'selected' if values.get('state') == code else None"/>
+                                    </t>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="existing_website">Your website</label>
+                                <input type="text" class="form-control" id="existing_website"
+                                       name="existing_website"
+                                       t-att-value="values.get('existing_website')"/>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="message">Anything else</label>
+                                <textarea class="form-control" id="message" name="message"
+                                          rows="4" t-esc="values.get('message')"/>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary mt-4">Send application</button>
+                        <p class="small text-muted mt-3">
+                            Fields marked * are required. We use these details only to
+                            answer your enquiry.
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="stockist_apply_thanks" name="Stockist application received">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container py-5" style="max-width:44rem">
+                    <h1>Thanks — we have it</h1>
+                    <p class="lead">
+                        Your application for <strong t-esc="business_name"/> has reached
+                        our customer service team.
+                    </p>
+                    <p t-if="reference" class="text-muted">
+                        Your reference is <strong t-esc="reference"/>. Quote it if you
+                        need to follow up.
+                    </p>
+                    <p><a href="/stockists">← Back to stockists</a></p>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>
