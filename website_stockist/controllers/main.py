@@ -184,9 +184,12 @@ class WebsiteStockistApplication(http.Controller):
         return request.render("website_stockist.stockist_apply", {
             "website": website,
             "cta_label": website._stockist_cta_label(),
+            "heading": website._stockist_apply_heading(),
+            "submit_label": website._stockist_submit_label(),
             "intro": website.stockist_cta_intro,
             "values": {},
             "errors": {},
+            "title": website._stockist_apply_heading(),
         })
 
     @http.route(["/stockists/apply/submit"], type="http", auth="public",
@@ -214,9 +217,12 @@ class WebsiteStockistApplication(http.Controller):
             return request.render("website_stockist.stockist_apply", {
                 "website": website,
                 "cta_label": website._stockist_cta_label(),
+                "heading": website._stockist_apply_heading(),
+                "submit_label": website._stockist_submit_label(),
                 "intro": website.stockist_cta_intro,
                 "values": values,
                 "errors": errors,
+                "title": website._stockist_apply_heading(),
             })
 
         ticket = self._create_ticket(website, values)

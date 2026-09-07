@@ -14,6 +14,10 @@ class ResConfigSettings(models.TransientModel):
         related="website_id.stockist_cta_enabled", readonly=False)
     stockist_cta_label = fields.Char(
         related="website_id.stockist_cta_label", readonly=False)
+    stockist_apply_heading = fields.Char(
+        related="website_id.stockist_apply_heading", readonly=False)
+    stockist_apply_submit_label = fields.Char(
+        related="website_id.stockist_apply_submit_label", readonly=False)
     stockist_cta_intro = fields.Text(
         related="website_id.stockist_cta_intro", readonly=False)
     stockist_helpdesk_team_id = fields.Many2one(

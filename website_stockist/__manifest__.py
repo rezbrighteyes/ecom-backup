@@ -22,7 +22,7 @@ Key points
 * Per-record SEO metadata via ``website.seo.metadata``.
 * Stockists appear in the XML sitemap of every website they are assigned to.
 """,
-    "version": "18.0.9.0.1",
+    "version": "18.0.9.1.0",
     "category": "Website",
     "author": "BrightEyes Group",
     "license": "OPL-1",

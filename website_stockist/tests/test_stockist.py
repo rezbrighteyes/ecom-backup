@@ -781,3 +781,24 @@ class TestStockistApplication(TransactionCase):
     def test_title_falls_back_to_the_name_with_no_brand(self):
         lonely = self.env["website"].create({"name": ""})
         self.assertEqual(self.stockist._meta_title(lonely), self.stockist.name)
+
+    def test_the_three_labels_are_independent(self):
+        """Button, heading and submit are separate on purpose.
+
+        A button says what to do, a heading says what the page is. Using one
+        string for both put "Click here to start selling Mangrove Jacks" in an
+        <h1>, which is an instruction addressed to nobody.
+        """
+        self.website.stockist_cta_label = "Click here to start selling Rocko's"
+        self.website.stockist_apply_heading = "Sell Rocko's in your store"
+        self.website.stockist_apply_submit_label = "Send my details"
+        self.assertEqual(self.website._stockist_cta_label(),
+                         "Click here to start selling Rocko's")
+        self.assertEqual(self.website._stockist_apply_heading(),
+                         "Sell Rocko's in your store")
+        self.assertEqual(self.website._stockist_submit_label(), "Send my details")
+
+    def test_each_label_falls_back_on_its_own(self):
+        self.website.stockist_cta_label = "Stock Rocko's"
+        self.assertEqual(self.website._stockist_apply_heading(), "Become a stockist")
+        self.assertEqual(self.website._stockist_submit_label(), "Send application")

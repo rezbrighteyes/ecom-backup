@@ -26,6 +26,16 @@
                                        placeholder="Become a stockist"/>
                             </div>
                             <div class="row">
+                                <label for="stockist_apply_heading" class="col-lg-4 o_light_label"/>
+                                <field name="stockist_apply_heading"
+                                       placeholder="Become a stockist"/>
+                            </div>
+                            <div class="row">
+                                <label for="stockist_apply_submit_label" class="col-lg-4 o_light_label"/>
+                                <field name="stockist_apply_submit_label"
+                                       placeholder="Send application"/>
+                            </div>
+                            <div class="row">
                                 <label for="stockist_helpdesk_team_id" class="col-lg-4 o_light_label"/>
                                 <field name="stockist_helpdesk_team_id"
                                        placeholder="found from the website's company"/>

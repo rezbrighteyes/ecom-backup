@@ -7,7 +7,7 @@
     <template id="stockist_cta_button" name="Stockist call to action">
         <t t-if="website.stockist_cta_enabled">
             <a href="/stockists/apply"
-               class="btn btn-primary o_stockist_cta"
+               class="btn btn-primary btn_cta o_stockist_cta"
                t-esc="website._stockist_cta_label()"/>
         </t>
     </template>
@@ -22,11 +22,11 @@
                             <li class="breadcrumb-item"><a href="/">Home</a></li>
                             <li class="breadcrumb-item"><a href="/stockists">Stockists</a></li>
                             <li class="breadcrumb-item active" aria-current="page"
-                                t-esc="cta_label"/>
+                                t-esc="heading"/>
                         </ol>
                     </nav>
 
-                    <h1 t-esc="cta_label"/>
+                    <h1 t-esc="heading"/>
                     <p t-if="intro" class="lead" t-esc="intro"/>
                     <p t-else="" class="lead">
                         Tell us about your store and we will be in touch about
@@ -102,13 +102,16 @@
                                        t-att-value="values.get('existing_website')"/>
                             </div>
                             <div class="col-12">
-                                <label class="form-label" for="message">Anything else</label>
+                                <label class="form-label" for="message">
+                                    Tell us about your store
+                                </label>
                                 <textarea class="form-control" id="message" name="message"
-                                          rows="4" t-esc="values.get('message')"/>
+                                          rows="4"
+                                          placeholder="What you sell, who shops with you, how many stores."><t t-esc="values.get('message')"/></textarea>
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary mt-4">Send application</button>
+                        <button type="submit" class="btn btn-secondary mt-4" t-esc="submit_label"/>
                         <p class="small text-muted mt-3">
                             Fields marked * are required. We use these details only to
                             answer your enquiry.

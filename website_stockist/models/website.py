@@ -9,6 +9,8 @@ template.
 from odoo import api, fields, models
 
 DEFAULT_CTA = "Become a stockist"
+DEFAULT_HEADING = "Become a stockist"
+DEFAULT_SUBMIT = "Send application"
 
 
 class Website(models.Model):
@@ -21,6 +23,16 @@ class Website(models.Model):
         help="The button text on the stockist pages. Say it in this brand's "
              "voice — the same wording on every site is what makes a group of "
              "brands read as one template. Blank uses '%s'." % DEFAULT_CTA,
+    )
+    stockist_apply_heading = fields.Char(
+        string="Application page heading",
+        help="The <h1> on /stockists/apply. Keep it separate from the button: a "
+             "button says what to do, a heading says what the page is, and "
+             '"Click here to..." as a heading reads as an instruction to nobody.',
+    )
+    stockist_apply_submit_label = fields.Char(
+        string="Submit button label",
+        help="The button that sends the form. Blank uses '%s'." % DEFAULT_SUBMIT,
     )
     stockist_cta_intro = fields.Text(
         string="Application form intro",
@@ -38,6 +50,14 @@ class Website(models.Model):
     def _stockist_cta_label(self):
         self.ensure_one()
         return (self.stockist_cta_label or "").strip() or DEFAULT_CTA
+
+    def _stockist_apply_heading(self):
+        self.ensure_one()
+        return (self.stockist_apply_heading or "").strip() or DEFAULT_HEADING
+
+    def _stockist_submit_label(self):
+        self.ensure_one()
+        return (self.stockist_apply_submit_label or "").strip() or DEFAULT_SUBMIT
 
     def _stockist_team(self):
         """The helpdesk team an application from this site belongs to.

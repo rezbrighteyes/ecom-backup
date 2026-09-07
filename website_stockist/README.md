@@ -319,6 +319,16 @@ Website > Configuration > Settings > Stockists. "Become a stockist", "Stock Rock
 "Wholesale enquiries": whatever suits that brand. The same sentence on five sites is what
 makes a group of brands read as one template.
 
+**Three labels, all per website, all independent:** the button on the stockist pages, the
+`<h1>` on the application page, and the submit button. They are separate because a button
+says what to do and a heading says what the page is — reusing one string for both put
+"Click here to start selling Mangrove Jacks" in an `<h1>`, an instruction addressed to
+nobody.
+
+The call to action uses the theme's own CTA classes (`btn btn-primary btn_cta`) and the
+submit uses its form-send style (`btn btn-secondary`), so the form looks like the rest of the
+site rather than like Bootstrap's defaults.
+
 `/stockists/apply` takes the application and creates a **helpdesk ticket** on the team that
 belongs to that site. Routing tries three things in order:
 
