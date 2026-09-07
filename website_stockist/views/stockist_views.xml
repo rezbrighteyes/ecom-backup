@@ -113,6 +113,40 @@
                         <page string="Description" name="description">
                             <field name="description" placeholder="Something specific to this location..."/>
                         </page>
+                        <page string="Per-website content" name="content">
+                            <p class="text-muted">
+                                One row per website this stockist appears on. The
+                                tag here selects the products for that site, so the
+                                same shop reads differently on two brands' websites
+                                without the address being entered twice. Leave the
+                                overrides empty and the page generates its own copy.
+                            </p>
+                            <field name="content_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="website_id"/>
+                                    <field name="brand_name" placeholder="defaults to the website name"/>
+                                    <field name="stockist_tag_ids" widget="many2many_tags"
+                                           options="{'no_create': True}"/>
+                                    <field name="website_meta_title" optional="hide"/>
+                                    <field name="website_meta_description" optional="hide"/>
+                                </list>
+                                <form>
+                                    <group>
+                                        <group>
+                                            <field name="website_id"/>
+                                            <field name="brand_name"/>
+                                            <field name="stockist_tag_ids" widget="many2many_tags"
+                                                   options="{'no_create': True}"/>
+                                        </group>
+                                        <group string="Overrides — leave empty to generate">
+                                            <field name="website_meta_title"/>
+                                            <field name="website_meta_description"/>
+                                        </group>
+                                    </group>
+                                    <field name="description" placeholder="Body override for this site only..."/>
+                                </form>
+                            </field>
+                        </page>
                         <page string="Images" name="images">
                             <group>
                                 <group string="Logo">

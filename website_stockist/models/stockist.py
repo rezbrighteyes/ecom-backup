@@ -165,6 +165,14 @@ class WebsiteStockist(models.Model):
              "They come from the products it selects, so the page can never "
              "claim a category the stock does not support.",
     )
+    content_ids = fields.One2many(
+        "website.stockist.content", "stockist_id",
+        string="Per-website content",
+        help="One row per website this stockist appears on. The row carries the "
+             "stockist tag, the brand name and any copy overrides for that site, "
+             "so the same shop reads differently on two brands' websites without "
+             "the address being entered twice.",
+    )
     product_ids = fields.Many2many(
         "product.template",
         string="Products in those ranges",
@@ -220,10 +228,61 @@ class WebsiteStockist(models.Model):
     CATEGORY_ORDER = ["sunglasses", "headwear", "footwear", "apparel",
                       "fishing", "accessories"]
 
-    def _stock_domain(self):
+    # ------------------------------------------------------------------
+    # Per-website resolution
+    #
+    # Everything below takes an optional `website`. Passed one, it answers for
+    # that site; passed nothing it falls back to the record-level fields, which
+    # is what the backend and any pre-existing caller sees. That fallback is why
+    # adding this model did not have to change every call site at once.
+    # ------------------------------------------------------------------
+    def _content_for(self, website=None):
+        """The content row for a website, or an empty recordset."""
+        self.ensure_one()
+        if website is None:
+            website = self.env["website"].get_current_website()
+        if not website:
+            return self.env["website.stockist.content"]
+        return self.content_ids.filtered(
+            lambda c, w=website: c.website_id.id == w.id)[:1]
+
+    def _tags_for(self, website=None):
+        """Stockist tags for this site, falling back to the record's own."""
+        self.ensure_one()
+        content = self._content_for(website)
+        if content and content.stockist_tag_ids:
+            return content.stockist_tag_ids
+        return self.stockist_tag_ids
+
+    def _body_for(self, website=None):
+        """Body copy for this site: the override if set, else the stockist's."""
+        self.ensure_one()
+        content = self._content_for(website)
+        if content and content.description:
+            return content.description
+        return self.description
+
+    def _brand_for(self, website=None):
+        """The brand to name on this site.
+
+        Was hardcoded to "Mangrove Jacks" in the description and in the Store
+        JSON-LD, which would have published the wrong brand on every other site
+        the module is used on.
+        """
+        self.ensure_one()
+        content = self._content_for(website)
+        if content:
+            brand = content._brand()
+            if brand:
+                return brand
+        if website is None:
+            website = self.env["website"].get_current_website()
+        return (website.name if website else "") or ""
+
+    def _stock_domain(self, website=None):
         """Products this stockist carries: published, sellable, on its websites."""
         self.ensure_one()
-        domain = [("product_tag_ids", "in", self.stockist_tag_ids.ids),
+        domain = [("product_tag_ids", "in", self._tags_for(website).ids),
                   ("is_published", "=", True),
                   ("sale_ok", "=", True),
                   ("active", "=", True)]
@@ -231,7 +290,7 @@ class WebsiteStockist(models.Model):
             domain.append(("website_id", "in", [False] + self.website_ids.ids))
         return domain
 
-    def _categories_stocked(self):
+    def _categories_stocked(self, website=None):
         """{category: tag recordset} for the stock this stockist actually holds.
 
         Derived from the PRODUCTS, not from the tags ticked on the stockist. A
@@ -249,9 +308,9 @@ class WebsiteStockist(models.Model):
         capped at 24 and the categories describe everything stocked.
         """
         self.ensure_one()
-        if not self.stockist_tag_ids:
+        if not self._tags_for(website):
             return {}
-        products = self.env["product.template"].search(self._stock_domain())
+        products = self.env["product.template"].search(self._stock_domain(website))
         by_category = {}
         for tag in products.product_tag_ids:
             if tag.stockist_category:
@@ -260,7 +319,7 @@ class WebsiteStockist(models.Model):
                 by_category[tag.stockist_category] |= tag
         return by_category
 
-    def _category_groups(self):
+    def _category_groups(self, website=None):
         """[(label, tag recordset)] — the categories a customer would recognise.
 
         Nobody outside the business knows what MJ39 is; they know "Sunglasses".
@@ -272,12 +331,12 @@ class WebsiteStockist(models.Model):
         """
         self.ensure_one()
         labels = dict(self.env["product.tag"]._fields["stockist_category"].selection)
-        stocked = self._categories_stocked()
+        stocked = self._categories_stocked(website)
         return [(labels[c], stocked[c]) for c in self.CATEGORY_ORDER if c in stocked]
 
-    def _stocked_categories(self):
+    def _stocked_categories(self, website=None):
         """Category words for the description, in a stable, readable order."""
-        stocked = self._categories_stocked()
+        stocked = self._categories_stocked(website)
         labels = dict(self.env["product.tag"]._fields["stockist_category"].selection)
         return [labels[c].lower() for c in self.CATEGORY_ORDER if c in stocked]
 
@@ -290,7 +349,7 @@ class WebsiteStockist(models.Model):
             return words[0]
         return "%s and %s" % (", ".join(words[:-1]), words[-1])
 
-    def _meta_description(self):
+    def _meta_description(self, website=None):
         """What this stockist sells, where it is, and how to check stock.
 
         Built from the ranges rather than written once, so a store that gets
@@ -298,9 +357,14 @@ class WebsiteStockist(models.Model):
         Capped at 155 characters, the point past which Google truncates.
         """
         self.ensure_one()
-        what = self._join_readable(self._stocked_categories()) or "sunglasses"
+        content = self._content_for(website)
+        if content and content.website_meta_description:
+            return content.website_meta_description[:155]
+        brand = self._brand_for(website)
+        what = self._join_readable(self._stocked_categories(website)) or "sunglasses"
         where = " ".join(p for p in [self.city, self.zip] if p)
-        text = "Find Mangrove Jacks %s at %s" % (what, self.name)
+        text = "Find %s %s at %s" % (brand, what, self.name) if brand else \
+            "Find %s at %s" % (what, self.name)
         if where:
             text += ", %s" % where
         text += "."
@@ -317,8 +381,14 @@ class WebsiteStockist(models.Model):
 
     def _default_website_meta(self):
         res = super()._default_website_meta()
+        website = self.env["website"].get_current_website()
         for stockist in self:
-            description = stockist._meta_description()
+            content = stockist._content_for(website)
+            if content and content.website_meta_title:
+                res["default_meta_title"] = content.website_meta_title
+                res["default_opengraph"]["og:title"] = content.website_meta_title
+                res["default_twitter"]["twitter:title"] = content.website_meta_title
+            description = stockist._meta_description(website)
             res["default_meta_description"] = description
             res["default_opengraph"]["og:description"] = description
             res["default_twitter"]["twitter:description"] = description
@@ -345,7 +415,37 @@ class WebsiteStockist(models.Model):
         base = self.env["website"].get_current_website().get_base_url()
         return "%s/web/image/website.stockist/%s/%s" % (base.rstrip("/"), self.id, field)
 
-    @api.depends("stockist_tag_ids", "website_ids")
+    def _products_for(self, website=None):
+        """The strip for one site. The stored field below is the union.
+
+        Sampling has to happen per website because the tag differs per website:
+        the same shop shows Rocko's stock on one domain and Mangrove Jacks stock
+        on another, and the categories follow the products.
+        """
+        self.ensure_one()
+        Product = self.env["product.template"]
+        if not self._tags_for(website):
+            return Product.browse()
+        base = self._stock_domain(website)
+        categories = self._categories_stocked(website)
+        picked = Product.browse()
+        if categories:
+            share = max(1, self.PRODUCT_DISPLAY_LIMIT // len(categories))
+            for category in self.CATEGORY_ORDER:
+                tags = categories.get(category)
+                if not tags:
+                    continue
+                picked |= Product.search(
+                    base + [("product_tag_ids", "in", tags.ids)],
+                    order="website_sequence, name", limit=share)
+        if len(picked) < self.PRODUCT_DISPLAY_LIMIT:
+            picked |= Product.search(
+                base + [("id", "not in", picked.ids)],
+                order="website_sequence, name",
+                limit=self.PRODUCT_DISPLAY_LIMIT - len(picked))
+        return picked
+
+    @api.depends("stockist_tag_ids", "website_ids", "content_ids.stockist_tag_ids")
     def _compute_product_ids(self):
         """A spread of what this stockist carries, capped at PRODUCT_DISPLAY_LIMIT.
 
@@ -571,7 +671,7 @@ class WebsiteStockist(models.Model):
                           .replace("&", "\\u0026"))
         return Markup(payload)
 
-    def _json_ld(self, base_url):
+    def _json_ld(self, base_url, website=None):
         """Store JSON-LD for one stockist. Returns Markup, or False."""
         self.ensure_one()
         if not self.name:
@@ -633,21 +733,26 @@ class WebsiteStockist(models.Model):
             data["logo"] = "%s/web/image/website.stockist/%s/logo" % (
                 base_url.rstrip("/"), self.id,
             )
-        if self.product_ids:
+        products = self._products_for(website)
+        if products:
             # The range is the only thing this page holds that the retailer's own
             # store page does not. On the page it is a row of badges; without
             # this it is invisible to anything parsing the document, which is the
             # entire reason the directory exists.
+            #
+            # The brand comes from the per-website row. It was hardcoded, so the
+            # same shop on Rocko's would have told Google it offers Mangrove
+            # Jacks products — a wrong claim in structured data, which is worse
+            # than an absent one.
+            brand = self._brand_for(website)
             data["makesOffer"] = [{
                 "@type": "Offer",
-                "itemOffered": {
-                    "@type": "Product",
-                    "name": product.name,
-                    "brand": {"@type": "Brand", "name": "Mangrove Jacks"},
-                    "url": "%s%s" % (base_url.rstrip("/"), product.website_url),
-                },
+                "itemOffered": dict(
+                    {"@type": "Product", "name": product.name,
+                     "url": "%s%s" % (base_url.rstrip("/"), product.website_url)},
+                    **({"brand": {"@type": "Brand", "name": brand}} if brand else {})),
                 "availableAtOrFrom": {"@id": data["@id"]},
-            } for product in self.product_ids]
+            } for product in products]
         if self.google_maps_url:
             data["hasMap"] = self.google_maps_url
         return self._json_ld_dump(data)

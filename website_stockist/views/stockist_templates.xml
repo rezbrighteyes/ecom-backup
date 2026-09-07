@@ -193,7 +193,8 @@
                                 </ul>
                             </t>
 
-                            <div t-if="stockist.description" class="mt-4" t-field="stockist.description"/>
+                            <t t-set="body" t-value="stockist._body_for()"/>
+                            <div t-if="body" class="mt-4" t-out="body"/>
                         </div>
 
                         <div class="col-lg-5">
@@ -206,12 +207,13 @@
                         </div>
                     </div>
 
-                    <t t-if="stockist.product_ids">
+                    <t t-set="strip" t-value="stockist._products_for()"/>
+                    <t t-if="strip">
                         <h2 class="h5 mt-5" t-attf-id="range">
-                            Mangrove Jacks stocked at <t t-esc="stockist.name"/>
+                            <t t-esc="stockist._brand_for()"/> stocked at <t t-esc="stockist.name"/>
                         </h2>
                         <div class="o_stockist_range_strip d-flex gap-3 mt-1 pb-2">
-                            <div t-foreach="stockist.product_ids" t-as="product"
+                            <div t-foreach="strip" t-as="product"
                                  class="o_stockist_range_item flex-shrink-0">
                                 <a t-att-href="product.website_url"
                                    class="text-decoration-none text-reset d-block h-100">

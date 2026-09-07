@@ -627,3 +627,87 @@ class TestOpeningHoursSpecification(TransactionCase):
         labels = [l for l, _ in self.stockist._category_groups()]
         self.assertEqual(labels, ["Apparel", "Fishing tackle"])
         self.assertIn("apparel and fishing tackle", self.stockist._meta_description())
+
+    def _two_sites(self):
+        rockos = self.env["website"].create({"name": "Rockos"})
+        mj = self.env["website"].create({"name": "Mangrove Jacks Test"})
+        return rockos, mj
+
+    def test_the_same_shop_shows_different_stock_per_site(self):
+        """The point of the whole model: one address, two brands, two pages."""
+        rockos, mj = self._two_sites()
+        r_tag = self.env["product.tag"].create({"name": "RockosTag"})
+        m_tag = self.env["product.tag"].create({"name": "MJTag"})
+        foot = self.env["product.tag"].create(
+            {"name": "FootCat", "stockist_category": "footwear"})
+        sun = self.env["product.tag"].create(
+            {"name": "SunCat", "stockist_category": "sunglasses"})
+        thong = self.env["product.template"].create({
+            "name": "Rockos Thong", "is_published": True,
+            "product_tag_ids": [(6, 0, [r_tag.id, foot.id])]})
+        shade = self.env["product.template"].create({
+            "name": "MJ Wrap", "is_published": True,
+            "product_tag_ids": [(6, 0, [m_tag.id, sun.id])]})
+
+        self.stockist.website_ids = [(6, 0, [rockos.id, mj.id])]
+        self.env["website.stockist.content"].create([
+            {"stockist_id": self.stockist.id, "website_id": rockos.id,
+             "brand_name": "Rocko's", "stockist_tag_ids": [(6, 0, [r_tag.id])]},
+            {"stockist_id": self.stockist.id, "website_id": mj.id,
+             "brand_name": "Mangrove Jacks", "stockist_tag_ids": [(6, 0, [m_tag.id])]},
+        ])
+
+        self.assertIn(thong, self.stockist._products_for(rockos))
+        self.assertNotIn(shade, self.stockist._products_for(rockos))
+        self.assertIn(shade, self.stockist._products_for(mj))
+        self.assertNotIn(thong, self.stockist._products_for(mj))
+
+        self.assertEqual([l for l, _ in self.stockist._category_groups(rockos)],
+                         ["Footwear"])
+        self.assertEqual([l for l, _ in self.stockist._category_groups(mj)],
+                         ["Sunglasses"])
+
+    def test_the_brand_in_the_copy_follows_the_site(self):
+        """It was hardcoded, so Rocko's pages would have named Mangrove Jacks."""
+        rockos, mj = self._two_sites()
+        self.env["website.stockist.content"].create([
+            {"stockist_id": self.stockist.id, "website_id": rockos.id,
+             "brand_name": "Rocko's"},
+            {"stockist_id": self.stockist.id, "website_id": mj.id,
+             "brand_name": "Mangrove Jacks"},
+        ])
+        self.assertIn("Rocko's", self.stockist._meta_description(rockos))
+        self.assertNotIn("Mangrove Jacks", self.stockist._meta_description(rockos))
+        self.assertIn("Mangrove Jacks", self.stockist._meta_description(mj))
+
+    def test_brand_falls_back_to_the_website_name(self):
+        rockos, _ = self._two_sites()
+        self.env["website.stockist.content"].create(
+            {"stockist_id": self.stockist.id, "website_id": rockos.id})
+        self.assertEqual(self.stockist._brand_for(rockos), "Rockos")
+
+    def test_overrides_win_over_generated_copy(self):
+        rockos, _ = self._two_sites()
+        self.env["website.stockist.content"].create({
+            "stockist_id": self.stockist.id, "website_id": rockos.id,
+            "website_meta_description": "Hand written for this one shop.",
+            "description": "<p>Bespoke body.</p>"})
+        self.assertEqual(self.stockist._meta_description(rockos),
+                         "Hand written for this one shop.")
+        self.assertIn("Bespoke body", self.stockist._body_for(rockos))
+
+    def test_no_row_falls_back_to_the_record(self):
+        """Pre-existing stockists keep working before the migration runs."""
+        rockos, _ = self._two_sites()
+        tag = self.env["product.tag"].create({"name": "LegacyTag"})
+        self.stockist.stockist_tag_ids = [(6, 0, [tag.id])]
+        self.assertEqual(self.stockist._tags_for(rockos), tag)
+
+    def test_one_row_per_website(self):
+        rockos, _ = self._two_sites()
+        self.env["website.stockist.content"].create(
+            {"stockist_id": self.stockist.id, "website_id": rockos.id})
+        with self.assertRaises(Exception):
+            self.env["website.stockist.content"].create(
+                {"stockist_id": self.stockist.id, "website_id": rockos.id})
+            self.env.flush_all()

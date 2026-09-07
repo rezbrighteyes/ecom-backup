@@ -46,6 +46,43 @@ The search view has an **"On every website"** filter so unassigned records can b
 in one click — the same gap that let four products leak across all three live domains on
 26 Aug.
 
+### One shop, several brands — the per-website content model
+
+A shop that stocks two of the group's brands appears on two sites. The shop is one thing —
+one address, one phone, one set of hours — but what it sells and what it should say differ
+per brand.
+
+There are two ways to handle that and they are mutually exclusive:
+
+| | Canonical to one owner | Per-website content |
+|---|---|---|
+| Duplicate content | eliminated | avoided, because the pages genuinely differ |
+| Which site can rank | one | all of them |
+| Setup | tick **Canonical website** | one content row per site |
+
+`website.stockist.content` is the second. One row per website, holding:
+
+* **the stockist tag** — the important one. It selects the products, and the products drive
+  the categories, the strip and the generated description. A shop tagged for Rocko's on
+  rockos.com.au and Mangrove Jacks on mangrovejacks.net.au produces different copy on each
+  site with nobody writing any.
+* **the brand name** used in the description and as `brand` in the Store JSON-LD. This was
+  **hardcoded to "Mangrove Jacks"**, so every other site would have published a wrong claim
+  in its structured data — worse than an absent one.
+* optional title, description and body overrides for stores that earn something bespoke.
+
+The address stays on the stockist and is maintained once. Address drift between sites is one
+of the few things that genuinely damages local search, and duplicating this module per site —
+the other obvious approach — guarantees it, as well as guaranteeing that a fix lands in one
+copy and not the others.
+
+**Adding a website is adding a row.** Never another copy of the module.
+
+Every resolver takes an optional `website` and falls back to the record-level fields when
+there is no row, so a stockist that predates the model keeps working. The 18.0.7.0.0
+migration seeds a row per website for every existing stockist, carrying the tag across, so
+behaviour does not silently change the first time somebody edits one.
+
 ### Cross-domain duplication — read this before assigning a stockist to several sites
 
 A stockist on three websites serves the same URL path on three domains. That is duplicate
