@@ -393,6 +393,17 @@ class SaleOrder(models.Model):
             return False
 
         costs = self._reza_edbert_costs(api, [l["wholesale_id"] for l in lines])
+        tax = self._reza_purchase_tax(api)
+        if not tax:
+            # Deliberately NOT added to `skipped`. That list means "these lines
+            # were left off the order", and it drives the `partial` status; a
+            # tax question is not a missing line and must not be reported as
+            # one. It is logged here and noted on the order after the mark.
+            _logger.warning(
+                "reza_ecom_intercompany_po: %s -- no single tax-exclusive purchase "
+                "tax on %s, so the bill may not agree with Edbert's invoice",
+                self.name, api.display_name)
+
         vals_lines, wanted = [], {}
         for l in lines:
             cost = costs.get(l["wholesale_id"])
@@ -420,6 +431,11 @@ class SaleOrder(models.Model):
                 "price_unit": cost,
                 "date_planned": fields.Datetime.now(),
                 "discount": 0.0,               # completes the compute group
+                # Passed explicitly for the same reason as the price: left to
+                # the compute it resolves to the ROOT company's tax, which
+                # reads the price as GST-inclusive while Edbert reads it as
+                # GST-exclusive.
+                **({"taxes_id": [(6, 0, tax.ids)]} if tax else {}),
             }))
         if not vals_lines:
             self._reza_mark("failed", _("Every line was skipped: %s") % "; ".join(skipped[:4]),
@@ -447,10 +463,27 @@ class SaleOrder(models.Model):
             raise ValueError(_("The Edbert cost was overwritten on create: %s")
                              % "; ".join(wrong[:3]))
 
+        # Same check for the tax. `taxes_id` is a stored compute like the
+        # price, so a change in how Odoo schedules it would silently put the
+        # root's tax-inclusive GST back and reintroduce the 1/11 gap.
+        if tax:
+            mistaxed = [
+                pl.product_id.display_name for pl in purchase.order_line
+                if pl.taxes_id != tax
+            ]
+            if mistaxed:
+                raise ValueError(
+                    _("The purchase tax was overwritten on create for: %s")
+                    % ", ".join(mistaxed[:3]))
+
         # Record the link and COMMIT before anything remote happens, so a
         # failure in the push cannot leave an unrecorded wholesale order.
         status = "partial" if skipped else "raised"
         self._reza_mark(status, ("; ".join(skipped[:4]) or False), purchase)
+        if not tax:
+            self._reza_note(
+                _("No tax-exclusive purchase tax on %s, so this bill may not "
+                  "agree with Edbert's invoice.") % api.display_name)
         self.env.cr.commit()
 
         confirmed = self._reza_confirm(purchase)
@@ -697,6 +730,32 @@ class SaleOrder(models.Model):
         _logger.info("reza_ecom_intercompany_po: %s -> %s (%s)",
                      self.name, purchase.name, purchase.state)
         return purchase
+
+    def _reza_purchase_tax(self, company):
+        """The tax to put on the Edbert bill lines, or an empty recordset.
+
+        It must be a tax THIS company owns. The branch companies here own no
+        tax of their own by default and fall back to the root's GST -- and the
+        root reads a price as tax-INCLUSIVE while Edbert reads the same number
+        as tax-EXCLUSIVE. The identical `price_unit` then means two different
+        things, and the bill can never match the invoice.
+
+        Measured on production 2026-09-07 across all nine bridge orders: every
+        pair was out by exactly 1/11. For one Tread Thong at 4.18889, Edbert
+        invoiced 4.19 ex / 4.61 inc while ecom recorded 3.81 ex / 4.19 inc.
+
+        A tax the company owns is evaluated against that company, which is
+        tax-exclusive like Edbert, so both sides read the number the same way.
+        Anything other than exactly one candidate is left alone rather than
+        guessed at -- the caller records that it fell back.
+        """
+        taxes = self.env["account.tax"].sudo().search([
+            ("company_id", "=", company.id),
+            ("type_tax_use", "=", "purchase"),
+            ("active", "=", True),
+        ])
+        exclusive = taxes.filtered(lambda t: not t.price_include)
+        return exclusive if len(exclusive) == 1 else self.env["account.tax"]
 
     def _reza_lines(self):
         """Which sale lines Edbert must supply, and against which product.

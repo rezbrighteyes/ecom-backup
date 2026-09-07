@@ -182,6 +182,59 @@ class TestEdbertPurchase(TransactionCase):
         return purchase
 
     # ------------------------------------------------------------------ price
+    # -------------------------------------------------------------------- tax
+    def _excl_tax(self, company=None, name=None):
+        company = company or self.company
+        return self.env["account.tax"].create({
+            "name": name or "TEST GST excl %s" % company.id,
+            "amount": 10.0, "amount_type": "percent", "type_tax_use": "purchase",
+            "company_id": company.id, "price_include_override": "tax_excluded",
+        })
+
+    def test_the_bill_line_carries_a_tax_this_company_owns(self):
+        """Left to the compute it resolves to the ROOT company's GST.
+
+        That tax is evaluated against the root, which reads a price as
+        GST-INCLUSIVE, while Edbert reads the same number as GST-EXCLUSIVE.
+        Measured on production 2026-09-07: every one of the nine bridge orders
+        was out by exactly 1/11, and the bill could never match the invoice.
+        """
+        tax = self._excl_tax()
+        order = self._order()
+        order.action_confirm()
+        self._raise(order)
+        self.assertTrue(order.reza_edbert_purchase_id)
+        for line in order.reza_edbert_purchase_id.order_line:
+            self.assertEqual(line.taxes_id, tax)
+        # The note carries the settle failure -- the remote is stubbed, so the
+        # transfer cannot complete in a test. What matters is that the TAX
+        # warning is absent, because a usable tax was found.
+        self.assertNotIn("tax-exclusive", order.reza_edbert_note or "")
+
+    def test_a_price_inclusive_tax_is_never_chosen(self):
+        """Choosing one would reintroduce the very gap this closes."""
+        self.env["account.tax"].create({
+            "name": "TEST GST incl", "amount": 10.0, "amount_type": "percent",
+            "type_tax_use": "purchase", "company_id": self.company.id,
+            "price_include_override": "tax_included",
+        })
+        self.assertFalse(self.env["sale.order"]._reza_purchase_tax(self.company))
+
+    def test_two_candidates_are_not_guessed_between(self):
+        self._excl_tax(name="TEST GST excl A")
+        self._excl_tax(name="TEST GST excl B")
+        self.assertFalse(self.env["sale.order"]._reza_purchase_tax(self.company))
+
+    def test_no_usable_tax_is_recorded_but_does_not_stop_the_order(self):
+        """The goods must still move. The money question is said out loud."""
+        order = self._order()
+        order.action_confirm()
+        self._raise(order)
+        self.assertTrue(order.reza_edbert_purchase_id)
+        self.assertEqual(order.reza_edbert_status, "raised",
+                         "a tax question is not a skipped line")
+        self.assertIn("tax-exclusive", order.reza_edbert_note or "")
+
     def test_edbert_cost_survives_the_create(self):
         """The whole point of the module: Edbert's cost, not ecom's."""
         order = self._order()
