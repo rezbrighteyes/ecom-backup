@@ -452,3 +452,34 @@ class TestOpeningHoursSpecification(TransactionCase):
         description = self.stockist._meta_description()
         self.assertIn("(02) 9782 0276", description)
         self.assertLessEqual(len(description), 155)
+
+    def test_page_shows_categories_not_tag_codes(self):
+        """A customer knows "Sunglasses"; nobody knows what MJ39 is."""
+        tags = [self.env["product.tag"].create(
+            {"name": n, "stockist_category": "sunglasses"})
+            for n in ("MJ39", "MJ49", "MJ59")]
+        self.stockist.range_ids = [(6, 0, [t.id for t in tags])]
+        groups = self.stockist._range_groups()
+        self.assertEqual([label for label, _ in groups], ["Sunglasses"])
+        self.assertEqual(len(groups[0][1]), 3, "all three must be behind the one badge")
+
+    def test_footwear_ranges_collapse_to_one_badge(self):
+        pluggers = self.env["product.tag"].create(
+            {"name": "MJPluggers", "stockist_category": "footwear"})
+        nobbies = self.env["product.tag"].create(
+            {"name": "MJNobbies", "stockist_category": "footwear"})
+        sun = self.env["product.tag"].create(
+            {"name": "MJ49", "stockist_category": "sunglasses"})
+        self.stockist.range_ids = [(6, 0, [pluggers.id, nobbies.id, sun.id])]
+        labels = [label for label, _ in self.stockist._range_groups()]
+        self.assertEqual(labels, ["Sunglasses", "Footwear"])
+
+    def test_unclassified_range_is_not_shown_but_still_sells(self):
+        """Publishing "MJMystery" to a customer is worse than publishing nothing."""
+        mystery = self.env["product.tag"].create({"name": "MJMystery"})
+        product = self.env["product.template"].create({
+            "name": "Mystery Item", "product_tag_ids": [(6, 0, [mystery.id])],
+            "is_published": True})
+        self.stockist.range_ids = [(6, 0, [mystery.id])]
+        self.assertEqual(self.stockist._range_groups(), [])
+        self.assertIn(product, self.stockist.product_ids)

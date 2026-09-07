@@ -23,4 +23,20 @@
         </field>
     </record>
 
+    <record id="product_tag_view_search_stockist" model="ir.ui.view">
+        <field name="name">product.tag.search.stockist</field>
+        <field name="model">product.tag</field>
+        <field name="inherit_id" ref="product.product_tag_view_search"/>
+        <field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="stockist_category"/>
+                <!-- An unclassified range still sells products on a stockist page,
+                     it just cannot describe itself. This is how you find them. -->
+                <filter name="needs_stockist_category"
+                        string="Needs a stockist category"
+                        domain="[('stockist_category', '=', False)]"/>
+            </field>
+        </field>
+    </record>
+
 </odoo>

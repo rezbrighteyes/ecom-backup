@@ -15,7 +15,7 @@ from odoo import api, fields, models
 # name does not match is left blank for a human to classify.
 NAME_HINTS = (
     ("sunglasses", ("mjsun", "mj39", "mj49", "mj59", "mj69", "mj79", "mj89", "mj99")),
-    ("footwear", ("mjfoot", "mjpluggers", "mjfishshoe")),
+    ("footwear", ("mjfoot", "mjpluggers", "mjfishshoe", "mjnobbies")),
     ("hats", ("mjhat",)),
     ("apparel", ("mjshirt",)),
 )

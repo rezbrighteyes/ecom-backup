@@ -152,6 +152,19 @@ The strip scrolls horizontally rather than auto-scrolling. A marquee moves a pro
 name out from under whoever is reading it and a touch user cannot pause one mid-read;
 scroll-snap gets the same compactness and stays under the reader's control.
 
+### The page says Sunglasses, not MJ39
+
+`stockist_category` on each tag drives what a reader sees. Ranges are grouped by it
+and shown once, so a store carrying MJ39, MJ49 and MJ59 shows a single **Sunglasses**
+badge linking to all three, and MJPluggers with MJNobbies collapse to **Footwear**.
+Nobody outside the business knows what MJ39 is.
+
+A range nobody has classified is deliberately **not shown** — it still contributes its
+products to the strip, so nothing disappears from the page, it just adds no badge and no
+word to the description. Publishing "MJMystery" to a customer would be worse than
+publishing nothing. Find them with the **Needs a stockist category** filter on the
+product tag list.
+
 ### Titles and meta descriptions
 
 The title is written to `website_meta_title` on each record and follows one pattern:

@@ -209,6 +209,31 @@ class WebsiteStockist(models.Model):
     # ------------------------------------------------------------------
     # Compute / constraints
     # ------------------------------------------------------------------
+    def _range_groups(self):
+        """[(label, tag recordset)] — what the page shows instead of tag codes.
+
+        A customer reading a stockist page has no idea what MJ39 is. They know
+        "Sunglasses". Ranges are grouped by their category and shown once, so
+        MJ39, MJ49 and MJ59 collapse to a single Sunglasses badge linking to all
+        three, and MJPluggers with MJNobbies collapse to Footwear.
+
+        A range nobody has classified is deliberately left out rather than shown
+        by its code — it still contributes its products to the strip, so nothing
+        is lost from the page, and the backend list shows which tags need a
+        category. Publishing "MJMystery" to a customer would be worse than
+        publishing nothing.
+        """
+        self.ensure_one()
+        order = ["sunglasses", "hats", "footwear", "apparel", "accessories"]
+        labels = dict(self.env["product.tag"]._fields["stockist_category"].selection)
+        groups = []
+        for category in order:
+            tags = self.range_ids.filtered(
+                lambda t, c=category: t.stockist_category == c)
+            if tags:
+                groups.append((labels[category], tags))
+        return groups
+
     def _stocked_categories(self):
         """Category words for this stockist, in a stable, readable order."""
         order = ["sunglasses", "hats", "footwear", "apparel", "accessories"]
