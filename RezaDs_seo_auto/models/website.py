@@ -14,6 +14,18 @@ MAX_TITLE = 60
 class Website(models.Model):
     _inherit = 'website'
 
+    seo_default_brand = fields.Char(
+        string='Default Brand Name',
+        help="Schema.org brand fallback for products with no brand set, on this website only. "
+             "A brand site and a multi-brand retailer cannot share one answer.")
+    seo_free_shipping_threshold = fields.Float(
+        string='Free Shipping Threshold',
+        help="Published in shipping schema for this website only. Mangrove Jacks offers free "
+             "shipping over $69 and WhatYouNeed over $150; a single shared figure is wrong on "
+             "one of them.")
+    seo_return_days = fields.Integer(
+        string='Return Window (days)',
+        help="Published in merchant return policy schema for this website only.")
     seo_title_suffix = fields.Char(
         string='SEO Title Suffix',
         help="Appended to page titles on this website only, e.g. ' | Sunglass Superstore'. "
@@ -23,6 +35,26 @@ class Website(models.Model):
     )
 
     def _get_seo_param(self, key, default=''):
+        """This website's own value, falling back to the shared config parameter.
+
+        Every setting in this module began as a global ``ir.config_parameter`` shared by all
+        seven storefronts. Most can stay that way -- whether breadcrumb schema is on is not a
+        per-brand question. Three cannot, because they are published as factual claims about a
+        specific shop:
+
+        ``free_shipping_threshold`` differs ($69 on Mangrove Jacks, $150 on WhatYouNeed and ECOM),
+        ``return_days`` is emitted as ``merchantReturnDays`` in every product's schema, and
+        ``default_brand`` is the Schema.org brand fallback, which a multi-brand retailer and a
+        single-brand site cannot share.
+
+        A website field left empty falls through to the global parameter, so nothing changes
+        until somebody sets one.
+        """
+        field_name = 'seo_%s' % key
+        if self and field_name in self._fields:
+            value = self[field_name]
+            if value:
+                return value
         try:
             return self.env['ir.config_parameter'].sudo().get_param(
                 'rezads_seo.%s' % key, default
@@ -100,7 +132,10 @@ class Website(models.Model):
 
         if not base:
             fields_ = getattr(seo_object, '_fields', {}) if seo_object else {}
-            if 'website_meta_title' in fields_ and seo_object.website_meta_title:
+            if 'website_seo_ids' in fields_:
+                # A per-website override wins over the shared title on this site only.
+                base = seo_object._seo_for_website(self, 'website_meta_title') or ''
+            if not base and 'website_meta_title' in fields_ and seo_object.website_meta_title:
                 base = seo_object.website_meta_title
             elif 'name' in fields_ and seo_object.name:
                 base = seo_object.name
@@ -121,6 +156,21 @@ class Website(models.Model):
         if len(base) > room:
             base = base[:room].rsplit(' ', 1)[0].rstrip(' |-,')
         return '%s%s' % (base, suffix)
+
+    def _seo_site_description(self, seo_object):
+        """This website's meta description, when it differs from the shared one.
+
+        Returns False when there is no override, so Odoo's own logic runs untouched. Unlike the
+        title there is no suffix to add -- a description is either written for this audience or
+        it is not.
+        """
+        self.ensure_one()
+        if not seo_object or 'website_seo_ids' not in getattr(seo_object, '_fields', {}):
+            return False
+        value = seo_object._seo_for_website(self, 'website_meta_description')
+        if not value or value == seo_object.website_meta_description:
+            return False
+        return value
 
     def _seo_base_url(self):
         """This website's own public origin, never another site's.

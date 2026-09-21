@@ -360,6 +360,65 @@ class TestPaginatedTitles(TransactionCase):
             self.assertLessEqual(len(title), 60)
             self.assertTrue(title.startswith('Wrap Polarised'))
 
+    # ---- per-website overrides ----------------------------------------------------
+
+    def _override(self, product, **vals):
+        return self.env['product.website.seo'].create(
+            dict(product_tmpl_id=product.id, website_id=self.website.id, **vals))
+
+    def test_no_override_uses_the_shared_field(self):
+        """Most of the catalogue has no override and must be unaffected."""
+        product = self.env['product.template'].create(
+            {'name': 'Adder C1', 'website_meta_title': 'Adder C1 Polarised Sunglasses'})
+        self.assertEqual(
+            product._seo_for_website(self.website, 'website_meta_title'),
+            'Adder C1 Polarised Sunglasses')
+
+    def test_an_override_wins_on_its_own_website(self):
+        product = self.env['product.template'].create(
+            {'name': 'Adder C1', 'website_meta_title': 'Adder C1 Polarised Sunglasses'})
+        self._override(product, meta_title='Adder C1 Fishing Sunglasses')
+        self.assertEqual(
+            product._seo_for_website(self.website, 'website_meta_title'),
+            'Adder C1 Fishing Sunglasses')
+
+    def test_an_empty_override_field_falls_back(self):
+        """A row created for one field must not blank the others."""
+        product = self.env['product.template'].create(
+            {'name': 'Adder C1',
+             'website_meta_title': 'Adder C1 Polarised Sunglasses',
+             'website_meta_description': 'Shared description.'})
+        self._override(product, meta_title='Adder C1 Fishing Sunglasses')
+        self.assertEqual(
+            product._seo_for_website(self.website, 'website_meta_description'),
+            'Shared description.')
+
+    def test_one_row_per_product_per_website(self):
+        from psycopg2 import IntegrityError
+        from odoo.tools import mute_logger
+        product = self.env['product.template'].create({'name': 'Adder C1'})
+        self._override(product, meta_title='First')
+        with self.assertRaises(IntegrityError), mute_logger('odoo.sql_db'):
+            with self.cr.savepoint():
+                self._override(product, meta_title='Second')
+
+    # ---- per-website settings -------------------------------------------------------
+
+    def test_website_value_beats_the_global_parameter(self):
+        """$69 on one storefront and $150 on another cannot share a config parameter."""
+        self.env['ir.config_parameter'].sudo().set_param(
+            'rezads_seo.free_shipping_threshold', '150')
+        self.website.seo_free_shipping_threshold = 69
+        self.assertEqual(
+            float(self.website._get_seo_param('free_shipping_threshold', '0')), 69)
+
+    def test_an_unset_website_value_falls_through_to_the_global(self):
+        self.env['ir.config_parameter'].sudo().set_param(
+            'rezads_seo.free_shipping_threshold', '150')
+        self.website.seo_free_shipping_threshold = 0
+        self.assertEqual(
+            float(self.website._get_seo_param('free_shipping_threshold', '0')), 150)
+
     def test_a_suffix_leaving_no_room_is_refused(self):
         """Publishing the site name alone is worse than publishing the product name alone."""
         self.website.seo_title_suffix = ' | The Longest Storefront Name Anybody Has Ever Used Here'

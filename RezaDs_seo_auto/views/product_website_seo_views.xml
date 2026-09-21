@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!--
+    Per-website overrides, shown inside the SEO tab beneath the shared fields.
+
+    The shared values stay at the top because they are what almost every product
+    uses. An override is an exception and reads as one: a product with no rows
+    below behaves exactly as it always has.
+  -->
+  <record id="product_website_seo_list" model="ir.ui.view">
+    <field name="name">product.website.seo.list</field>
+    <field name="model">product.website.seo</field>
+    <field name="arch" type="xml">
+      <list string="Per-website overrides" editable="bottom">
+        <field name="website_id"/>
+        <field name="meta_title" placeholder="leave empty to use the shared title"/>
+        <field name="meta_description" placeholder="leave empty to use the shared description"/>
+        <field name="website_sequence"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="product_template_form_seo_overrides" model="ir.ui.view">
+    <field name="name">product.template.form.seo.overrides</field>
+    <field name="model">product.template</field>
+    <field name="inherit_id" ref="RezaDs_seo_auto.product_template_form_seo_tab"/>
+    <field name="arch" type="xml">
+      <xpath expr="//page[@name='rezads_seo']" position="inside">
+        <separator string="Per-website overrides"/>
+        <div class="text-muted">
+          Add a row only where a storefront genuinely needs different words. The site
+          name is appended automatically by that website's own SEO Title Suffix and
+          does not belong in an override. A product with no rows here uses the shared
+          fields above on every site, which is correct for most of the catalogue.
+        </div>
+        <field name="website_seo_ids" nolabel="1"
+               context="{'default_product_tmpl_id': id}">
+          <list editable="bottom">
+            <field name="website_id"/>
+            <field name="meta_title" placeholder="uses the shared title"/>
+            <field name="meta_description" placeholder="uses the shared description"/>
+            <field name="description_ecommerce" widget="html" optional="hide"/>
+            <field name="website_ribbon_id" optional="hide"/>
+            <field name="website_sequence"/>
+          </list>
+        </field>
+      </xpath>
+    </field>
+  </record>
+</odoo>

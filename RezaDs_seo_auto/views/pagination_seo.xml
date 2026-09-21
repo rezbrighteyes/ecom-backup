@@ -21,6 +21,11 @@
             <t t-if="seo_paginated_title">
                 <t t-set="title" t-value="seo_paginated_title"/>
             </t>
+            <t t-set="seo_site_description"
+               t-value="website._seo_site_description(seo_object or main_object)"/>
+            <t t-if="seo_site_description">
+                <t t-set="meta_description" t-value="seo_site_description"/>
+            </t>
         </xpath>
     </template>
 

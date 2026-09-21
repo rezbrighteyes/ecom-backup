@@ -4,7 +4,7 @@ import logging
 import unicodedata
 from datetime import date, timedelta
 from markupsafe import Markup
-from odoo import api, models
+from odoo import fields, api, models
 
 _logger = logging.getLogger(__name__)
 
@@ -351,6 +351,27 @@ class ProductTemplate(models.Model):
         else:
             title = core
         return _title_word_trim(title, MAX_META_TITLE)
+
+    website_seo_ids = fields.One2many(
+        'product.website.seo', 'product_tmpl_id', string='Per-website SEO')
+
+    def _seo_for_website(self, website=None, field=None):
+        """The value this website should show, falling back to the shared field.
+
+        Resolution is override -> shared -> empty, and it never skips a step. A missing override
+        is not an instruction to publish nothing; it means "the shared wording is fine here",
+        which is true for most of the catalogue.
+        """
+        self.ensure_one()
+        if website is None:
+            website = self.env['website'].get_current_website()
+        shared = self[field] if field in self._fields else False
+        if not website:
+            return shared
+        override = self.website_seo_ids.filtered(lambda r: r.website_id == website)[:1]
+        if override and override[field]:
+            return override[field]
+        return shared
 
     def _set_seo_defaults(self, name_changed=False, desc_changed=False):
         for record in self:

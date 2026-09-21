@@ -14,8 +14,9 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='rezads_seo.meta_title_template',
     )
     seo_default_brand = fields.Char(
+        related='website_id.seo_default_brand',
+        readonly=False,
         string='Default Brand Name',
-        config_parameter='rezads_seo.default_brand',
     )
     seo_enable_schema = fields.Boolean(
         string='Enable Product Schema',
@@ -66,10 +67,12 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='rezads_seo.enable_merchant_policies',
     )
     seo_return_days = fields.Integer(
+        related='website_id.seo_return_days',
+        readonly=False,
         string='Return Window (days)',
-        config_parameter='rezads_seo.return_days',
     )
     seo_free_shipping_threshold = fields.Float(
+        related='website_id.seo_free_shipping_threshold',
+        readonly=False,
         string='Free Shipping Threshold',
-        config_parameter='rezads_seo.free_shipping_threshold',
     )
