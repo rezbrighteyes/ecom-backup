@@ -386,7 +386,11 @@ class ProductTemplate(models.Model):
             # A field with no override column cannot be overridden, and guessing a column
             # name here is how the KeyError this map exists to prevent comes back.
             return shared
-        override = self.website_seo_ids.filtered(lambda r: r.website_id == website)[:1]
+        # Read as superuser. A shop visitor is base.group_public, which holds no ACL on
+        # product.website.seo, and every product page reaches this line -- an ordinary read
+        # therefore raises AccessError and the page answers 403. Only this product's own
+        # override for this one website leaves the method, so nothing else is exposed.
+        override = self.sudo().website_seo_ids.filtered(lambda r: r.website_id == website)[:1]
         if not override:
             return shared
         if override_field not in override._fields:
@@ -412,7 +416,12 @@ class ProductTemplate(models.Model):
                 website = self.env['website'].get_current_website()
         if not website:
             return False
-        override = self.website_seo_ids.filtered(lambda r: r.website_id == website)[:1]
+        # sudo for the same reason _seo_for_website does it: a shop visitor is
+        # base.group_public and holds no ACL on product.website.seo, so an ordinary read
+        # raises AccessError and Odoo answers the product page with a 403. This method is
+        # called from four product page templates, so without it the fix Reza shipped in
+        # 18.0.10.0.2 would be undone the moment this branch landed.
+        override = self.sudo().website_seo_ids.filtered(lambda r: r.website_id == website)[:1]
         return override.description_ecommerce or False
 
     def _set_seo_defaults(self, name_changed=False, desc_changed=False):
