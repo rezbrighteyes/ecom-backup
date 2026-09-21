@@ -137,7 +137,12 @@ class Website(models.Model):
                 base = seo_object._seo_for_website(self, 'website_meta_title') or ''
             if not base and 'website_meta_title' in fields_ and seo_object.website_meta_title:
                 base = seo_object.website_meta_title
-            elif 'name' in fields_ and seo_object.name:
+            # A separate test, not an elif. Chained to the line above, this branch fired
+            # precisely when base HAD been found: the per-website override and the shared meta
+            # title were each resolved and then overwritten with the bare product name. The
+            # override could never reach a page title, and it failed silently because a
+            # product's name is a plausible-looking title.
+            if not base and 'name' in fields_ and seo_object.name:
                 base = seo_object.name
         base = (base or '').strip()
         if not base:
