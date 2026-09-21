@@ -1,11 +1,15 @@
 {
     'name': 'Smart SEO by Reza D Shiraz',
-    'version': '18.0.10.1.0',
+    'version': '18.0.10.2.0',
     'category': 'Website/eCommerce',
     'summary': 'Complete eCommerce SEO: Schema.org, breadcrumbs, auto meta, 301 redirects, sitemap, dashboard',
     'author': 'Reza D Shiraz',
     'license': 'LGPL-3',
-    'depends': ['website_sale', 'stock'],
+    # website_ids on product.template belongs to sh_product_multi_website, and this
+    # module reads it in the SEO tab view and in the constraint on product.website.seo.
+    # Undeclared, whether the field exists when this module's views are validated is
+    # decided by module load order rather than by anything stated.
+    'depends': ['website_sale', 'stock', 'sh_product_multi_website'],
     'data': [
         'security/ir.model.access.csv',
         'views/pagination_seo.xml',
