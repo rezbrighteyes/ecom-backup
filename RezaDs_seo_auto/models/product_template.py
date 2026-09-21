@@ -104,6 +104,15 @@ def _strip_html(html):
 # be verified without a database.
 # ---------------------------------------------------------------------------
 MAX_META_TITLE = 60
+
+# product.website.seo stores an override under its own short column name, not under
+# the product.template field name the callers pass to _seo_for_website(). Indexing the
+# override record with the template name raises KeyError, so map it first.
+_SEO_OVERRIDE_FIELD = {
+    'website_meta_title': 'meta_title',
+    'website_meta_description': 'meta_description',
+    'description_ecommerce': 'description_ecommerce',
+}
 _TITLE_SEPARATORS = ' -/&,+|'
 
 # Redundant phrasing shortened before anything is ever cut. Order matters.
@@ -356,15 +365,8 @@ class ProductTemplate(models.Model):
     website_seo_ids = fields.One2many(
         'product.website.seo', 'product_tmpl_id', string='Per-website SEO')
 
-    # product.template calls its meta fields website_meta_*; the override row drops the
-    # prefix, because on that model every field is already a website's. Callers pass the
-    # product.template name, so the two have to be mapped rather than assumed equal --
-    # reading override['website_meta_title'] raises KeyError, which is not a fallback.
-    SEO_OVERRIDE_FIELDS = {
-        'website_meta_title': 'meta_title',
-        'website_meta_description': 'meta_description',
-        'description_ecommerce': 'description_ecommerce',
-    }
+    # The template-name-to-override-column mapping is _SEO_OVERRIDE_FIELD, defined at module
+    # level beside MAX_META_TITLE. Two copies of it would drift the first time a field is added.
 
     def _seo_for_website(self, website=None, field=None):
         """The value this website should show, falling back to the shared field.
@@ -379,15 +381,17 @@ class ProductTemplate(models.Model):
         shared = self[field] if field in self._fields else False
         if not website:
             return shared
-        override_field = self.SEO_OVERRIDE_FIELDS.get(field)
+        override_field = _SEO_OVERRIDE_FIELD.get(field)
         if not override_field:
             # A field with no override column cannot be overridden, and guessing a column
             # name here is how the KeyError this map exists to prevent comes back.
             return shared
         override = self.website_seo_ids.filtered(lambda r: r.website_id == website)[:1]
-        if override and override[override_field]:
-            return override[override_field]
-        return shared
+        if not override:
+            return shared
+        if override_field not in override._fields:
+            return shared
+        return override[override_field] or shared
 
     def _seo_body_override(self, website=None):
         """This website's own body copy, or False when it has none.
