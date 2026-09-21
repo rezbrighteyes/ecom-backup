@@ -4,6 +4,11 @@ from odoo import fields, models
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
+    seo_title_suffix = fields.Char(
+        related='website_id.seo_title_suffix',
+        readonly=False,
+        string='SEO Title Suffix',
+    )
     seo_meta_title_template = fields.Char(
         string='Meta Title Template',
         config_parameter='rezads_seo.meta_title_template',

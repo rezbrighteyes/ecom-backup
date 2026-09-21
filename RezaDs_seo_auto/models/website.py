@@ -2,14 +2,25 @@ import json
 import logging
 
 from markupsafe import Markup
-from odoo import models
+from odoo import fields, models
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
 
 
+MAX_TITLE = 60
+
+
 class Website(models.Model):
     _inherit = 'website'
+
+    seo_title_suffix = fields.Char(
+        string='SEO Title Suffix',
+        help="Appended to page titles on this website only, e.g. ' | Sunglass Superstore'. "
+             "Leave empty for no suffix. Every other SEO setting in this module is a global "
+             "config parameter shared by all websites; this one is not, because a shared "
+             "product must be able to name the site a visitor is actually on.",
+    )
 
     def _get_seo_param(self, key, default=''):
         try:
@@ -62,6 +73,54 @@ class Website(models.Model):
         if not base:
             base = self.name or ''
         return '%s | Page %s' % (base.strip(' |'), page)
+
+    def _seo_site_title(self, seo_object):
+        """The page title for THIS website, including its own suffix.
+
+        website_meta_title is stored once on the record and Odoo scopes it by language, never by
+        website. 785 live products in this database are carried by two or more storefronts, so a
+        title generated with one site's suffix baked in is wrong on every other site showing the
+        same product -- "Mangrove Jacks Adder C1 | Mangrove Jacks" read on Sunglass Superstore.
+
+        The stored title therefore stays site-neutral and the suffix is applied here, at render
+        time, from the website actually being served.
+
+        Returns False when nothing would change, so the caller falls through to Odoo's own
+        title logic untouched.
+        """
+        self.ensure_one()
+        # The suffix is used verbatim, never stripped: the leading space in " | Sunglass
+        # Superstore" is the separator, and trimming it renders "Sunglasses| Sunglass
+        # Superstore". Only its emptiness is tested.
+        suffix = self.seo_title_suffix or ''
+        base = self._seo_paginated_title(seo_object)
+
+        if not suffix.strip():
+            return base
+
+        if not base:
+            fields_ = getattr(seo_object, '_fields', {}) if seo_object else {}
+            if 'website_meta_title' in fields_ and seo_object.website_meta_title:
+                base = seo_object.website_meta_title
+            elif 'name' in fields_ and seo_object.name:
+                base = seo_object.name
+        base = (base or '').strip()
+        if not base:
+            return False
+
+        if base.casefold().endswith(suffix.casefold()):
+            return False
+
+        # Trim the core rather than the suffix: a title cut mid-way through the site name reads
+        # like a bug, and the product words are the ones worth losing last.
+        room = MAX_TITLE - len(suffix)
+        if room < 12:
+            # The suffix would leave nothing useful. Publishing the product name alone beats
+            # publishing the site name alone.
+            return False
+        if len(base) > room:
+            base = base[:room].rsplit(' ', 1)[0].rstrip(' |-,')
+        return '%s%s' % (base, suffix)
 
     def _seo_base_url(self):
         """This website's own public origin, never another site's.

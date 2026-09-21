@@ -15,6 +15,14 @@
                             </div>
                         </div>
                     </setting>
+                    <setting string="SEO Title Suffix" help="Appended to page titles on THIS website only. Every other setting here is shared by all websites.">
+                        <div class="content-group">
+                            <div class="row mt8">
+                                <label class="col-lg-3" string="Suffix" for="seo_title_suffix"/>
+                                <field name="seo_title_suffix" placeholder=" | Sunglass Superstore"/>
+                            </div>
+                        </div>
+                    </setting>
                     <setting string="Default Brand Name" help="Fallback brand for Schema.org when product has no brand set.">
                         <div class="content-group">
                             <div class="row mt8">

@@ -308,3 +308,62 @@ class TestPaginatedTitles(TransactionCase):
         with self._at('/shop/page/2'):
             title = self.website._seo_paginated_title(False)
             self.assertTrue(title.endswith('| Page 2'))
+
+    # ---- per-website title suffix -------------------------------------------------
+    #
+    # website_meta_title is stored once and Odoo scopes it by language, never by website.
+    # 785 live products in this database are carried by two or more storefronts, so a title
+    # with one site's name baked in is wrong everywhere else the same product appears.
+
+    def test_no_suffix_configured_changes_nothing(self):
+        """A site with no suffix must behave exactly as before."""
+        self.website.seo_title_suffix = False
+        category = self.env['product.public.category'].create(
+            {'name': 'Wrap', 'website_meta_title': 'Wrap Polarised Sunglasses'})
+        with self._at('/shop/category/wrap-1'):
+            self.assertFalse(self.website._seo_site_title(category))
+
+    def test_suffix_is_appended_to_the_meta_title(self):
+        self.website.seo_title_suffix = ' | Sunglass Superstore'
+        category = self.env['product.public.category'].create(
+            {'name': 'Wrap', 'website_meta_title': 'Wrap Polarised Sunglasses'})
+        with self._at('/shop/category/wrap-1'):
+            self.assertEqual(self.website._seo_site_title(category),
+                             'Wrap Polarised Sunglasses | Sunglass Superstore')
+
+    def test_suffix_composes_with_pagination(self):
+        self.website.seo_title_suffix = ' | SGS'
+        category = self.env['product.public.category'].create(
+            {'name': 'Wrap', 'website_meta_title': 'Wrap Polarised'})
+        with self._at('/shop/category/wrap-1/page/2'):
+            self.assertEqual(self.website._seo_site_title(category),
+                             'Wrap Polarised | Page 2 | SGS')
+
+    def test_a_title_already_ending_in_the_suffix_is_left_alone(self):
+        """Otherwise a regenerated title doubles the site name on every render."""
+        self.website.seo_title_suffix = ' | Sunglass Superstore'
+        category = self.env['product.public.category'].create(
+            {'name': 'Wrap',
+             'website_meta_title': 'Wrap Polarised Sunglasses | Sunglass Superstore'})
+        with self._at('/shop/category/wrap-1'):
+            self.assertFalse(self.website._seo_site_title(category))
+
+    def test_the_core_is_trimmed_not_the_suffix(self):
+        """A title cut mid-way through the site name reads like a bug."""
+        self.website.seo_title_suffix = ' | Sunglass Superstore'
+        category = self.env['product.public.category'].create(
+            {'name': 'Wrap',
+             'website_meta_title': 'Wrap Polarised Sunglasses In Every Colourway We Stock'})
+        with self._at('/shop/category/wrap-1'):
+            title = self.website._seo_site_title(category)
+            self.assertTrue(title.endswith(' | Sunglass Superstore'))
+            self.assertLessEqual(len(title), 60)
+            self.assertTrue(title.startswith('Wrap Polarised'))
+
+    def test_a_suffix_leaving_no_room_is_refused(self):
+        """Publishing the site name alone is worse than publishing the product name alone."""
+        self.website.seo_title_suffix = ' | The Longest Storefront Name Anybody Has Ever Used Here'
+        category = self.env['product.public.category'].create(
+            {'name': 'Wrap', 'website_meta_title': 'Wrap Polarised Sunglasses'})
+        with self._at('/shop/category/wrap-1'):
+            self.assertFalse(self.website._seo_site_title(category))

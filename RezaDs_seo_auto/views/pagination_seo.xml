@@ -2,7 +2,9 @@
 <odoo>
 
     <!--
-      Number the title on page 2 and beyond.
+      Set the page title from this website's own perspective: page number when
+      paginated, and this site's suffix rather than whichever site's name happened to
+      be baked into the stored meta title.
 
       website.layout only assigns `title` when it is not already set:
 
@@ -15,7 +17,7 @@
     <template id="seo_paginated_title" inherit_id="website.layout">
         <xpath expr="//t[@t-if='not title']" position="before">
             <t t-set="seo_paginated_title"
-               t-value="website._seo_paginated_title(seo_object or main_object)"/>
+               t-value="website._seo_site_title(seo_object or main_object)"/>
             <t t-if="seo_paginated_title">
                 <t t-set="title" t-value="seo_paginated_title"/>
             </t>
