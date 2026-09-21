@@ -121,6 +121,13 @@ _TITLE_COMPRESSIONS = [
     (' Revo Mirror ', ' Revo '),
     (' Mirror Polarised', ' Polarised'),
     (' Matte Crystal ', ' Crystal '),
+]
+
+# Eyewear only. In a colourway 'w' is the separator -- 'Black w Matte Crystal' -- but
+# across the rest of this catalogue it is short for 'with', and 120 published products
+# use it that way: '10 Pack Stackable Fridge Organizer w Lids' compressed to
+# 'Organizer / Lids'. Applied only where the name is actually a colourway.
+_COLOURWAY_COMPRESSIONS = [
     (' w Matte ', ' / '),
     (' w ', ' / '),
 ]
@@ -187,10 +194,22 @@ def _title_word_trim(text, limit):
 
 
 def _category_noun(candidates):
-    """First curated noun implied by any candidate string, else ''."""
+    """First curated noun implied by any candidate string, else ''.
+
+    Matched at a word start, never as a bare substring. Plain `in` made 'hat' match
+    'What You Need' -- a real public category carrying 140 published products -- so
+    every one of them would have been titled '... Hat' the next time its title was
+    generated. Caught 22 Sep 2026 on a wizard run against five products, all five
+    wrong, before the run reached the other 863.
+
+    The needles stay singular and an optional plural is allowed around them, which is
+    all the singular stems were ever for: 'sunglass' finds 'sunglasses' and 'watch'
+    finds 'watches', while 'what' and 'watchamacallit' match nothing. Anchoring only
+    the start is not enough -- 'watch' still finds 'watchamacallit'.
+    """
     hay = ' '.join(c for c in candidates if c).lower()
     for needle, noun in _CATEGORY_NOUNS:
-        if needle in hay:
+        if re.search(r'\b%s(?:e?s)?\b' % re.escape(needle), hay):
             return noun
     return ''
 
@@ -247,7 +266,10 @@ def _compose_meta_title(name, category_noun='', limit=MAX_META_TITLE):
     core = _title_spaces(name)
     if not core:
         return ''
-    for phrase, replacement in _TITLE_COMPRESSIONS:
+    compressions = list(_TITLE_COMPRESSIONS)
+    if category_noun == 'Sunglasses' or 'polaris' in core.lower():
+        compressions += _COLOURWAY_COMPRESSIONS
+    for phrase, replacement in compressions:
         if phrase in core:
             core = _title_spaces(core.replace(phrase, replacement))
     if 'polaris' in core.lower():
