@@ -5,7 +5,7 @@
     'summary': 'Complete eCommerce SEO: Schema.org, breadcrumbs, auto meta, 301 redirects, sitemap, dashboard',
     'author': 'Reza D Shiraz',
     'license': 'LGPL-3',
-    'depends': ['website_sale', 'stock'],
+    'depends': ['website_sale', 'stock', 'sh_product_multi_website'],
     'data': [
         'security/ir.model.access.csv',
         'views/pagination_seo.xml',
