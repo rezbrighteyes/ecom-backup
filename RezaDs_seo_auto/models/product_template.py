@@ -377,7 +377,11 @@ class ProductTemplate(models.Model):
         shared = self[field] if field in self._fields else False
         if not website:
             return shared
-        override = self.website_seo_ids.filtered(lambda r: r.website_id == website)[:1]
+        # Read as superuser. A shop visitor is base.group_public, which holds no ACL on
+        # product.website.seo, and every product page reaches this line -- an ordinary read
+        # therefore raises AccessError and the page answers 403. Only this product's own
+        # override for this one website leaves the method, so nothing else is exposed.
+        override = self.sudo().website_seo_ids.filtered(lambda r: r.website_id == website)[:1]
         if not override:
             return shared
         override_field = _SEO_OVERRIDE_FIELD.get(field, field)
