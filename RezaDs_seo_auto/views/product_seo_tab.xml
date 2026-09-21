@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!--
+    A SEO tab on the product form.
+
+    RezaDs_seo_auto generates website_meta_title, website_meta_description,
+    seo_name and website_meta_keywords onto product.template, and nothing in the
+    backend displays any of them. The only way to see one today is Odoo's
+    front-end "Optimize SEO" dialog, one product at a time, which is unusable
+    for a catalogue of 1,704 live products and invisible to anyone reviewing.
+
+    This is view-only: no new fields, no stored data, no migration. It shows
+    what the module already writes.
+
+    The websites field is shown read-only alongside, because a title's audience
+    depends on which storefronts carry the product — a Mangrove Jacks product
+    also selling on Sunglass Superstore is read by two different audiences and
+    currently has one title for both.
+  -->
+  <record id="product_template_form_seo_tab" model="ir.ui.view">
+    <field name="name">product.template.form.seo.tab</field>
+    <field name="model">product.template</field>
+    <field name="inherit_id" ref="product.product_template_form_view"/>
+    <field name="arch" type="xml">
+      <notebook position="inside">
+        <page string="SEO" name="rezads_seo">
+          <group>
+            <group string="Search result">
+              <field name="website_meta_title"
+                     placeholder="Generated from the product name and its category noun"/>
+              <field name="website_meta_description"
+                     placeholder="Derived from the ecommerce description"/>
+              <field name="seo_name" string="URL slug"/>
+              <field name="website_meta_keywords"/>
+            </group>
+            <group string="Where this is published">
+              <field name="website_ids" widget="many2many_tags" readonly="1"/>
+            </group>
+          </group>
+          <div class="text-muted mt-2">
+            One title serves every storefront listed here. Odoo scopes these fields
+            by language, never by website, so a product carried by more than one
+            site cannot yet be optimised differently for each.
+          </div>
+        </page>
+      </notebook>
+    </field>
+  </record>
+</odoo>
