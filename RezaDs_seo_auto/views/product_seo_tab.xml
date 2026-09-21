@@ -38,9 +38,10 @@
             </group>
           </group>
           <div class="text-muted mt-2">
-            One title serves every storefront listed here. Odoo scopes these fields
-            by language, never by website, so a product carried by more than one
-            site cannot yet be optimised differently for each.
+            These are the shared values, used on every storefront listed here unless a
+            per-website override says otherwise. Odoo itself scopes them by language and
+            never by website, so a storefront that needs its own wording gets a per-website
+            override row on the product rather than a different value here.
           </div>
         </page>
       </notebook>

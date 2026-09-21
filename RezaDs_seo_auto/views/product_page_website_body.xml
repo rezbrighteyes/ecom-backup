@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!--
+    Render this website's own body copy when it has one.
+
+    The shared description keeps its editable t-field. An override is an exception, so the
+    page only changes shape where a row exists: everywhere else the snippet is byte-for-byte
+    what website_sale ships, and still editable in place on the front end.
+
+    An override is deliberately NOT editable here. The editor has no way to know which
+    website's row it would be writing, and a silent write to the wrong storefront is worse
+    than sending the author to the product's SEO tab.
+  -->
+  <template id="product_website_body"
+            name="Per-website product body copy"
+            inherit_id="website_sale.product">
+
+    <xpath expr="//div[@t-field='product.description_ecommerce']" position="before">
+      <t t-set="seo_body_override" t-value="product._seo_body_override()"/>
+      <div t-if="seo_body_override"
+           id="seo_website_body"
+           class="oe_structure o_not_editable"
+           t-out="seo_body_override"/>
+    </xpath>
+
+    <xpath expr="//div[@t-field='product.description_ecommerce']" position="attributes">
+      <attribute name="t-if">not seo_body_override</attribute>
+    </xpath>
+
+  </template>
+</odoo>

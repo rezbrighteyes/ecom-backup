@@ -36,15 +36,6 @@ class ProductWebsiteSeo(models.Model):
     description_ecommerce = fields.Html(
         translate=True, sanitize_attributes=False,
         help="Overrides the product page body copy on this website only.")
-    website_ribbon_id = fields.Many2one(
-        'product.ribbon', string='Ribbon',
-        help="Overrides the sale/new badge on this website only. Pricelists are already "
-             "per-website, so a product on promotion at one storefront and full price at "
-             "another must not wear the same badge on both.")
-    website_sequence = fields.Integer(
-        help="Overrides listing order on this website only. A hero product on one storefront "
-             "is filler on another.")
-
     _sql_constraints = [
         ('product_website_uniq', 'unique (product_tmpl_id, website_id)',
          'A product can have only one override row per website.'),

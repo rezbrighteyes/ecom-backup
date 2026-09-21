@@ -1,11 +1,11 @@
 {
     'name': 'Reza Smart Storefront',
-    'version': '18.0.1.0.0',
+    'version': '18.0.2.0.0',
     'summary': 'Smart storefront features for non-SS websites',
     'author': 'reza',
     'category': 'Website/Website',
     'license': 'OPL-1',
-    'depends': ['website_sale', 'stock', 'd3_website_product_extended'],
+    'depends': ['website_sale', 'stock', 'd3_website_product_extended', 'RezaDs_seo_auto'],
     'data': [
         'views/product_page.xml',
         'views/drift_kart_banner.xml',

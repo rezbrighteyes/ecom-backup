@@ -1,6 +1,6 @@
 {
     'name': 'Sunglass Superstore — Product Page',
-    'version': '18.0.2.0.0',
+    'version': '18.0.3.0.0',
     'summary': 'Custom product page design for Sunglass Superstore (self-contained)',
     'author': 'reza',
     'category': 'Website/Website',
@@ -10,6 +10,7 @@
         'website_sale_wishlist',
         'stock',
         'd3_website_product_extended',
+        'RezaDs_seo_auto',
     ],
     'data': [
         'views/templates.xml',

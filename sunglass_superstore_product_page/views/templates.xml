@@ -83,6 +83,11 @@
               priority="20">
         <xpath expr="//div[@t-field='product.description_ecommerce']" position="replace">
         </xpath>
+        <!-- The per-website override renders in the same slot, and this page moves body
+             copy into the accordion below the image. Leaving it would show the override
+             inline and the shared copy in the accordion on the same page. -->
+        <xpath expr="//div[@id='seo_website_body']" position="replace">
+        </xpath>
     </template>
 
     <template id="product_fullwidth_accordion"
@@ -91,7 +96,8 @@
               priority="30">
         <xpath expr="//t[@t-call='website_sale.shop_product_images']" position="after">
             <div id="ss_product_accordion_section" class="ss-left-accordion mt-3">
-                <t t-set="d3_has_description" t-value="product.description_ecommerce or product.website_description"/>
+                <t t-set="seo_body_override" t-value="product._seo_body_override()"/>
+                <t t-set="d3_has_description" t-value="seo_body_override or product.description_ecommerce or product.website_description"/>
                 <t t-set="d3_general_specs" t-value="product._d3_get_visible_product_specs('general')"/>
                 <div id="product_accordion" class="accordion accordion-flush">
                     <div t-if="d3_has_description" class="accordion-item">
@@ -107,11 +113,14 @@
                         </h2>
                         <div id="ss_collapse_description" class="accordion-collapse collapse show">
                             <div class="accordion-body">
-                                <div t-if="product.description_ecommerce"
+                                <div t-if="seo_body_override"
+                                     t-out="seo_body_override"
+                                     class="mb-2 o_not_editable"/>
+                                <div t-if="not seo_body_override and product.description_ecommerce"
                                      t-field="product.description_ecommerce"
                                      class="mb-2 oe_structure"
                                      placeholder="Add a product description here."/>
-                                <div t-if="not product.description_ecommerce and product.website_description"
+                                <div t-if="not seo_body_override and not product.description_ecommerce and product.website_description"
                                      t-field="product.website_description"
                                      class="mb-2 oe_structure"
                                      placeholder="Add a product description here."/>

@@ -63,7 +63,8 @@
               inherit_id="website_sale.product">
         <xpath expr="//div[@id='product_full_description']" position="replace" optional="True">
             <t t-set="d3_all_specs" t-value="product._d3_get_visible_product_specs(False)"/>
-            <t t-set="d3_has_description" t-value="product.description_ecommerce or product.website_description"/>
+            <t t-set="seo_body_override" t-value="product._seo_body_override()"/>
+            <t t-set="d3_has_description" t-value="seo_body_override or product.description_ecommerce or product.website_description"/>
             <t t-if="website.name != 'Sunglass Superstore' and (d3_has_description or d3_all_specs)">
                 <section id="product_full_description" class="sf-product-details">
                     <div class="container">
@@ -101,11 +102,15 @@
                                          class="tab-pane fade show active"
                                          role="tabpanel"
                                          aria-labelledby="sf_product_description_tab">
-                                        <div t-if="product.description_ecommerce"
+                                        <div t-if="seo_body_override"
+                                             class="sf-details-content o_not_editable"
+                                             itemprop="description"
+                                             t-out="seo_body_override"/>
+                                        <div t-if="not seo_body_override and product.description_ecommerce"
                                              class="sf-details-content"
                                              itemprop="description"
                                              t-field="product.description_ecommerce"/>
-                                        <div t-if="not product.description_ecommerce and product.website_description"
+                                        <div t-if="not seo_body_override and not product.description_ecommerce and product.website_description"
                                              class="sf-details-content"
                                              itemprop="description"
                                              t-field="product.website_description"/>

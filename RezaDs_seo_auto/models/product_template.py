@@ -5,6 +5,7 @@ import unicodedata
 from datetime import date, timedelta
 from markupsafe import Markup
 from odoo import fields, api, models
+from odoo.http import request
 
 _logger = logging.getLogger(__name__)
 
@@ -355,6 +356,16 @@ class ProductTemplate(models.Model):
     website_seo_ids = fields.One2many(
         'product.website.seo', 'product_tmpl_id', string='Per-website SEO')
 
+    # product.template calls its meta fields website_meta_*; the override row drops the
+    # prefix, because on that model every field is already a website's. Callers pass the
+    # product.template name, so the two have to be mapped rather than assumed equal --
+    # reading override['website_meta_title'] raises KeyError, which is not a fallback.
+    SEO_OVERRIDE_FIELDS = {
+        'website_meta_title': 'meta_title',
+        'website_meta_description': 'meta_description',
+        'description_ecommerce': 'description_ecommerce',
+    }
+
     def _seo_for_website(self, website=None, field=None):
         """The value this website should show, falling back to the shared field.
 
@@ -368,10 +379,37 @@ class ProductTemplate(models.Model):
         shared = self[field] if field in self._fields else False
         if not website:
             return shared
+        override_field = self.SEO_OVERRIDE_FIELDS.get(field)
+        if not override_field:
+            # A field with no override column cannot be overridden, and guessing a column
+            # name here is how the KeyError this map exists to prevent comes back.
+            return shared
         override = self.website_seo_ids.filtered(lambda r: r.website_id == website)[:1]
-        if override and override[field]:
-            return override[field]
+        if override and override[override_field]:
+            return override[override_field]
         return shared
+
+    def _seo_body_override(self, website=None):
+        """This website's own body copy, or False when it has none.
+
+        Deliberately returns False rather than the shared description, because the caller is a
+        product page template that still renders ``description_ecommerce`` through an editable
+        ``t-field``. Returning the shared value here would replace an editable snippet with a
+        read-only one on every product in the catalogue, and in-place editing on the front end
+        is how this copy has always been written.
+
+        So an override takes the page over only where one exists, and everywhere else the page
+        behaves exactly as it did before this module touched it.
+        """
+        self.ensure_one()
+        if website is None:
+            website = self.env['website']
+            if request and getattr(request, 'httprequest', None):
+                website = self.env['website'].get_current_website()
+        if not website:
+            return False
+        override = self.website_seo_ids.filtered(lambda r: r.website_id == website)[:1]
+        return override.description_ecommerce or False
 
     def _set_seo_defaults(self, name_changed=False, desc_changed=False):
         for record in self:

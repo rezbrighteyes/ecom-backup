@@ -402,6 +402,38 @@ class TestPaginatedTitles(TransactionCase):
             with self.cr.savepoint():
                 self._override(product, meta_title='Second')
 
+    def test_body_override_is_false_when_there_is_none(self):
+        """The product page still renders an editable t-field when nothing overrides it.
+
+        Returning the shared description here would swap that editable snippet for a
+        read-only one on every product in the catalogue.
+        """
+        product = self.env['product.template'].create(
+            {'name': 'Adder C1', 'description_ecommerce': '<p>Shared body.</p>'})
+        self.assertFalse(product._seo_body_override(self.website))
+
+    def test_body_override_is_returned_on_its_own_website(self):
+        product = self.env['product.template'].create(
+            {'name': 'Adder C1', 'description_ecommerce': '<p>Shared body.</p>'})
+        self._override(product, description_ecommerce='<p>Written for this shop.</p>')
+        self.assertIn('Written for this shop',
+                      product._seo_body_override(self.website))
+
+    def test_body_override_does_not_leak_to_another_website(self):
+        other = self.env['website'].create({'name': 'Another Storefront'})
+        product = self.env['product.template'].create(
+            {'name': 'Adder C1', 'description_ecommerce': '<p>Shared body.</p>'})
+        self._override(product, description_ecommerce='<p>Written for this shop.</p>')
+        self.assertFalse(product._seo_body_override(other))
+
+    def test_a_field_with_no_override_column_returns_the_shared_value(self):
+        """seo_name has no column on the override row, and must fall back rather than raise."""
+        product = self.env['product.template'].create(
+            {'name': 'Adder C1', 'seo_name': 'adder-c1'})
+        self._override(product, meta_title='Adder C1 Fishing Sunglasses')
+        self.assertEqual(
+            product._seo_for_website(self.website, 'seo_name'), 'adder-c1')
+
     # ---- per-website settings -------------------------------------------------------
 
     def test_website_value_beats_the_global_parameter(self):
