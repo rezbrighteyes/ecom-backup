@@ -103,6 +103,15 @@ def _strip_html(html):
 # be verified without a database.
 # ---------------------------------------------------------------------------
 MAX_META_TITLE = 60
+
+# product.website.seo stores an override under its own short column name, not under
+# the product.template field name the callers pass to _seo_for_website(). Indexing the
+# override record with the template name raises KeyError, so map it first.
+_SEO_OVERRIDE_FIELD = {
+    'website_meta_title': 'meta_title',
+    'website_meta_description': 'meta_description',
+    'description_ecommerce': 'description_ecommerce',
+}
 _TITLE_SEPARATORS = ' -/&,+|'
 
 # Redundant phrasing shortened before anything is ever cut. Order matters.
@@ -369,9 +378,12 @@ class ProductTemplate(models.Model):
         if not website:
             return shared
         override = self.website_seo_ids.filtered(lambda r: r.website_id == website)[:1]
-        if override and override[field]:
-            return override[field]
-        return shared
+        if not override:
+            return shared
+        override_field = _SEO_OVERRIDE_FIELD.get(field, field)
+        if override_field not in override._fields:
+            return shared
+        return override[override_field] or shared
 
     def _set_seo_defaults(self, name_changed=False, desc_changed=False):
         for record in self:
