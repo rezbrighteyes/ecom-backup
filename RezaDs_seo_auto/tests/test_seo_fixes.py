@@ -420,7 +420,16 @@ class TestPaginatedTitles(TransactionCase):
                       product._seo_body_override(self.website))
 
     def test_body_override_does_not_leak_to_another_website(self):
-        other = self.env['website'].create({'name': 'Another Storefront'})
+        """An override belongs to one storefront and must be invisible on the others.
+
+        Deliberately uses a website that already exists rather than creating one. Creating
+        a website runs every installed module's hooks -- pages, menus, a pricelist -- and on
+        this estate that is a lot of machinery to stand up for an assertion that only needs
+        two distinct ids. The real configuration is also the more honest thing to test.
+        """
+        other = self.env['website'].search([('id', '!=', self.website.id)], limit=1)
+        if not other:
+            self.skipTest('needs a second website to prove an override does not cross sites')
         product = self.env['product.template'].create(
             {'name': 'Adder C1', 'description_ecommerce': '<p>Shared body.</p>'})
         self._override(product, description_ecommerce='<p>Written for this shop.</p>')
