@@ -36,6 +36,21 @@ class ProductWebsiteSeo(models.Model):
     description_ecommerce = fields.Html(
         translate=True, sanitize_attributes=False,
         help="Overrides the product page body copy on this website only.")
+    # Kept, though nothing renders them yet. They shipped in 18.0.10.0.0 and the override
+    # view in the database still names them; product_seo_tab.xml loads before
+    # product_website_seo_views.xml, so an upgrade validates the OLD view against the NEW
+    # model and dies with "Field website_ribbon_id does not exist in model
+    # product.website.seo". Removing a field a live view references is a two-version job:
+    # ship the view without it first, then drop the field.
+    website_ribbon_id = fields.Many2one(
+        'product.ribbon', string='Ribbon',
+        help="Not yet rendered. A ribbon is per-website in intent -- pricelists already are, "
+             "so a product on promotion at one storefront and full price at another must not "
+             "wear the same badge -- but nothing reads this value yet.")
+    website_sequence = fields.Integer(
+        help="Not yet rendered. Listing order is per-website in intent; nothing reads this "
+             "value yet.")
+
     _sql_constraints = [
         ('product_website_uniq', 'unique (product_tmpl_id, website_id)',
          'A product can have only one override row per website.'),
