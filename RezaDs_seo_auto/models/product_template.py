@@ -777,8 +777,13 @@ class ProductTemplate(models.Model):
             product_path = self._canonical_path()
             product_url = '%s%s' % (domain, product_path) if domain else product_path
 
+            # The override first, so structured data agrees with the page. Google reads
+            # both, and a Product schema describing the product differently from the
+            # visible copy is a contradiction we would be publishing on purpose. Falls
+            # through to exactly the previous chain when no storefront has overridden it.
             description = (
-                self.description_sale
+                _strip_html(self._seo_body_override())
+                or self.description_sale
                 or _strip_html(self.description_ecommerce)
                 or self.name
                 or ''
