@@ -21,6 +21,19 @@
             <t t-if="seo_paginated_title">
                 <t t-set="title" t-value="seo_paginated_title"/>
             </t>
+        </xpath>
+
+        <!--
+          The description is set AFTER website.layout sets its own, not before.
+
+          The layout guards the title with t-if="not title", so a title set earlier
+          survives. It gives meta_description no such guard: it assigns it
+          unconditionally from seo_object.website_meta_description. Setting ours first
+          therefore resolved the right value and then had it overwritten, which is why a
+          per-website meta description never reached a page. Verified live 23 Sep 2026
+          with an override row that changed the title and left the description shared.
+        -->
+        <xpath expr="//t[@t-set='meta_description']" position="after">
             <t t-set="seo_site_description"
                t-value="website._seo_site_description(seo_object or main_object)"/>
             <t t-if="seo_site_description">
