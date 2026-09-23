@@ -112,6 +112,7 @@ _SEO_OVERRIDE_FIELD = {
     'website_meta_title': 'meta_title',
     'website_meta_description': 'meta_description',
     'description_ecommerce': 'description_ecommerce',
+    'website_description': 'website_description',
 }
 _TITLE_SEPARATORS = ' -/&,+|'
 
@@ -444,7 +445,11 @@ class ProductTemplate(models.Model):
         # called from four product page templates, so without it the fix Reza shipped in
         # 18.0.10.0.2 would be undone the moment this branch landed.
         override = self.sudo().website_seo_ids.filtered(lambda r: r.website_id == website)[:1]
-        return override.description_ecommerce or False
+        # Either body field counts. website_sale renders description_ecommerce inline and
+        # website_description in the full-width block, and a storefront writing its own copy
+        # in one of them means the same thing in both: this site says it differently. Taking
+        # either avoids a fourth branch in each of the four templates that render body copy.
+        return override.description_ecommerce or override.website_description or False
 
     def _set_seo_defaults(self, name_changed=False, desc_changed=False):
         for record in self:

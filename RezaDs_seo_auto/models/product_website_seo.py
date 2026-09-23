@@ -42,6 +42,12 @@ class ProductWebsiteSeo(models.Model):
     # model and dies with "Field website_ribbon_id does not exist in model
     # product.website.seo". Removing a field a live view references is a two-version job:
     # ship the view without it first, then drop the field.
+    website_description = fields.Html(
+        translate=True, sanitize_attributes=False,
+        help="Overrides the full-width description on this website only. Separate from "
+             "description_ecommerce because website_sale renders them in different slots and "
+             "1,114 published products use this one, 727 of them on more than one storefront.")
+
     website_ribbon_id = fields.Many2one(
         'product.ribbon', string='Ribbon',
         help="Not yet rendered. A ribbon is per-website in intent -- pricelists already are, "

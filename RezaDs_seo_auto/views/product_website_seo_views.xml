@@ -50,6 +50,8 @@
             <field name="meta_description" placeholder="uses the shared description"/>
             <field name="description_ecommerce" widget="html" optional="show"
                    placeholder="uses the shared description"/>
+            <field name="website_description" widget="html" optional="hide"
+                   placeholder="uses the shared full-width description"/>
           </list>
         </field>
       </xpath>
