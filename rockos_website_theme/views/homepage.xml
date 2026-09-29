@@ -21,7 +21,7 @@
                     <img t-att-src="'/web/image/product.template/%s/image_512' % product.id"
                          t-att-alt="product.name"/>
                     <strong t-out="product.name"/>
-                    <span class="rockos-product-rating"><i class="fa fa-star-o"/><i class="fa fa-star-o"/><i class="fa fa-star-o"/><i class="fa fa-star-o"/><i class="fa fa-star-o"/> <small>Reviews (<t t-out="product.rating_count or 0"/>)</small></span>
+                    <span t-if="product.rating_count" class="rockos-product-rating"><i class="fa fa-star"/> <t t-out="product.rating_avg" t-options="{'widget': 'float', 'precision': 1}"/> <small>(<t t-out="product.rating_count"/> reviews)</small></span>
                     <span class="rockos-product-price"
                           t-out="product_price_vals.get('price_reduce', product.list_price)"
                           t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>

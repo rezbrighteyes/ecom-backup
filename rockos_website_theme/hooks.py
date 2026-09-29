@@ -11,23 +11,31 @@ ROCKOS_BRANCH_NAME = "Rockos"
 ROCKOS_PARENT_COMPANY_NAME = "ECOM SUPERSTORE PTY LTD"
 ROCKOS_VIEW_PREFIX = "rockos_website_theme."
 ROCKOS_MENU_VERSION = "2"
-ROCKOS_PRODUCT_SECTION_VERSION = "1"
-ROCKOS_BEST_SELLER_NAMES = [
-    "Earbuds",
-    "Dual Car Charger",
-    "Braided Micro USB Cable",
-    "Double Pluggers",
+ROCKOS_PRODUCT_SECTION_VERSION = "2"
+# Variant SKUs from the Best Sellers and New Arrivals rows on the Neto
+# rockos.com.au homepage. Matched by SKU, because a name search picked up
+# products from other brands' sites.
+ROCKOS_BEST_SELLER_CODES = [
+    "9337217027461",  # Rocko's Double Pluggers
+    "9340457002310",  # Rocko's Tread Thongs
+    "9340457004307",  # Smartcell 1.5m Braided Lightning Cable
+    "9340457013309",  # Smartcell 1.5m Braided Type C Cable
+    "9340457004260",  # Smartcell Earbuds
+    "9340457007810",  # Smartcell 2.1 Amp Dual Car Charger
+    "Per101434116",   # Rockos Pen Readers
 ]
-ROCKOS_NEW_ARRIVAL_NAMES = [
-    "Rocko's Ankle Sports Socks 11-14 Bamboo White",
-    "Rocko's Ankle Sports Socks 6-11 Bamboo White",
-    "Rocko's Business Socks 11-14 Bamboo Black",
-    "Rocko's Business Socks 6-11 Bamboo Black",
-    "Rocko's Kids Ankle Socks 13-2 Bamboo White",
-    "Rocko's Kids Ankle Socks 5-8 Bamboo White",
-    "Rocko's Kids Ankle Socks 9-12 Bamboo White",
-    "Rocko's Sneaker Socks 11-14 Bamboo White",
+ROCKOS_NEW_ARRIVAL_CODES = [
+    "3660740028473",  # Bolle STKS 420
+    "3660740027896",  # Bolle STKS Large 420 Black Gloss
+    "3660740027964",  # Bolle STKS Large 420 Graphite
+    "3660740028442",  # Bolle STKS Large 420 Matte Black
+    "9340457040657",  # Rocko's Ankle Sports Socks 11-14
+    "9340457040640",  # Rocko's Ankle Sports Socks 6-11
+    "9340457040633",  # Rocko's Business Socks 11-14
+    "9340457040626",  # Rocko's Business Socks 6-11
 ]
+ROCKOS_FREE_SHIPPING_TEXT = "On orders over $50"
+ROCKOS_OLD_FREE_SHIPPING_TEXT = "On Selected Retail Orders"
 ROCKOS_PAGES = [
     ("About Us", "/about-us", "rockos_website_theme.rockos_about_us"),
     ("Returns Policy", "/returns-policy", "rockos_website_theme.rockos_returns_policy"),
@@ -154,8 +162,11 @@ def _configure_rockos_website(env, website):
         "rockos_instagram_url": website.rockos_instagram_url
         or "https://www.instagram.com/rockos_australia",
         "rockos_phone": website.rockos_phone or "0754991191",
-        "rockos_free_shipping_text": website.rockos_free_shipping_text
-        or "On Selected Retail Orders",
+        "rockos_free_shipping_text": (
+            ROCKOS_FREE_SHIPPING_TEXT
+            if website.rockos_free_shipping_text in (False, ROCKOS_OLD_FREE_SHIPPING_TEXT)
+            else website.rockos_free_shipping_text
+        ),
         "configurator_done": True,
     }
     if not website.logo:
@@ -182,19 +193,22 @@ def _seed_rockos_product_sections(env, website):
     if parameter.get_param(seed_key) == ROCKOS_PRODUCT_SECTION_VERSION:
         return
 
-    Product = env["product.template"].sudo()
+    Variant = env["product.product"].sudo()
 
-    def find_products(names):
-        products = Product.browse()
-        for name in names:
-            product = Product.search([("name", "ilike", name)], limit=1)
-            if product:
-                products |= product
+    def find_products(codes):
+        # Keep the Neto order; skip anything this website cannot show.
+        products = env["product.template"].sudo()
+        for code in codes:
+            template = Variant.search([("default_code", "=", code)], limit=1).product_tmpl_id
+            if template and template.is_published and (
+                not template.website_ids or website in template.website_ids
+            ):
+                products |= template
         return products
 
     website.write({
-        "rockos_best_seller_product_ids": [(6, 0, find_products(ROCKOS_BEST_SELLER_NAMES).ids)],
-        "rockos_new_arrival_product_ids": [(6, 0, find_products(ROCKOS_NEW_ARRIVAL_NAMES).ids)],
+        "rockos_best_seller_product_ids": [(6, 0, find_products(ROCKOS_BEST_SELLER_CODES).ids)],
+        "rockos_new_arrival_product_ids": [(6, 0, find_products(ROCKOS_NEW_ARRIVAL_CODES).ids)],
     })
     parameter.set_param(seed_key, ROCKOS_PRODUCT_SECTION_VERSION)
 
