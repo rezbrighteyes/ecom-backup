@@ -6,6 +6,16 @@
         </xpath>
     </template>
 
+    <template id="rockos_checkout_payment_notice" inherit_id="website_sale.payment" name="Rockos: Payment Notice">
+        <xpath expr="//div[@id='payment_method']" position="before">
+            <p class="rockos-payment-notice alert alert-info mt-4 mb-0">
+                Payment is processed by ECOM Superstore Pty Ltd, which also dispatches your order.
+                Your card or bank statement will show <strong>ecomsuperstore</strong>.
+                <a href="/faq">Why?</a>
+            </p>
+        </xpath>
+    </template>
+
     <template id="rockos_product_card" inherit_id="website_sale.products_item" name="Rockos: Product Card">
         <xpath expr="//form" position="attributes">
             <attribute name="class" add="rockos-product-card" separator=" "/>
