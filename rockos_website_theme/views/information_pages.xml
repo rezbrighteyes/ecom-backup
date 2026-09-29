@@ -14,14 +14,10 @@
                 <section class="rockos-container rockos-info-layout">
                     <aside class="rockos-info-sidebar">
                         <h2>Shop by Categories</h2>
-                        <a href="/shop?search=thongs">Thongs</a>
-                        <a href="/shop?search=hats">Hats</a>
-                        <a href="/shop?search=sunglasses">Sunnies</a>
-                        <a href="/shop?search=technology">Technology</a>
-                        <a href="/shop?search=toys">Toys</a>
-                        <a href="/shop?search=outdoor">Outdoor</a>
-                        <a href="/shop?search=games">Games</a>
-                        <a href="/shop?search=home">Your Pad</a>
+                        <a t-foreach="website._rockos_top_categories()"
+                           t-as="category"
+                           t-att-href="website._rockos_category_href(category)"
+                           t-out="category.name"/>
                         <h2>Useful Links</h2>
                         <a href="/about-us">About Us</a>
                         <a href="/returns-policy">Returns Policy</a>
@@ -29,6 +25,8 @@
                         <a href="/shipping">Shipping Policy</a>
                         <a href="/privacy-policy">Privacy Policy</a>
                         <a href="/security-policy">Security Policy</a>
+                        <a href="/terms-and-conditions">Terms and Conditions</a>
+                        <a href="/faq">FAQ</a>
                         <a href="/form/expression-of-interest">Expression of Interest</a>
                         <a href="/footwear-sizing-chart">Footwear Sizing Chart</a>
                         <a href="/amrf">AMRF</a>
@@ -97,7 +95,7 @@
             <h2>Eligibility for Returns</h2>
             <ul><li>Returns must be made within 30 days of the purchase date.</li><li>Items must be in their original, unused condition, with swing tags and original packaging intact.</li><li>Returned items must have no visible signs of wear or use. Any returned items that do not meet these conditions may be sent back to the customer at their expense, and no refund, exchange, or credit will be provided.</li></ul>
             <h2>To initiate a return, please complete the following steps</h2>
-            <ol><li>Reply to your order confirmation email to request which product/s you would like to return or email us at <a href="mailto:support@rockos.com.au">support@rockos.com.au</a>.</li><li>Print the return shipping label created in the Australia Post return portal.</li><li>Send all items back to us BrightEyes using the label provided. (Please note, if you choose to send your item back using a different method and your parcel is lost in transit, we are unable to assist with a lost parcel claim)</li></ol>
+            <ol><li>Reply to your order confirmation email to request which product/s you would like to return or email us at <a href="mailto:support@rockos.com.au">support@rockos.com.au</a>.</li><li>Print the return shipping label created in the Australia Post return portal.</li><li>Send all items back to us using the label provided. (Please note, if you choose to send your item back using a different method and your parcel is lost in transit, we are unable to assist with a lost parcel claim)</li></ol>
             <h2>Faulty or Damaged Products</h2>
             <p>If your order arrives damaged, please email us at <a href="mailto:support@rockos.com.au">support@rockos.com.au</a> as soon as possible with your order number and a photo of the item’s condition. We address these situations on a case-by-case basis but will do our best to work towards a satisfactory solution. Once approved, we will cover the cost of return shipping for damaged or faulty products.</p>
             <h2>Return Processing Time</h2>
@@ -115,10 +113,10 @@
             <p>At Liaise International, we strive to deliver your orders efficiently and promptly. Please note that we only deliver within Australia.</p>
             <p>Orders are processed within 1 to 3 business days (excluding weekends and holidays) after your order confirmation email is sent. Please note that payment must be received before we can dispatch your order.</p>
             <p>Once your order has shipped, you will receive an email notification with tracking details. For tracking information, please log in to your Customer Account or check your email for the shipping confirmation.</p>
-            <p><strong>Customer Account Login:</strong> <a href="/my">https://www.rockos.com.au/_myacct/login</a></p>
+            <p><strong>Customer Account Login:</strong> <a href="/web/login">Log in to your account</a></p>
             <h2>Domestic Shipping Rates and Estimates</h2>
             <p>Most orders are shipped via Australia Post Standard Delivery. Parcels are left in a safe place at the delivery address unless you request a signature on delivery in your order notes at checkout.</p>
-            <ul><li><strong>Free Shipping:</strong> Retail (non-wholesale) orders over $50 qualify for free shipping.</li><li><strong>Flat Rate:</strong> Retail (non-wholesale) orders under $50 are charged a flat rate of $12.50.</li></ul>
+            <ul><li><strong>Free Shipping:</strong> Retail (non-wholesale) orders over $50 qualify for free shipping.</li><li><strong>Flat Rate:</strong> Retail (non-wholesale) orders under $50 are charged a flat rate of $12.50.</li><li><strong>Express Post:</strong> Available at checkout for a flat $15.</li></ul>
             <h2>Dispatch Times</h2>
             <ul><li><strong>Same-Day Dispatch:</strong> Orders received before 10am, Monday through Friday are typically dispatched the same day.</li><li><strong>Next Business Day Dispatch:</strong> Orders placed after 10am, Monday through Friday or on weekends or public holidays will be shipped the following business day, provided payment has been received.</li></ul>
             <h2>Delivery Times</h2>
@@ -234,6 +232,59 @@
             <ul><li>IGA stores</li><li>Fishing &amp; Boating stores</li><li>Newsagents</li><li>Service Stations</li><li>General Stores</li><li>Road Houses</li><li>Pharmacies</li></ul>
             <h3>Together, We Can Make a Difference!</h3>
             <p>By choosing AMRF sunglasses, you're not only protecting your eyes with quality eyewear but also contributing to a critical cause. Thank you for helping us support the Australian Melanoma Research Foundation!</p>
+        </t>
+    </template>
+
+    <template id="rockos_terms" name="Rockos Terms and Conditions">
+        <t t-call="rockos_website_theme.rockos_info_shell">
+            <t t-set="page_title">Terms and Conditions</t>
+            <p>Welcome to our website. If you continue to browse and use this website, you are agreeing to comply with and be bound by the following terms and conditions of use, which together with our <a href="/privacy-policy">privacy policy</a> govern Liaise International’s relationship with you in relation to this website. If you disagree with any part of these terms and conditions, please do not use our website.</p>
+            <p>The term ‘Liaise International’ or ‘us’ or ‘we’ refers to Liaise International Pty Ltd (ABN 70 115 521 821), the owner of this website and the Rocko’s brand. The term ‘you’ refers to the user or viewer of our website.</p>
+            <h2>Payments and delivery</h2>
+            <p>Orders placed on this website are paid to, and delivered by, ECOM Superstore Pty Ltd (ABN 15 664 665 696), which processes payments and dispatches orders for our online store. Your card or bank statement will show the merchant name “ecomsuperstore”. Your purchase is still a Rocko’s purchase, and our returns policy applies as normal.</p>
+            <h2>Use of this website</h2>
+            <p>The use of this website is subject to the following terms of use:</p>
+            <ul>
+                <li>The content of the pages of this website is for your general information and use only. It is subject to change without notice.</li>
+                <li>Neither we nor any third parties provide any warranty or guarantee as to the accuracy, timeliness, performance, completeness or suitability of the information and materials found or offered on this website for any particular purpose. You acknowledge that such information and materials may contain inaccuracies or errors and we expressly exclude liability for any such inaccuracies or errors to the fullest extent permitted by law.</li>
+                <li>Your use of any information or materials on this website is entirely at your own risk, for which we shall not be liable. It shall be your own responsibility to ensure that any products, services or information available through this website meet your specific requirements.</li>
+                <li>This website contains material which is owned by or licensed to us. This material includes, but is not limited to, the design, layout, look, appearance and graphics. Reproduction is prohibited other than in accordance with the copyright notice, which forms part of these terms and conditions.</li>
+                <li>All trademarks reproduced in this website, which are not the property of, or licensed to the operator, are acknowledged on the website.</li>
+                <li>Unauthorised use of this website may give rise to a claim for damages and/or be a criminal offence.</li>
+                <li>From time to time, this website may also include links to other websites. These links are provided for your convenience to provide further information. They do not signify that we endorse the website(s). We have no responsibility for the content of the linked website(s).</li>
+                <li>Your use of this website and any dispute arising out of such use of the website is subject to the laws of Australia.</li>
+            </ul>
+            <p>Nothing in these terms excludes, restricts or modifies any right or remedy you have under the Australian Consumer Law.</p>
+        </t>
+    </template>
+
+    <template id="rockos_faq" name="Rockos FAQ">
+        <t t-call="rockos_website_theme.rockos_info_shell">
+            <t t-set="page_title">Frequently Asked Questions</t>
+            <h2>Orders and payment</h2>
+            <h3>Why does my bank statement say “ecomsuperstore”?</h3>
+            <p>Payments for the Rocko’s online store are processed by ECOM Superstore Pty Ltd, so the merchant name on your card or bank statement is “ecomsuperstore”. Your purchase is still with Rocko’s, and our returns policy applies as normal.</p>
+            <h3>What payment methods do you accept?</h3>
+            <p>You can pay by Visa, Mastercard, American Express or PayPal. Available options are shown at checkout.</p>
+            <h3>I had an account on the old Rocko’s website. How do I log in?</h3>
+            <p>Your account has moved across. On the login page, choose “Reset password” and enter the same email address you used before. We will email you a link to set a new password. Your saved addresses are still there.</p>
+            <h2>Shipping</h2>
+            <h3>How much is shipping?</h3>
+            <ul>
+                <li><strong>Standard (Australia Post Parcel Post):</strong> free on orders over $50, otherwise a flat $12.50.</li>
+                <li><strong>Express (Australia Post Express Post):</strong> a flat $15.</li>
+            </ul>
+            <h3>How long will my order take?</h3>
+            <p>Orders received before 10am on a business day are usually dispatched the same day. Standard delivery normally takes 1 to 5 business days after dispatch, and rural areas can take a little longer. See our <a href="/shipping">shipping policy</a> for details.</p>
+            <h3>Do you ship overseas?</h3>
+            <p>No. We currently deliver within Australia only, including to P.O. Boxes and Parcel Lockers.</p>
+            <h2>Returns</h2>
+            <h3>Can I return or exchange an item?</h3>
+            <p>Yes. Returns are accepted within 30 days of purchase for items in original, unused condition with tags and packaging intact. Please contact us first for a Return Authorisation. See our <a href="/returns-policy">returns policy</a> for the full conditions.</p>
+            <h3>My order arrived damaged. What should I do?</h3>
+            <p>Email <a href="mailto:cs@rockos.com.au">cs@rockos.com.au</a> as soon as possible with your order number and a photo of the item. Once approved, we cover the return shipping for damaged or faulty products.</p>
+            <h2>Still need help?</h2>
+            <p>Call us on 07 5499 1191, email <a href="mailto:cs@rockos.com.au">cs@rockos.com.au</a> or use our <a href="/contactus">contact form</a>.</p>
         </t>
     </template>
 </odoo>

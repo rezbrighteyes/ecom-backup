@@ -45,6 +45,8 @@ ROCKOS_PAGES = [
     ("Expression of Interest", "/form/expression-of-interest", "rockos_website_theme.rockos_expression_interest"),
     ("Footwear Sizing Chart", "/footwear-sizing-chart", "rockos_website_theme.rockos_footwear_sizing"),
     ("Australian Melanoma Research Foundation", "/amrf", "rockos_website_theme.rockos_amrf"),
+    ("Terms and Conditions", "/terms-and-conditions", "rockos_website_theme.rockos_terms"),
+    ("FAQ", "/faq", "rockos_website_theme.rockos_faq"),
 ]
 ROCKOS_MENU_TREE = [
     ("Thongs", "/shop?search=thongs", [
