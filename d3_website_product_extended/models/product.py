@@ -385,6 +385,8 @@ class ProductTemplate(models.Model):
                         variant |= pv
                 if variant:
                     variants |= variant[0]
+        elif self.env['website'].get_current_website().shop_one_card_per_product:
+            variants |= product_variants[:1]
         else:
             variants |= product_variants
         return variants

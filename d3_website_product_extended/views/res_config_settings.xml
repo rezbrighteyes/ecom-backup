@@ -14,6 +14,13 @@
                         <field name="consider_all_related_warehouses" class="w-auto"/>
                     </div>
                 </div>
+                <div class="row"
+                    id="shop_one_card_per_product_setting">
+                    <div class="col-12">
+                        <label for="shop_one_card_per_product" string="One Shop Card per Product" class="p-0 col-4 o_light_label mb-3 mt-2"/>
+                        <field name="shop_one_card_per_product" class="w-auto"/>
+                    </div>
+                </div>
             </xpath>
         </field>
     </record>
