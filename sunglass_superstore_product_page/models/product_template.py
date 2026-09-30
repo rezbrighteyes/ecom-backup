@@ -9,22 +9,17 @@ SHIPPING_THRESHOLDS = {
     'Rockos': 50,
 }
 DEFAULT_SHIPPING_THRESHOLD = 150
-# Sites that quote a delivery window instead of a calculated date.
-DELIVERY_ESTIMATE_TEXT = {
-    'Rockos': '2–5 business days',
-}
+# Every group site dispatches from the same warehouse, same day before
+# 10am, so they all quote one window rather than a calculated date.
+DELIVERY_ESTIMATE_TEXT = '2–5 business days'
 
 
 class ProductTemplateSS(models.Model):
     _inherit = 'product.template'
 
     def _sf_get_delivery_date(self, days=3):
-        try:
-            text = DELIVERY_ESTIMATE_TEXT.get(self.env['website'].get_current_website().name)
-        except Exception:
-            text = None
-        if text:
-            return text
+        if DELIVERY_ESTIMATE_TEXT:
+            return DELIVERY_ESTIMATE_TEXT
         today = date.today()
         if today.weekday() == 5:
             today += timedelta(days=2)
