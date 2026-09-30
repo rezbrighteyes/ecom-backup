@@ -6,6 +6,7 @@ SHIPPING_THRESHOLDS = {
     'WhatYouNeed': 150,
     'ecomsuperstore': 150,
     'Sunglass Superstore': 150,
+    'Rockos': 50,
 }
 DEFAULT_SHIPPING_THRESHOLD = 150
 

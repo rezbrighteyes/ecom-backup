@@ -1,6 +1,6 @@
 {
     'name': 'Sunglass Superstore — Product Page',
-    'version': '18.0.3.0.0',
+    'version': '18.0.3.0.1',
     'summary': 'Custom product page design for Sunglass Superstore (self-contained)',
     'author': 'reza',
     'category': 'Website/Website',
