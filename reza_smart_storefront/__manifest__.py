@@ -1,6 +1,6 @@
 {
     'name': 'Reza Smart Storefront',
-    'version': '18.0.2.0.0',
+    'version': '18.0.2.0.1',
     'summary': 'Smart storefront features for non-SS websites',
     'author': 'reza',
     'category': 'Website/Website',

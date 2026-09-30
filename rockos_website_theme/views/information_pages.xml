@@ -117,6 +117,7 @@
             <h2>Domestic Shipping Rates and Estimates</h2>
             <p>Most orders are shipped via Australia Post Standard Delivery. Parcels are left in a safe place at the delivery address unless you request a signature on delivery in your order notes at checkout.</p>
             <ul><li><strong>Free Shipping:</strong> Retail (non-wholesale) orders over $50 qualify for free shipping.</li><li><strong>Flat Rate:</strong> Retail (non-wholesale) orders under $50 are charged a flat rate of $12.50.</li><li><strong>Express Post:</strong> Available at checkout for a flat $15.</li></ul>
+            <p>Once dispatched, Parcel Post usually arrives in 2 to 5 business days and Express Post in 1 to 3 business days.</p>
             <h2>Dispatch Times</h2>
             <ul><li><strong>Same-Day Dispatch:</strong> Orders received before 10am, Monday through Friday are typically dispatched the same day.</li><li><strong>Next Business Day Dispatch:</strong> Orders placed after 10am, Monday through Friday or on weekends or public holidays will be shipped the following business day, provided payment has been received.</li></ul>
             <h2>Delivery Times</h2>
@@ -274,7 +275,7 @@
             <h3>How much is shipping?</h3>
             <ul>
                 <li><strong>Standard (Australia Post Parcel Post):</strong> free on orders over $50, otherwise a flat $12.50.</li>
-                <li><strong>Express (Australia Post Express Post):</strong> a flat $15.</li>
+                <li><strong>Express (Australia Post Express Post):</strong> a flat $15, usually delivered in 1 to 3 business days after dispatch.</li>
             </ul>
             <h3>How long will my order take?</h3>
             <p>Orders received before 10am on a business day are usually dispatched the same day. Standard delivery normally takes 1 to 5 business days after dispatch, and rural areas can take a little longer. See our <a href="/shipping">shipping policy</a> for details.</p>
