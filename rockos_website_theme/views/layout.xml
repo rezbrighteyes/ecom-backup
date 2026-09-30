@@ -84,10 +84,10 @@
                     <div class="oe_structure" id="rockos_categories_editable">
                         <h2>Welcome to Rocko's</h2>
                         <div class="rockos-category-grid">
-                            <a t-att-href="website._rockos_category_url('Thongs')" class="rockos-category-card rockos-category-card-wide"><img src="/rockos_website_theme/static/src/img/86.png" alt="Thongs"/><span>Thongs</span></a>
+                            <a t-att-href="website._rockos_category_url('Thongs')" class="rockos-category-card rockos-category-card-wide"><img src="/rockos_website_theme/static/src/img/86.webp" alt="Thongs"/><span>Thongs</span></a>
                             <a t-att-href="website._rockos_category_url('Sunnies', search='sunglasses')" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/89.jpg" alt="Sunnies"/><span>Sunnies</span></a>
                             <a t-att-href="website._rockos_category_url('Technology')" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/91.png.webp" alt="Technology"/><span>Technology</span></a>
-                            <a t-att-href="website._rockos_category_url('Hats')" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/88.png" alt="Hats"/><span>Hats</span></a>
+                            <a t-att-href="website._rockos_category_url('Hats')" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/88.webp" alt="Hats"/><span>Hats</span></a>
                             <a t-att-href="website._rockos_category_url('Fishing', 'Outdoor')" class="rockos-category-card"><img src="/rockos_website_theme/static/src/img/90.png.webp" alt="Fishing"/><span>Fishing</span></a>
                             <a t-att-href="website._rockos_category_url('Little Tackers Thongs', 'Thongs', search='kids thongs')" class="rockos-category-card rockos-category-card-wide"><img src="/rockos_website_theme/static/src/img/93.png.webp" alt="Kids Footwear"/><span>Kids Footwear</span></a>
                         </div>
