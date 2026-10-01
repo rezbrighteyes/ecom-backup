@@ -146,7 +146,7 @@ class TestEdbertPurchase(TransactionCase):
             self._dispatch(order)
 
         Purchase = type(self.env["purchase.order"])
-        with patch.object(type(order), "_reza_edbert_costs",
+        with patch.object(type(order), "_reza_edbert_prices",
                           return_value=costs if costs is not None else {105811: 3.3610}), \
                 patch.object(type(order), "_reza_find_remote_sale",
                              return_value=remote), \
@@ -620,7 +620,7 @@ class TestEdbertPurchase(TransactionCase):
         order.action_confirm()
         self._dispatch(order)      # the worker only buys what shipped
         Purchase = type(self.env["purchase.order"])
-        with patch.object(type(order), "_reza_edbert_costs",
+        with patch.object(type(order), "_reza_edbert_prices",
                           return_value={105811: 3.3610}), \
                 patch.object(type(order), "_reza_find_remote_sale", return_value=None), \
                 patch.object(Purchase, "button_confirm", return_value=True):
@@ -883,3 +883,89 @@ class TestEdbertPurchase(TransactionCase):
                          "the button must not call the private worker directly")
         self.assertTrue(hasattr(self.env["sale.order"],
                                 "action_reza_raise_edbert_purchase"))
+
+
+class _FakeWholesale:
+    """Stands in for the wholesale XML-RPC proxy in the price tests."""
+
+    def __init__(self, pricelist_id=39, prices=None, active=None):
+        self.pricelist_id = pricelist_id
+        self.prices = prices or {}
+        self.active = active or {}
+        self.calls = []
+
+    def execute_kw(self, db, uid, pwd, model, method, args, kw=None):
+        self.calls.append((model, method, args, kw))
+        if (model, method) == ("product.product", "search_read"):
+            ids = args[0][0][2]
+            return [{"id": i, "active": self.active.get(i, True), "display_name": "W%s" % i}
+                    for i in ids if i in self.active or str(i) in self.prices]
+        if (model, method) == ("res.partner", "reza_external_api_prices"):
+            return {"pricelist_id": self.pricelist_id, "pricelist_name": "Ecom superstore",
+                    "prices": dict(self.prices)}
+        raise AssertionError("unexpected call %s.%s" % (model, method))
+
+
+@tagged("post_install", "-at_install")
+class TestEdbertPrices(TransactionCase):
+    """The brands buy at Edbert's pricelist price, never at cost (2026-10-01)."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.company = cls.env.company
+        cls.company.sudo().write({"external_api_purchase_partner": 21712})
+        cls.env["ir.config_parameter"].sudo().set_param(
+            "reza_ecom_intercompany_po.edbert_pricelist_id", "39")
+
+    def _prices(self, fake, lines):
+        order = self.env["sale.order"]
+        with patch.object(type(order), "_reza_wholesale_proxy",
+                          return_value=(fake, "db", 2, "pw")):
+            return order.new({})._reza_edbert_prices(self.company, lines)
+
+    def _lines(self, *pairs):
+        return [{"wholesale_id": w, "qty": q} for w, q in pairs]
+
+    def test_the_pricelist_price_is_used(self):
+        fake = _FakeWholesale(prices={"105811": 9.0})
+        out = self._prices(fake, self._lines((105811, 2.0)))
+        self.assertEqual(out, {105811: 9.0})
+
+    def test_the_brand_customer_and_summed_quantity_are_sent(self):
+        fake = _FakeWholesale(prices={"105811": 9.0})
+        self._prices(fake, self._lines((105811, 2.0), (105811, 3.0)))
+        call = next(c for c in fake.calls if c[1] == "reza_external_api_prices")
+        self.assertEqual(call[2][0], [21712], "must price for the brand's customer record")
+        self.assertEqual(call[2][1], [[105811, 5.0]])
+        self.assertEqual(call[3]["company_id"], 1, "must price as Edbert")
+
+    def test_a_different_pricelist_refuses_the_order(self):
+        """A brand left on Default would be charged full list price silently."""
+        fake = _FakeWholesale(pricelist_id=1, prices={"105811": 20.0})
+        with self.assertRaisesRegex(ValueError, "not the agreed one"):
+            self._prices(fake, self._lines((105811, 1.0)))
+
+    def test_an_unset_parameter_refuses_rather_than_reading_zero(self):
+        self.env["ir.config_parameter"].sudo().set_param(
+            "reza_ecom_intercompany_po.edbert_pricelist_id", False)
+        fake = _FakeWholesale(prices={"105811": 9.0})
+        with self.assertRaisesRegex(ValueError, "not set"):
+            self._prices(fake, self._lines((105811, 1.0)))
+
+    def test_archived_and_unknown_products_keep_their_markers(self):
+        fake = _FakeWholesale(prices={"1": 5.0, "2": 6.0}, active={1: True, 2: False})
+        out = self._prices(fake, self._lines((1, 1.0), (2, 1.0), (3, 1.0)))
+        self.assertEqual(out[1], 5.0)
+        self.assertEqual(out[2], "archived")
+        self.assertNotIn(3, out, "an id wholesale does not have must stay absent")
+
+    def test_a_missing_price_reads_zero_so_the_line_is_refused(self):
+        fake = _FakeWholesale(prices={}, active={1: True})
+        out = self._prices(fake, self._lines((1, 1.0)))
+        self.assertEqual(out[1], 0.0)
+
+    def test_the_shipped_parameter_is_39(self):
+        rec = self.env.ref("reza_ecom_intercompany_po.param_edbert_pricelist_id")
+        self.assertEqual(rec.key, "reza_ecom_intercompany_po.edbert_pricelist_id")
+        self.assertEqual(rec.value, "39")

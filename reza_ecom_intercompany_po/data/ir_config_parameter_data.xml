@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The wholesale pricelist the brands are charged on: id 39 "Ecom superstore"
+         in the Edbert production database, which follows BrightEyes - Corporate.
+         noupdate so a module upgrade never overwrites a value somebody changed. -->
+    <data noupdate="1">
+        <record id="param_edbert_pricelist_id" model="ir.config_parameter">
+            <field name="key">reza_ecom_intercompany_po.edbert_pricelist_id</field>
+            <field name="value">39</field>
+        </record>
+    </data>
+</odoo>

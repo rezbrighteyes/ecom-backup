@@ -51,15 +51,19 @@ a wizard action instead of validating, which is a silent no-op. Vendor code; the
 module's answer is to make its own recovery safe rather than to patch it.
 
 PRICE
-`price_unit` is EDBERT'S `standard_price`, read live from wholesale when the
-purchase order is raised. ecom's own `standard_price` is a different figure --
+`price_unit` is what EDBERT CHARGES THE BRAND, read live from wholesale when the
+purchase order is raised: the price on the pricelist of the brand's customer
+record in wholesale ("Ecom superstore", which follows BrightEyes - Corporate),
+and that pricelist must be the one in the system parameter
+`reza_ecom_intercompany_po.edbert_pricelist_id`. Until 2026-10-01 it was
+Edbert's `standard_price`. ecom's own `standard_price` is a different figure --
 measured 2026-09-02, product 2023 reads 7.61 on ecom against Edbert's 3.3610.
 
 `discount` is passed explicitly as 0.0, and it is load-bearing. `price_unit`,
 `name`, `date_planned` and `discount` are ONE stored compute group on
 `purchase.order.line`. Supply three and Odoo schedules the compute for the
 fourth; it then runs on the real record and assigns all four, replacing the
-Edbert cost. Supplying all four means the compute is never scheduled. This
+Edbert price. Supplying all four means the compute is never scheduled. This
 matters beyond the first order, because `button_confirm` calls
 `_add_supplier_to_product()`, which CREATES a `product.supplierinfo` for Edbert
 at whatever price this order used -- so without the guard the second order for a
@@ -98,6 +102,7 @@ still stall for an unbounded time on one order. Moving the work off the request
 stops that reaching a customer; it does not remove it.
 """
 import logging
+from collections import defaultdict
 import ssl
 import xmlrpc.client
 
@@ -114,6 +119,7 @@ RPC_TIMEOUT = 60
 # company-dependent -- an unpinned read returns whichever company the remote
 # session happens to carry.
 WHOLESALE_EDBERT_COMPANY = 1
+PRICELIST_PARAM = "reza_ecom_intercompany_po.edbert_pricelist_id"
 # How many times the cron re-tries an order that failed before leaving it alone.
 MAX_ATTEMPTS = 5
 
@@ -403,7 +409,7 @@ class SaleOrder(models.Model):
                     "not_needed", _("Nothing on this order is supplied by Edbert."))
             return False
 
-        costs = self._reza_edbert_costs(api, [l["wholesale_id"] for l in lines])
+        prices = self._reza_edbert_prices(api, lines)
         tax = self._reza_purchase_tax(api)
         if not tax:
             # Deliberately NOT added to `skipped`. That list means "these lines
@@ -417,21 +423,21 @@ class SaleOrder(models.Model):
 
         vals_lines, wanted = [], {}
         for l in lines:
-            cost = costs.get(l["wholesale_id"])
-            if cost is None:
+            price = prices.get(l["wholesale_id"])
+            if price is None:
                 skipped.append(_("%s: not found in wholesale") % l["product"].display_name)
                 continue
-            if cost == "archived":
+            if price == "archived":
                 # An archived wholesale product cannot be sold there, so the
                 # remote sale line would be unusable. Skip it here where it is
                 # visible rather than failing inside the push.
                 skipped.append(_("%s: archived in wholesale") % l["product"].display_name)
                 continue
-            if not cost:
-                # A zero cost books a permanent zero-value receipt. Refuse it.
-                skipped.append(_("%s: Edbert cost is zero") % l["product"].display_name)
+            if not price:
+                # A zero price books a permanent zero-value receipt. Refuse it.
+                skipped.append(_("%s: Edbert price is zero") % l["product"].display_name)
                 continue
-            wanted[l["product"].id] = cost
+            wanted[l["product"].id] = price
             vals_lines.append((0, 0, {
                 "product_id": l["product"].id,
                 "name": l["product"].display_name,
@@ -439,7 +445,7 @@ class SaleOrder(models.Model):
                 # Odoo 18 calls this `product_uom`; `product_uom_id` is 19.
                 # Use the SALE line's unit, because `qty` is expressed in it.
                 "product_uom": l["uom"].id,
-                "price_unit": cost,
+                "price_unit": price,
                 "date_planned": fields.Datetime.now(),
                 "discount": 0.0,               # completes the compute group
                 # Passed explicitly for the same reason as the price: left to
@@ -461,7 +467,7 @@ class SaleOrder(models.Model):
             "order_line": vals_lines,
         })
 
-        # Prove the Edbert cost survived the create, matched on PRODUCT rather
+        # Prove the Edbert price survived the create, matched on PRODUCT rather
         # than on position -- line order is not guaranteed.
         wrong = [
             "%s: %.4f not %.4f" % (pl.product_id.display_name, pl.price_unit,
@@ -471,7 +477,7 @@ class SaleOrder(models.Model):
             and abs(pl.price_unit - wanted[pl.product_id.id]) > 0.0001
         ]
         if wrong:
-            raise ValueError(_("The Edbert cost was overwritten on create: %s")
+            raise ValueError(_("The Edbert price was overwritten on create: %s")
                              % "; ".join(wrong[:3]))
 
         # Same check for the tax. `taxes_id` is a stored compute like the
@@ -607,7 +613,7 @@ class SaleOrder(models.Model):
 
         Comparing the purchase order's products against the sale's buyable
         lines cannot be lost that way, and it catches every reason a line was
-        left off -- unmapped, archived in wholesale, or zero cost.
+        left off -- unmapped, archived in wholesale, or zero price.
         """
         self.ensure_one()
         wanted, skipped = self._reza_lines()
@@ -991,24 +997,61 @@ class SaleOrder(models.Model):
         return {"id": r["id"], "name": r["name"], "state": r["state"],
                 "line_count": len(r.get("order_line") or [])}
 
-    def _reza_edbert_costs(self, api, wholesale_ids):
-        """Edbert's standard_price per wholesale product, read live, one call.
+    def _reza_expected_pricelist_id(self):
+        """The wholesale pricelist the brands must be charged on.
 
-        A missing key means wholesale does not have that id; the string
-        "archived" means it has it but cannot sell it. `search_read` is used
-        rather than `read` because `read` can raise MissingError on a stale id,
-        which would fail the whole order instead of skipping one line.
+        Read from a system parameter rather than trusted from wholesale: if a
+        brand's customer record in Edbert is ever left on Default, wholesale
+        would answer with full list price and nothing would look wrong.
+        `get_param` returns False for a missing key and `int(False)` is 0, so
+        the raw value is tested BEFORE the cast (recorded in CLAUDE.md).
+        """
+        raw = self.env["ir.config_parameter"].sudo().get_param(PRICELIST_PARAM)
+        if raw in (None, False, "") or not str(raw).strip().isdigit() or int(raw) <= 0:
+            raise ValueError(_("The Edbert pricelist for intercompany orders is not set "
+                               "(system parameter %s).") % PRICELIST_PARAM)
+        return int(raw)
+
+    def _reza_edbert_prices(self, api, lines):
+        """What Edbert charges this brand per wholesale product, read live.
+
+        Wholesale prices it on the pricelist of the brand's OWN customer record
+        there (`external_api_purchase_partner`) through
+        `res.partner.reza_external_api_prices` in wholesale's `d3_external_api`.
+        It used to be Edbert's cost; Reza's call 2026-10-01 is that the brands
+        buy at the Bright Eyes price, through the "Ecom superstore" pricelist.
+
+        Returns {wholesale_id: price}. A missing key means wholesale does not
+        have that id; the string "archived" means it has it but cannot sell it.
+        `search_read` is used rather than `read` because `read` can raise
+        MissingError on a stale id, which would fail the whole order instead of
+        skipping one line. Raises when wholesale priced on any pricelist other
+        than the configured one.
         """
         self.ensure_one()
+        wholesale_ids = sorted({l["wholesale_id"] for l in lines})
         if not wholesale_ids:
             return {}
+        expected = self._reza_expected_pricelist_id()
+        qty = defaultdict(float)
+        for l in lines:
+            qty[l["wholesale_id"]] += l["qty"]
         proxy, db, uid, pwd = self._reza_wholesale_proxy(api)
+        ctx = {"allowed_company_ids": [WHOLESALE_EDBERT_COMPANY], "active_test": False}
         rows = proxy.execute_kw(
             db, uid, pwd, "product.product", "search_read",
-            [[["id", "in", sorted(set(wholesale_ids))]]],
-            {"fields": ["standard_price", "active", "display_name"],
-             "context": {"allowed_company_ids": [WHOLESALE_EDBERT_COMPANY],
-                         "active_test": False}})
+            [[["id", "in", wholesale_ids]]],
+            {"fields": ["active", "display_name"], "context": ctx})
+        priced = proxy.execute_kw(
+            db, uid, pwd, "res.partner", "reza_external_api_prices",
+            [[api.external_api_purchase_partner], [[wid, qty[wid]] for wid in wholesale_ids]],
+            {"company_id": WHOLESALE_EDBERT_COMPANY, "context": ctx})
+        if priced.get("pricelist_id") != expected:
+            raise ValueError(_(
+                "Edbert priced this order on pricelist \"%s\", not the agreed one (id %s). "
+                "Set this brand's customer in Edbert to the right pricelist.")
+                % (priced.get("pricelist_name"), expected))
+        prices = priced.get("prices") or {}
         out = {}
         for r in rows:
             if not r.get("active"):
@@ -1017,5 +1060,5 @@ class SaleOrder(models.Model):
                     r["id"], r.get("display_name"))
                 out[r["id"]] = "archived"
                 continue
-            out[r["id"]] = r.get("standard_price") or 0.0
+            out[r["id"]] = prices.get(str(r["id"])) or 0.0
         return out
