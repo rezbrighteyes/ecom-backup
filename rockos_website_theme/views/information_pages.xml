@@ -141,7 +141,7 @@
             <h2>Commitment to Your Privacy</h2>
             <p>Liaise International is dedicated to ensuring your privacy is protected. Any information you provide that can identify you will only be used in accordance with this privacy statement.</p>
             <h2>Who Handles Your Order</h2>
-            <p>This website is operated by Liaise International Pty Ltd (ABN 70 115 521 821), the owner of the Rocko’s brand. Payments and deliveries for orders placed on this website are handled by ECOM Superstore Pty Ltd (ABN 15 664 665 696). To process your order, ECOM Superstore receives your name, contact details, delivery address and order details, and your payment is handled by our payment providers. That is why your card or bank statement shows the merchant name “ecomsuperstore”. ECOM Superstore uses this information only to take payment, dispatch your order and provide support for it, and does not use it to market other brands to you.</p>
+            <p>This website is operated by Liaise International Pty Ltd (ABN 70 115 521 821), the owner of the Rocko’s brand. Payments and deliveries for orders placed on this website are handled by ECOM Superstore Pty Ltd (ABN 15 664 665 696). To process your order, ECOM Superstore receives your name, contact details, delivery address and order details, and your payment is handled by our payment providers. That is why your card or bank statement shows the merchant name “ECOM SUPERSTORE PTY LTD”. ECOM Superstore uses this information only to take payment, dispatch your order and provide support for it, and does not use it to market other brands to you.</p>
             <h2>Policy Updates</h2>
             <p>We may update this policy periodically by revising this page. Please check back occasionally to ensure you are satisfied with any changes.</p>
             <h2>Information We Collect</h2>
@@ -244,7 +244,7 @@
             <p>Welcome to our website. If you continue to browse and use this website, you are agreeing to comply with and be bound by the following terms and conditions of use, which together with our <a href="/privacy-policy">privacy policy</a> govern Liaise International’s relationship with you in relation to this website. If you disagree with any part of these terms and conditions, please do not use our website.</p>
             <p>The term ‘Liaise International’ or ‘us’ or ‘we’ refers to Liaise International Pty Ltd (ABN 70 115 521 821), the owner of this website and the Rocko’s brand. The term ‘you’ refers to the user or viewer of our website.</p>
             <h2>Payments and delivery</h2>
-            <p>Orders placed on this website are paid to, and delivered by, ECOM Superstore Pty Ltd (ABN 15 664 665 696), which processes payments and dispatches orders for our online store. Your card or bank statement will show the merchant name “ecomsuperstore”. Your purchase is still a Rocko’s purchase, and our returns policy applies as normal.</p>
+            <p>Orders placed on this website are paid to, and delivered by, ECOM Superstore Pty Ltd (ABN 15 664 665 696), which processes payments and dispatches orders for our online store. Your card or bank statement will show the merchant name “ECOM SUPERSTORE PTY LTD”. Your purchase is still a Rocko’s purchase, and our returns policy applies as normal.</p>
             <h2>Use of this website</h2>
             <p>The use of this website is subject to the following terms of use:</p>
             <ul>
@@ -265,8 +265,8 @@
         <t t-call="rockos_website_theme.rockos_info_shell">
             <t t-set="page_title">Frequently Asked Questions</t>
             <h2>Orders and payment</h2>
-            <h3>Why does my bank statement say “ecomsuperstore”?</h3>
-            <p>Payments for the Rocko’s online store are processed by ECOM Superstore Pty Ltd, so the merchant name on your card or bank statement is “ecomsuperstore”. Your purchase is still with Rocko’s, and our returns policy applies as normal.</p>
+            <h3>Why does my bank statement say “ECOM SUPERSTORE PTY LTD”?</h3>
+            <p>Payments for the Rocko’s online store are processed by ECOM Superstore Pty Ltd, so the merchant name on your card or bank statement is “ECOM SUPERSTORE PTY LTD”. Your purchase is still with Rocko’s, and our returns policy applies as normal.</p>
             <h3>What payment methods do you accept?</h3>
             <p>You can pay by Visa, Mastercard, American Express, PayPal or Afterpay. Available options are shown at checkout.</p>
             <h3>I had an account on the old Rocko’s website. How do I log in?</h3>

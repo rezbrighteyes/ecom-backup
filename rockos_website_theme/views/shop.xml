@@ -10,7 +10,7 @@
         <xpath expr="//div[@id='payment_method']" position="before">
             <p class="rockos-payment-notice alert alert-info mt-4 mb-0">
                 Payment is processed by ECOM Superstore Pty Ltd, which also dispatches your order.
-                Your card or bank statement will show <strong>ecomsuperstore</strong>.
+                Your card or bank statement will show <strong>ECOM SUPERSTORE PTY LTD</strong>.
                 <a href="/faq">Why?</a>
             </p>
         </xpath>
