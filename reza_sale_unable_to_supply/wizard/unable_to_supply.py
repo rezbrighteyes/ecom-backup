@@ -65,11 +65,33 @@ class RezaUnableSupplyWizard(models.TransientModel):
         """Button target, so it must stay public. Everything it does is gated
         here, server side: `groups=` on the view only hides the button."""
         self.ensure_one()
+        self._check_rights()
+        todo, refunds = self._remove_and_credit()
+        self._log(self.order_id, todo, refunds)
+
+        if not refunds:
+            return {"type": "ir.actions.act_window_close"}
+        action = {
+            "type": "ir.actions.act_window",
+            "res_model": "account.move",
+            "name": _("Credit Notes"),
+            "context": {"default_move_type": "out_refund"},
+        }
+        if len(refunds) == 1:
+            action.update(view_mode="form", res_id=refunds.id)
+        else:
+            action.update(view_mode="list,form", domain=[("id", "in", refunds.ids)])
+        return action
+
+    def _check_rights(self):
         user = self.env.user
         if not (user.has_group("sales_team.group_sale_salesman")
                 and user.has_group("account.group_account_invoice")):
             raise AccessError(_("Cannot Supply needs both Sales and Invoicing rights."))
 
+    def _remove_and_credit(self):
+        """Lower the order, shrink the delivery, credit what was invoiced.
+        Shared with the Exchange wizard. Returns (wizard lines acted on, credit notes)."""
         order = self.order_id
         prec = self.env["decimal.precision"].precision_get("Product Unit of Measure")
         todo = self.line_ids.filtered(
@@ -102,22 +124,7 @@ class RezaUnableSupplyWizard(models.TransientModel):
         refunds = self.env["account.move"]
         for invoice, per_line in allocation.items():
             refunds |= self._make_credit_note(invoice, per_line)
-
-        self._log(order, todo, refunds)
-
-        if not refunds:
-            return {"type": "ir.actions.act_window_close"}
-        action = {
-            "type": "ir.actions.act_window",
-            "res_model": "account.move",
-            "name": _("Credit Notes"),
-            "context": {"default_move_type": "out_refund"},
-        }
-        if len(refunds) == 1:
-            action.update(view_mode="form", res_id=refunds.id)
-        else:
-            action.update(view_mode="list,form", domain=[("id", "in", refunds.ids)])
-        return action
+        return todo, refunds
 
     def _check_can_apply(self, order, todo, prec):
         if order.state != "sale":

@@ -11,6 +11,10 @@
                         string="Cannot Supply" class="btn-secondary"
                         invisible="state != 'sale' or locked"
                         groups="sales_team.group_sale_salesman"/>
+                <button name="action_reza_exchange" type="object"
+                        string="Exchange" class="btn-secondary"
+                        invisible="state != 'sale' or locked"
+                        groups="sales_team.group_sale_salesman"/>
             </xpath>
         </field>
     </record>

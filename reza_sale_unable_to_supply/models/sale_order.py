@@ -16,3 +16,15 @@ class SaleOrder(models.Model):
             "target": "new",
             "context": {"default_order_id": self.id},
         }
+
+    def action_reza_exchange(self):
+        """Open the Exchange wizard. Public: it is a button target."""
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Exchange"),
+            "res_model": "reza.exchange.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {"default_order_id": self.id},
+        }
