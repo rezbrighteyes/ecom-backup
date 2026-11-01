@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- The Administrator login is exempt from the geolock from the start:
+         Claude's Odoo connector signs in as Administrator from US servers, and
+         this is the login that manages the geolock. noupdate, so a deliberate
+         untick survives an upgrade. -->
+    <function model="res.users" name="write"
+              eval="[[ref('base.user_admin')], {'reza_geolock_exempt': True}]"/>
+</odoo>

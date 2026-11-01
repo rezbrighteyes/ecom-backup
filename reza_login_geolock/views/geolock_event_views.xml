@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_reza_login_geolock_event_list" model="ir.ui.view">
+        <field name="name">reza.login.geolock.event.list</field>
+        <field name="model">reza.login.geolock.event</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0" decoration-danger="action == 'blocked'" decoration-warning="action == 'would_block'">
+                <field name="create_date" string="When"/>
+                <field name="login"/>
+                <field name="user_id" optional="hide"/>
+                <field name="country"/>
+                <field name="ip"/>
+                <field name="channel"/>
+                <field name="action"/>
+                <field name="user_agent" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_reza_login_geolock_event_search" model="ir.ui.view">
+        <field name="name">reza.login.geolock.event.search</field>
+        <field name="model">reza.login.geolock.event</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="login"/>
+                <field name="ip"/>
+                <field name="country"/>
+                <filter name="blocked" string="Blocked" domain="[('action', '=', 'blocked')]"/>
+                <filter name="would_block" string="Would Block" domain="[('action', '=', 'would_block')]"/>
+                <separator/>
+                <filter name="when" string="Date" date="create_date"/>
+                <filter name="group_login" string="User" context="{'group_by': 'login'}"/>
+                <filter name="group_country" string="Country" context="{'group_by': 'country'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_reza_login_geolock_event" model="ir.actions.act_window">
+        <field name="name">Sign-in Geolock</field>
+        <field name="res_model">reza.login.geolock.event</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No staff sign-in from outside the allowed countries yet.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_reza_login_geolock_event"
+              name="Sign-in Geolock"
+              parent="base.menu_users"
+              action="action_reza_login_geolock_event"
+              groups="reza_login_geolock.group_geolock_manager"
+              sequence="90"/>
+</odoo>

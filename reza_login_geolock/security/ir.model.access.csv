@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_reza_login_geolock_event_system,reza.login.geolock.event system,model_reza_login_geolock_event,reza_login_geolock.group_geolock_manager,1,0,0,1
