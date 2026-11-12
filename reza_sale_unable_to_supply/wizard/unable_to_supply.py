@@ -133,18 +133,7 @@ class RezaUnableSupplyWizard(models.TransientModel):
             raise UserError(_("%s is locked. Ask a sales manager to unlock it first.", order.name))
         if not todo:
             raise UserError(_("Enter the quantity you cannot supply on at least one line."))
-        # Edbert bridge (reza_ecom_intercompany_po, optional here). It raises the
-        # Edbert purchase only once the order has FULLY shipped, and for
-        # qty_delivered, so an item removed before dispatch never reaches
-        # Edbert. A purchase already linked means that assumption no longer
-        # holds, and changing the order would leave Edbert billing for goods
-        # the customer never got. A person must handle that one.
-        if "reza_edbert_purchase_id" in order._fields:
-            purchase = order.sudo().reza_edbert_purchase_id
-            if purchase and purchase.state != "cancel":
-                raise UserError(_(
-                    "Edbert purchase %(po)s is already raised for %(so)s. Change it by hand.",
-                    po=purchase.name, so=order.name))
+        self._check_edbert_purchase(order)
         for wl in todo:
             if wl.sale_line_id.order_id != order:
                 raise UserError(_("A line does not belong to %s.", order.name))
@@ -159,6 +148,22 @@ class RezaUnableSupplyWizard(models.TransientModel):
             raise UserError(_(
                 "This order has a draft invoice or credit note (%s). Confirm or delete it first.",
                 ", ".join(drafts.mapped("display_name"))))
+
+    def _check_edbert_purchase(self, order):
+        """Edbert bridge (reza_ecom_intercompany_po, optional here). It raises
+        the Edbert purchase only once the order has FULLY shipped, and for
+        qty_delivered, so an item removed before dispatch never reaches
+        Edbert. A purchase already linked means that assumption no longer
+        holds, and changing the order would leave Edbert billing for goods
+        the customer never got. A person must handle that one -- unless the
+        caller sends the goods back to Edbert itself (reza_exchange_shipped
+        overrides this for exactly that case)."""
+        if "reza_edbert_purchase_id" in order._fields:
+            purchase = order.sudo().reza_edbert_purchase_id
+            if purchase and purchase.state != "cancel":
+                raise UserError(_(
+                    "Edbert purchase %(po)s is already raised for %(so)s. Change it by hand.",
+                    po=purchase.name, so=order.name))
 
     @api.model
     def _open_deliveries(self, sol):

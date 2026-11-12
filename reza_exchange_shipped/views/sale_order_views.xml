@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_order_form_reza_exchange_shipped" model="ir.ui.view">
+        <field name="name">sale.order.form.reza.exchange.shipped</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_reza_exchange_shipped" type="object"
+                        string="Exchange (shipped)" class="btn-secondary"
+                        invisible="state != 'sale' or locked or delivery_status not in ('partial', 'full')"
+                        groups="sales_team.group_sale_salesman"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Exchanges" name="reza_exchanges"
+                      invisible="not reza_exchange_origin_id and not reza_exchange_ids and not reza_edbert_return_ids"
+                      groups="sales_team.group_sale_salesman">
+                    <group>
+                        <field name="reza_exchange_origin_id" readonly="1"/>
+                    </group>
+                    <field name="reza_exchange_ids" readonly="1">
+                        <list>
+                            <field name="name"/>
+                            <field name="date_order"/>
+                            <field name="amount_total"/>
+                            <field name="state"/>
+                        </list>
+                    </field>
+                    <field name="reza_edbert_return_ids" readonly="1"
+                           context="{'form_view_ref': 'reza_exchange_shipped.view_reza_edbert_return_form'}">
+                        <list decoration-danger="state in ('failed', 'mismatch')"
+                              decoration-success="state == 'done'">
+                            <field name="name"/>
+                            <field name="product_id"/>
+                            <field name="qty"/>
+                            <field name="state"/>
+                            <field name="note"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

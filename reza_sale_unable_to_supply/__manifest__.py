@@ -24,7 +24,7 @@ Stripe, by a person.
 """,
     "author": "Reza",
     "category": "Sales/Sales",
-    "version": "18.0.1.1.0",
+    "version": "18.0.1.1.1",
     "license": "OPL-1",
     "depends": ["sale_stock", "account"],
     "data": [
