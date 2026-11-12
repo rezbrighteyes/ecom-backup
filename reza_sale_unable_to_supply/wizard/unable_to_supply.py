@@ -89,14 +89,20 @@ class RezaUnableSupplyWizard(models.TransientModel):
                 and user.has_group("account.group_account_invoice")):
             raise AccessError(_("Cannot Supply needs both Sales and Invoicing rights."))
 
-    def _remove_and_credit(self):
+    def _remove_and_credit(self, edbert_handled=False):
         """Lower the order, shrink the delivery, credit what was invoiced.
-        Shared with the Exchange wizard. Returns (wizard lines acted on, credit notes)."""
+        Shared with the Exchange wizards. Returns (wizard lines acted on, credit notes).
+
+        `edbert_handled` is a METHOD ARGUMENT on purpose, not a field or a
+        context key: both of those can be set by any client over call_kw,
+        which would let a caller skip the Edbert refusal. Only server code
+        that sends the goods back to Edbert itself (reza_exchange_shipped)
+        passes it."""
         order = self.order_id
         prec = self.env["decimal.precision"].precision_get("Product Unit of Measure")
         todo = self.line_ids.filtered(
             lambda wl: float_compare(wl.qty_to_remove, 0.0, precision_digits=prec) > 0)
-        self._check_can_apply(order, todo, prec)
+        self._check_can_apply(order, todo, prec, edbert_handled=edbert_handled)
 
         # Work out the credit BEFORE the quantity changes: it is whatever has
         # been invoiced beyond the quantity that will remain.
@@ -126,14 +132,15 @@ class RezaUnableSupplyWizard(models.TransientModel):
             refunds |= self._make_credit_note(invoice, per_line)
         return todo, refunds
 
-    def _check_can_apply(self, order, todo, prec):
+    def _check_can_apply(self, order, todo, prec, edbert_handled=False):
         if order.state != "sale":
             raise UserError(_("Only a confirmed sale order can be changed this way."))
         if order.locked:
             raise UserError(_("%s is locked. Ask a sales manager to unlock it first.", order.name))
         if not todo:
             raise UserError(_("Enter the quantity you cannot supply on at least one line."))
-        self._check_edbert_purchase(order)
+        if not edbert_handled:
+            self._check_edbert_purchase(order)
         for wl in todo:
             if wl.sale_line_id.order_id != order:
                 raise UserError(_("A line does not belong to %s.", order.name))
@@ -156,8 +163,8 @@ class RezaUnableSupplyWizard(models.TransientModel):
         Edbert. A purchase already linked means that assumption no longer
         holds, and changing the order would leave Edbert billing for goods
         the customer never got. A person must handle that one -- unless the
-        caller sends the goods back to Edbert itself (reza_exchange_shipped
-        overrides this for exactly that case)."""
+        caller sends the goods back to Edbert itself (see `edbert_handled`
+        on _remove_and_credit)."""
         if "reza_edbert_purchase_id" in order._fields:
             purchase = order.sudo().reza_edbert_purchase_id
             if purchase and purchase.state != "cancel":

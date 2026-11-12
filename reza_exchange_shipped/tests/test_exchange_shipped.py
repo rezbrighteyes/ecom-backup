@@ -353,12 +353,15 @@ class TestExchangeShipped(UtsCommon):
         self.assertFalse(order.reza_edbert_return_ids)
 
     def test_cannot_supply_still_refuses_after_edbert(self):
-        """The bypass is for this flow only. Cannot Supply on its own must
-        still refuse an order whose Edbert purchase is raised."""
+        """The bypass is for this flow only. Cannot Supply on its own -- the
+        public action_apply a client can call -- must still refuse an order
+        whose Edbert purchase is raised."""
         order, __, __ = self._shipped()
         with self.assertRaises(UserError) as cm:
-            self.env["reza.unable.supply.wizard"]._check_edbert_purchase(order)
+            self._apply(order, {self.nobbies: 1})
         self.assertIn("is already raised", str(cm.exception))
+        self.assertNotIn("reza_edbert_handled", self.env["reza.unable.supply.wizard"]._fields,
+                         "a client-settable skip flag is back on the wizard")
 
     # --------------------------------------------------------- the Edbert side
     def test_edbert_return_happy_path(self):

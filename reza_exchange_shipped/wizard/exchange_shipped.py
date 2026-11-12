@@ -80,11 +80,12 @@ class RezExchangeShippedWizard(models.TransientModel):
         remover = self.env["reza.unable.supply.wizard"].create({
             "order_id": order.id,
             "reason": _("Exchange (returned)"),
-            "reza_edbert_handled": True,
             "line_ids": [Command.create({"sale_line_id": wl.sale_line_id.id,
                                          "qty_to_remove": wl.qty_to_exchange}) for wl in todo],
         })
-        __, refunds = remover._remove_and_credit()
+        # The returned items go back to Edbert through _queue_edbert, so the
+        # "Edbert purchase already raised" refusal does not apply here.
+        __, refunds = remover._remove_and_credit(edbert_handled=True)
 
         new_order, kept = self._make_replacement(order, todo, paid)
 
