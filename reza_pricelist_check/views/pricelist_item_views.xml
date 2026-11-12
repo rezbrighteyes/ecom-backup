@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_reza_price_rules_list" model="ir.ui.view">
+        <field name="name">product.pricelist.item.list.reza.rules</field>
+        <field name="model">product.pricelist.item</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Price Rules" create="0" default_order="pricelist_id, applied_on, reza_category_id">
+                <field name="pricelist_id" column_invisible="context.get('reza_one_pricelist')"/>
+                <field name="applied_on" string="Level" optional="hide"/>
+                <field name="name" string="Applies To"/>
+                <field name="reza_category_id" optional="hide"/>
+                <field name="reza_kind" widget="badge"
+                       decoration-info="reza_kind == 'pct'"
+                       decoration-primary="reza_kind == 'fixed'"
+                       decoration-muted="reza_kind == 'full'"/>
+                <field name="reza_rule_text"/>
+                <field name="reza_sale_price" invisible="not reza_sale_price"/>
+                <field name="reza_rule_price" invisible="not reza_sale_price"/>
+                <field name="reza_off_pct" widget="percentage" invisible="not reza_sale_price"
+                       decoration-danger="reza_off_pct &lt; 0"/>
+                <field name="reza_in_use" widget="boolean" invisible="not reza_sale_price"/>
+                <field name="reza_dates_text" optional="show"/>
+                <field name="reza_date_state" widget="badge" optional="show"
+                       decoration-success="reza_date_state == 'running'"
+                       decoration-danger="reza_date_state == 'expired'"
+                       decoration-warning="reza_date_state == 'future'"/>
+                <field name="min_quantity" optional="hide"/>
+                <field name="date_start" optional="hide"/>
+                <field name="date_end" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_reza_price_rules_search" model="ir.ui.view">
+        <field name="name">product.pricelist.item.search.reza.rules</field>
+        <field name="model">product.pricelist.item</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <search string="Price Rules">
+                <field name="product_tmpl_id" string="Product or SKU"
+                       filter_domain="['|', '|', ('product_tmpl_id', 'ilike', self), ('product_id', 'ilike', self), ('product_id.default_code', 'ilike', self)]"/>
+                <field name="pricelist_id"/>
+                <field name="reza_category_id" string="Category" operator="child_of"/>
+                <filter name="level_variant" string="Variant rules" domain="[('applied_on', '=', '0_product_variant')]"/>
+                <filter name="level_product" string="Product rules" domain="[('applied_on', '=', '1_product')]"/>
+                <filter name="level_category" string="Category rules" domain="[('applied_on', '=', '2_product_category')]"/>
+                <filter name="level_global" string="All-product rules" domain="[('applied_on', '=', '3_global')]"/>
+                <separator/>
+                <filter name="kind_pct" string="% discount" domain="[('compute_price', '=', 'percentage')]"/>
+                <filter name="kind_fixed" string="Fixed price" domain="[('compute_price', '=', 'fixed')]"/>
+                <filter name="kind_formula" string="Formula" domain="[('compute_price', '=', 'formula')]"/>
+                <separator/>
+                <filter name="zero_pct" string="0% rules (keep full price, e.g. exclusions)"
+                        domain="[('compute_price', '=', 'percentage'), ('percent_price', '=', 0), ('base', '=', 'list_price')]"/>
+                <separator/>
+                <filter name="current" string="Current"
+                        domain="['&amp;', '|', ('date_start', '=', False), ('date_start', '&lt;=', context_today().strftime('%Y-%m-%d 23:59:59')), '|', ('date_end', '=', False), ('date_end', '&gt;=', context_today().strftime('%Y-%m-%d 00:00:00'))]"/>
+                <filter name="expired" string="Expired" domain="[('date_end', '&lt;', context_today().strftime('%Y-%m-%d 00:00:00'))]"/>
+                <filter name="future" string="Not started" domain="[('date_start', '&gt;', context_today().strftime('%Y-%m-%d 23:59:59'))]"/>
+                <separator/>
+                <separator/>
+                <filter name="not_in_use" string="Not in use (another rule wins, or not running)"
+                        domain="[('reza_in_use', '=', False), ('applied_on', 'in', ['0_product_variant', '1_product'])]"/>
+                <separator/>
+                <filter name="active_lists" string="Active price lists" domain="[('pricelist_id.active', '=', True)]"/>
+                <group>
+                    <filter name="groupby_pricelist" string="Price List" context="{'group_by': 'pricelist_id'}"/>
+                    <filter name="groupby_applied_on" string="Level" context="{'group_by': 'applied_on'}"/>
+                    <filter name="groupby_reza_category" string="Category" context="{'group_by': 'reza_category_id'}"/>
+                    <filter name="groupby_kind" string="Rule Type" context="{'group_by': 'compute_price'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_reza_price_rules" model="ir.actions.act_window">
+        <field name="name">Price Rules</field>
+        <field name="res_model">product.pricelist.item</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_reza_price_rules_list"/>
+        <field name="search_view_id" ref="view_reza_price_rules_search"/>
+        <field name="context">{'search_default_active_lists': 1, 'search_default_current': 1, 'search_default_groupby_pricelist': 1, 'search_default_groupby_applied_on': 1}</field>
+    </record>
+
+    <menuitem id="menu_reza_price_rules"
+              name="Price Rules"
+              parent="sale.product_menu_catalog"
+              action="action_reza_price_rules"
+              groups="product.group_product_pricelist"
+              sequence="4"/>
+</odoo>

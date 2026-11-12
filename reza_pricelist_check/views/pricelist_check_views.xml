@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_reza_pricelist_check_line_list" model="ir.ui.view">
+        <field name="name">reza.pricelist.check.line.list</field>
+        <field name="model">reza.pricelist.check.line</field>
+        <field name="arch" type="xml">
+            <list string="Check Prices" create="0" edit="0" delete="0"
+                  decoration-danger="status in ('zero', 'above', 'below_cost')"
+                  decoration-warning="status == 'no_rule'"
+                  decoration-muted="status == 'same'">
+                <header>
+                    <button name="action_reza_exclude" type="object" string="Exclude from Discount"
+                            groups="sales_team.group_sale_manager"
+                            help="Adds a 0% rule for each selected product on this list, so it sells at the normal price."/>
+                    <button name="action_reza_allow" type="object" string="Allow Discount Again"
+                            groups="sales_team.group_sale_manager"
+                            help="Removes this list's 0% rules for the selected products, so their wider discount applies again."/>
+                </header>
+                <field name="default_code"/>
+                <field name="product_id"/>
+                <field name="categ_id" optional="hide"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="sale_price"/>
+                <field name="price"/>
+                <field name="cost" optional="hide"/>
+                <field name="discount_pct" widget="percentage" decoration-danger="discount_pct &lt; 0"/>
+                <field name="difference" optional="hide"/>
+                <field name="status" widget="badge"
+                       decoration-success="status == 'discount'"
+                       decoration-warning="status == 'no_rule'"
+                       decoration-danger="status in ('zero', 'above', 'below_cost')"
+                       />
+                <field name="why"/>
+                <field name="conflict" widget="badge" optional="show"
+                       invisible="conflict == 'none'"
+                       decoration-danger="conflict == 'conflict'"
+                       decoration-muted="conflict == 'overlap'"/>
+                <field name="conflict_text" optional="show"/>
+                <field name="rule_id" string="Rule Used" optional="hide"/>
+                <field name="rule_applied_on" optional="hide"/>
+                <field name="base_rule_id" optional="hide"/>
+                <button name="action_open_rule" type="object" icon="fa-external-link"
+                        title="Open the rule" invisible="not rule_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_reza_pricelist_check_line_form" model="ir.ui.view">
+        <field name="name">reza.pricelist.check.line.form</field>
+        <field name="model">reza.pricelist.check.line</field>
+        <field name="arch" type="xml">
+            <form string="Price Check" create="0" edit="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="pricelist_id"/>
+                            <field name="product_id"/>
+                            <field name="default_code"/>
+                            <field name="categ_id"/>
+                        </group>
+                        <group>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="sale_price"/>
+                            <field name="price"/>
+                            <field name="cost"/>
+                            <field name="discount_pct" widget="percentage" decoration-danger="discount_pct &lt; 0"/>
+                            <field name="status"/>
+                            <field name="why"/>
+                            <field name="rule_id"/>
+                            <field name="conflict"/>
+                            <field name="match_count"/>
+                            <field name="conflict_text"/>
+                            <field name="base_rule_id" invisible="not base_rule_id"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_reza_pricelist_check_line_search" model="ir.ui.view">
+        <field name="name">reza.pricelist.check.line.search</field>
+        <field name="model">reza.pricelist.check.line</field>
+        <field name="arch" type="xml">
+            <search string="Check Prices">
+                <field name="product_id" string="Product or SKU"
+                       filter_domain="['|', ('product_id', 'ilike', self), ('default_code', 'ilike', self)]"/>
+                <field name="categ_id" operator="child_of"/>
+                <field name="rule_id"/>
+                <field name="pricelist_id"/>
+                <filter name="status_discount" string="Discounted" domain="[('status', '=', 'discount')]"/>
+                <filter name="status_same" string="Not allowed a discount (a rule keeps the normal price)" domain="[('status', '=', 'same')]"/>
+                <filter name="status_no_rule" string="Not discounted (no rule covers it)" domain="[('status', '=', 'no_rule')]"/>
+                <filter name="status_above" string="Above Sale Price" domain="[('status', '=', 'above')]"/>
+                <filter name="status_zero" string="Zero price" domain="[('status', '=', 'zero')]"/>
+                <filter name="status_below_cost" string="Below cost" domain="[('status', '=', 'below_cost')]"/>
+                <separator/>
+                <filter name="changes_price" string="Changes the price (discount, fixed or above)"
+                        domain="[('status', 'not in', ('no_rule', 'same'))]"/>
+                <separator/>
+                <filter name="not_discounted" string="Not discounted (any reason)"
+                        domain="[('status', '!=', 'discount')]"/>
+                <separator/>
+                <filter name="conflicts" string="Conflicting discounts"
+                        domain="[('conflict', '=', 'conflict')]"/>
+                <filter name="overlaps" string="Overlapping rules (same price)"
+                        domain="[('conflict', '=', 'overlap')]"/>
+                <separator/>
+                <filter name="level_variant" string="Priced by a variant rule" domain="[('rule_applied_on', '=', '0_product_variant')]"/>
+                <filter name="level_product" string="Priced by a product rule" domain="[('rule_applied_on', '=', '1_product')]"/>
+                <filter name="level_category" string="Priced by a category rule" domain="[('rule_applied_on', '=', '2_product_category')]"/>
+                <filter name="level_global" string="Priced by an all-products rule" domain="[('rule_applied_on', '=', '3_global')]"/>
+                <group>
+                    <filter name="groupby_status" string="Status" context="{'group_by': 'status'}"/>
+                    <filter name="groupby_categ" string="Category" context="{'group_by': 'categ_id'}"/>
+                    <filter name="groupby_rule" string="Rule Used" context="{'group_by': 'rule_id'}"/>
+                    <filter name="groupby_level" string="Rule Level" context="{'group_by': 'rule_applied_on'}"/>
+                    <filter name="groupby_conflict" string="Other Rules" context="{'group_by': 'conflict'}"/>
+                    <filter name="groupby_parent" string="Parent Product" context="{'group_by': 'product_tmpl_id'}"/>
+                    <filter name="groupby_variant" string="Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="groupby_pricelist" string="Price List" context="{'group_by': 'pricelist_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

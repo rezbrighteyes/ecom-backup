@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pricelist_form_reza_check" model="ir.ui.view">
+        <field name="name">product.pricelist.form.reza.check</field>
+        <field name="model">product.pricelist</field>
+        <field name="inherit_id" ref="product.product_pricelist_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_open_pricelist_report']" position="before">
+                <button name="action_reza_check_prices" type="object" string="Check Prices"
+                        class="btn-primary"
+                        help="List every product with the price this list charges, the % off and the rule used."/>
+                <button name="action_reza_not_discounted" type="object" string="Not Discounted"
+                        help="Products no rule on this list covers, so they sell at the normal price."/>
+                <button name="action_reza_not_allowed_discount" type="object" string="Not Allowed a Discount"
+                        help="Products a rule on this list deliberately keeps at the normal price, such as a 0% exclusion."/>
+                <button name="action_reza_conflicts" type="object" string="Conflicts"
+                        help="Products where two or more rules on this list match with different prices, which one wins, and why."/>
+                <button name="action_reza_open_rules" type="object" string="Rules by Category"
+                        help="This list's rules, grouped by level and category."/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
