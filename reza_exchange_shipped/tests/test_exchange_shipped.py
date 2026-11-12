@@ -223,8 +223,10 @@ class TestExchangeShipped(UtsCommon):
         })
         return purchase
 
-    def _shipped(self, paid=True, edbert=True):
+    def _shipped(self, paid=True, edbert=True, carrier=None):
         order = self._order(lines=[(self.nobbies, 2, 24.99), (self.thongs, 1, 22.99)])
+        if carrier:
+            order.set_delivery_line(carrier, 12.50)
         self._deliver(order)
         invoice = self._invoice(order)
         if paid:
@@ -238,10 +240,10 @@ class TestExchangeShipped(UtsCommon):
                    lambda self: (fake, "db", 1, "pwd"))
         return fake
 
-    def _exchange(self, order, swaps, user=None):
+    def _exchange(self, order, swaps, user=None, charge_shipping=True):
         """swaps: {old_product: (qty, new_product)}"""
         wizard = self.env["reza.exchange.shipped.wizard"].with_user(user or self.user) \
-            .with_context(default_order_id=order.id).create({})
+            .with_context(default_order_id=order.id).create({"charge_shipping": charge_shipping})
         for wl in wizard.line_ids:
             if wl.product_id in swaps:
                 qty, new = swaps[wl.product_id]
@@ -279,6 +281,37 @@ class TestExchangeShipped(UtsCommon):
         self.assertTrue(refund.currency_id.is_zero(refund.amount_residual))
         self.assertTrue(new_inv.currency_id.is_zero(new_inv.amount_residual))
         self.assertIn("nothing to pay", order.message_ids[0].body)
+
+    def _carrier(self):
+        product = self.env["product.product"].create({
+            "name": "UTS Parcel Post carrier", "type": "service", "list_price": 12.50,
+            "invoice_policy": "order", "taxes_id": [Command.clear()]})
+        return self.env["delivery.carrier"].create({
+            "name": "UTS Parcel Post", "delivery_type": "fixed", "fixed_price": 12.50,
+            "product_id": product.id})
+
+    def test_shipping_charged_again_by_default(self):
+        carrier = self._carrier()
+        order, __, __ = self._shipped(carrier=carrier)
+        self._exchange(order, {self.nobbies: (1, self.nobbies)})
+        new = self._new_order(order)
+        ship = new.order_line.filtered("is_delivery")
+        self.assertEqual(new.carrier_id, carrier)
+        self.assertAlmostEqual(ship.price_total, 12.50)
+        # Same item, so the only thing the customer owes is the shipping.
+        self.assertAlmostEqual(new.invoice_ids.amount_total, 24.99 + 12.50)
+        self.assertAlmostEqual(new.invoice_ids.amount_residual, 12.50)
+        self.assertIn("owes", order.message_ids[0].body)
+        self.assertEqual(new.picking_ids.carrier_id, carrier)
+
+    def test_shipping_not_charged_when_unticked(self):
+        carrier = self._carrier()
+        order, __, __ = self._shipped(carrier=carrier)
+        self._exchange(order, {self.nobbies: (1, self.nobbies)}, charge_shipping=False)
+        new = self._new_order(order)
+        self.assertFalse(new.order_line.filtered("is_delivery"))
+        self.assertEqual(new.carrier_id, carrier, "the replacement must still ship")
+        self.assertTrue(new.currency_id.is_zero(new.invoice_ids.amount_residual))
 
     def test_price_kept_under_a_dollar(self):
         order, __, __ = self._shipped()

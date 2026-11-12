@@ -41,6 +41,11 @@ class RezExchangeShippedWizard(models.TransientModel):
 
     order_id = fields.Many2one("sale.order", required=True, readonly=True, ondelete="cascade")
     line_ids = fields.One2many("reza.exchange.shipped.wizard.line", "wizard_id")
+    charge_shipping = fields.Boolean(
+        default=True,
+        help="Put the shipping the customer paid on the first order onto the replacement "
+        "order too. Untick it when the customer should not pay shipping again, for "
+        "example when the item was faulty.")
 
     @api.model
     def default_get(self, fields_list):
@@ -245,10 +250,28 @@ class RezExchangeShippedWizard(models.TransientModel):
             if kept[wl]:
                 line.write({"price_unit": old.price_unit, "discount": old.discount,
                             "tax_id": [Command.set(old.tax_id.ids)]})
+        if self.charge_shipping:
+            self._add_shipping(order, new_order)
         # No send_email in the context: the customer is told by staff, not by
         # a second order confirmation they did not place.
         new_order.action_confirm()
         return new_order, kept
+
+    def _add_shipping(self, order, new_order):
+        """The same shipping charge the customer paid on the first order.
+
+        Copied from the old delivery line rather than re-quoted from the
+        carrier: a re-quote calls Starshipit, may come back different, and
+        staff cannot see why. The price and tax are written back after
+        `set_delivery_line`, because `_prepare_delivery_line_vals` adjusts
+        the amount for fiscal position and tax-included pricing."""
+        old = order.order_line.filtered(lambda l: l.is_delivery and not l.display_type)[:1]
+        if not old or not order.carrier_id:
+            return
+        new_order.set_delivery_line(order.carrier_id, old.price_unit)
+        line = new_order.order_line.filtered("is_delivery")
+        line.write({"price_unit": old.price_unit, "discount": old.discount,
+                    "tax_id": [Command.set(old.tax_id.ids)]})
 
     # ----------------------------------------------------------------- Edbert
     def _queue_edbert(self, order, todo, purchase):
