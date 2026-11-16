@@ -11,10 +11,14 @@
                         string="Exchange (shipped)" class="btn-secondary"
                         invisible="state != 'sale' or locked or delivery_status not in ('partial', 'full')"
                         groups="sales_team.group_sale_salesman"/>
+                <button name="action_reza_refund_shipped" type="object"
+                        string="Refund (shipped)" class="btn-secondary"
+                        invisible="state != 'sale' or locked or delivery_status not in ('partial', 'full')"
+                        groups="sales_team.group_sale_salesman"/>
             </xpath>
             <xpath expr="//notebook" position="inside">
-                <page string="Exchanges" name="reza_exchanges"
-                      invisible="not reza_exchange_origin_id and not reza_exchange_ids and not reza_edbert_return_ids"
+                <page string="Returns" name="reza_exchanges"
+                      invisible="not reza_exchange_origin_id and not reza_exchange_ids and not reza_edbert_return_ids and not reza_customer_refund_ids"
                       groups="sales_team.group_sale_salesman">
                     <group>
                         <field name="reza_exchange_origin_id" readonly="1"/>
@@ -25,6 +29,19 @@
                             <field name="date_order"/>
                             <field name="amount_total"/>
                             <field name="state"/>
+                        </list>
+                    </field>
+                    <field name="reza_customer_refund_ids" readonly="1"
+                           context="{'form_view_ref': 'reza_exchange_shipped.view_reza_customer_refund_form'}">
+                        <list decoration-danger="state in ('late', 'mismatch')"
+                              decoration-success="state == 'done'">
+                            <field name="name"/>
+                            <field name="credit_note_id"/>
+                            <field name="amount"/>
+                            <field name="refunded_amount"/>
+                            <field name="currency_id" column_invisible="1"/>
+                            <field name="state"/>
+                            <field name="note"/>
                         </list>
                     </field>
                     <field name="reza_edbert_return_ids" readonly="1"

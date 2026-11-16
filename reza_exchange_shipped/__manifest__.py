@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
-    "name": "Reza: Exchange After Delivery",
-    "summary": "Exchange an item the customer has sent back, and return it to Edbert",
+    "name": "Reza: Exchange or Refund After Delivery",
+    "summary": "Exchange or refund an item the customer has sent back, return it to Edbert, and check the refund really went out",
     "description": """
 The "Exchange (shipped)" button on a delivered sale order handles a customer
 who sends an item back and wants a different one (or the same one again).
@@ -18,20 +18,29 @@ One click, after the item is back in the shed:
   returned, the Edbert delivery is returned, and a vendor credit and an Edbert
   credit note are raised and posted only when the two agree.
 
-It never moves money. A refund to the customer is still done in PayPal or
-Stripe, by a person.
+The "Refund (shipped)" button does the same for a customer who wants their
+money back: return in, credit note at the price paid (shipping only when
+ticked), goods back to Edbert, and a Customer Refund row that a daily cron
+checks against Stripe or PayPal until the money has really gone back.
+
+Odoo sends a Stripe refund itself only when "Send refunds through Odoo" is on
+(Sales > Settings; off by default). Otherwise the refund user (Accounts Dept)
+gets a task with the amount, provider and transaction.
 """,
     "author": "Reza",
     "category": "Sales/Sales",
-    "version": "18.0.1.1.0",
+    "version": "18.0.1.2.0",
     "license": "OPL-1",
-    "depends": ["reza_sale_unable_to_supply", "reza_ecom_intercompany_po"],
+    "depends": ["reza_sale_unable_to_supply", "reza_ecom_intercompany_po", "account_payment", "delivery"],
     "data": [
         "security/ir.model.access.csv",
+        "security/customer_refund_rules.xml",
         "data/ir_cron_data.xml",
         "views/edbert_return_views.xml",
+        "views/customer_refund_views.xml",
         "views/sale_order_views.xml",
         "wizard/exchange_shipped_views.xml",
+        "wizard/refund_shipped_views.xml",
     ],
     "installable": True,
     "application": False,

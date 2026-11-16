@@ -80,7 +80,8 @@ class RezExchangeShippedWizard(models.TransientModel):
         # What the customer paid for the old items, read before anything changes.
         paid = {wl: wl.sale_line_id.price_reduce_taxinc * wl.qty_to_exchange for wl in todo}
 
-        self._return_from_customer(todo, prec)
+        pairs = [(wl.sale_line_id, wl.qty_to_exchange) for wl in todo]
+        self._return_from_customer(pairs, prec)
 
         remover = self.env["reza.unable.supply.wizard"].create({
             "order_id": order.id,
@@ -100,7 +101,7 @@ class RezExchangeShippedWizard(models.TransientModel):
             invoice.action_post()
             self.env["reza.exchange.wizard"]._rematch(refunds, invoice)
 
-        rows = self._queue_edbert(order, todo, edbert)
+        rows = self._queue_edbert(order, pairs, edbert)
         self._log(order, new_order, todo, kept, paid, refunds, invoice, rows)
         return {
             "type": "ir.actions.act_window",
@@ -147,6 +148,7 @@ class RezExchangeShippedWizard(models.TransientModel):
             raise UserError(_("%s was invoiced with a discount. Do this exchange by hand.",
                               order.name))
 
+    @api.model
     def _edbert_purchase(self, order):
         """The Edbert purchase the returned items go back against, or empty.
 
@@ -174,16 +176,19 @@ class RezExchangeShippedWizard(models.TransientModel):
         return purchase
 
     # ------------------------------------------------------------------ stock
-    def _return_from_customer(self, todo, prec):
+    @api.model
+    def _return_from_customer(self, pairs, prec):
         """Receive the items back: one return per delivery, newest delivery
-        first, validated at once (the item is already in the shed)."""
+        first, validated at once (the item is already in the shed).
+
+        `pairs` is [(sale.order.line, quantity in the line's UoM)]. Shared with
+        the Refund (shipped) wizard."""
         per_picking = defaultdict(dict)
-        for wl in todo:
-            sol = wl.sale_line_id
+        for sol, qty in pairs:
             moves = sol.move_ids.filtered(
                 lambda m: m.state == "done" and m.location_dest_id.usage == "customer"
                 and not m.origin_returned_move_id)
-            remaining = sol.product_uom._compute_quantity(wl.qty_to_exchange, sol.product_id.uom_id)
+            remaining = sol.product_uom._compute_quantity(qty, sol.product_id.uom_id)
             for move in moves.sorted("id", reverse=True):
                 if float_is_zero(remaining, precision_digits=prec):
                     break
@@ -274,15 +279,17 @@ class RezExchangeShippedWizard(models.TransientModel):
                     "tax_id": [Command.set(old.tax_id.ids)]})
 
     # ----------------------------------------------------------------- Edbert
-    def _queue_edbert(self, order, todo, purchase):
+    @api.model
+    def _queue_edbert(self, order, pairs, purchase):
+        """`pairs` is [(sale.order.line, quantity)]. Shared with Refund (shipped)."""
         Return = self.env["reza.edbert.return"].sudo()
         if not purchase:
             return Return
         bought = purchase.order_line.product_id
         qty = defaultdict(float)
-        for wl in todo:
-            if wl.product_id in bought:
-                qty[wl.product_id] += wl.qty_to_exchange
+        for sol, q in pairs:
+            if sol.product_id in bought:
+                qty[sol.product_id] += q
         rows = Return.create([{
             "sale_order_id": order.id,
             "purchase_id": purchase.id,
