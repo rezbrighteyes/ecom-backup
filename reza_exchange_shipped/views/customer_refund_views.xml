@@ -99,6 +99,10 @@
                     <setting string="Refunds done by" help="Who gets the 'Refund $X' task.">
                         <field name="reza_refund_user_id"/>
                     </setting>
+                    <setting string="Also alert"
+                             help="Emailed with the refund user when a refund is late (3 days) or for a different amount.">
+                        <field name="reza_refund_alert_emails"/>
+                    </setting>
                 </block>
             </xpath>
         </field>

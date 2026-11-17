@@ -29,7 +29,7 @@ gets a task with the amount, provider and transaction.
 """,
     "author": "Reza",
     "category": "Sales/Sales",
-    "version": "18.0.1.2.0",
+    "version": "18.0.1.3.0",
     "license": "OPL-1",
     "depends": ["reza_sale_unable_to_supply", "reza_ecom_intercompany_po", "account_payment", "delivery"],
     "data": [

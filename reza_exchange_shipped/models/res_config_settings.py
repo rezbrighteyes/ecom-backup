@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import fields, models
 
+from .customer_refund import DEFAULT_ALERT_EMAILS
+
 
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
@@ -16,3 +18,9 @@ class ResConfigSettings(models.TransientModel):
         config_parameter="reza_exchange_shipped.refund_user_id",
         domain="[('share', '=', False)]",
         help="Who gets the 'Refund $X' task. Empty: Accounts Dept.")
+    reza_refund_alert_emails = fields.Char(
+        "Also alert",
+        config_parameter="reza_exchange_shipped.refund_alert_emails",
+        default=DEFAULT_ALERT_EMAILS,
+        help="Comma-separated emails that hear, with the refund user, when a refund is "
+        "late (3 days) or for a different amount.")

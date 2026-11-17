@@ -32,6 +32,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 import requests
+from markupsafe import Markup
 
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError
@@ -44,7 +45,10 @@ TOLERANCE = 0.01          # dollars: a refund "matches" within one cent
 TIMEOUT = 30              # seconds, every provider call
 PARAM_AUTO = "reza_exchange_shipped.refund_auto"
 PARAM_USER = "reza_exchange_shipped.refund_user_id"
+PARAM_ALERT = "reza_exchange_shipped.refund_alert_emails"
 DEFAULT_REFUND_LOGIN = "accounts@brighteyes.com.au"
+# Who else hears about a refund that went wrong (late or a different amount).
+DEFAULT_ALERT_EMAILS = "reza@brighteyes.com.au,luke@brighteyes.com.au"
 
 
 class ProviderReadError(Exception):
@@ -220,15 +224,30 @@ class RezaCustomerRefund(models.Model):
                  amount=amount, customer=self.sale_order_id.partner_id.display_name, where=where)
 
     def _open_task(self):
+        """The task in Odoo, plus an email of our own.
+
+        The activity's built-in "You have been assigned" notification is
+        switched off (mail_activity_quick_update): it is queued behind a
+        12-hour mail cron and sent from odoobot@, which the Outlook server's
+        from_filter does not list. The email below is sent from the shop's
+        own address, kept after sending as proof, and the queue is triggered
+        at once."""
         self.ensure_one()
-        activity = self.credit_note_id.sudo().activity_schedule(
+        user = self._refund_user()
+        activity = self.credit_note_id.sudo().with_context(
+            mail_activity_quick_update=True).activity_schedule(
             "mail.mail_activity_data_todo",
             date_deadline=fields.Date.context_today(self),
             summary=_("Refund %s", self._fmt(self.amount)),
             note=self._task_text(),
-            user_id=self._refund_user().id,
+            user_id=user.id,
         )
         self.activity_id = activity
+        self._email_staff(
+            _("Refund to do: %(amt)s for %(so)s", amt=self._fmt(self.amount),
+              so=self.sale_order_id.name),
+            _("A customer return was credited. Please refund the customer now."),
+            [user.email])
 
     # ------------------------------------------------------------------ check
     def action_check(self):
@@ -279,10 +298,15 @@ class RezaCustomerRefund(models.Model):
             return self._settle(pick)
         if free:
             total = sum(r["amount"] for r in free)
+            was = self.state
             self.write({"state": "mismatch", "refunded_amount": total, "note": _(
                 "%(p)s shows %(got)s refunded, but this credit note is %(want)s. Check it, "
                 "then refund the difference or correct the credit note.",
                 p=self.provider_code.capitalize(), got=self._fmt(total), want=self._fmt(self.amount))})
+            if was != "mismatch":
+                self._email_staff(
+                    _("Refund amount differs: %(so)s", so=self.sale_order_id.name),
+                    self.note, self._alert_emails())
             return False
         return self._maybe_late()
 
@@ -367,11 +391,57 @@ class RezaCustomerRefund(models.Model):
         if self.state in ("waiting", "sending", "sent") and \
                 fields.Datetime.now() - self.create_date > timedelta(days=LATE_DAYS):
             self.state = "late"
-            self.sale_order_id.message_post(body=_(
-                "%(cn)s: the customer has NOT been refunded %(amt)s after %(n)s days. %(task)s",
-                cn=self.credit_note_id.name, amt=self._fmt(self.amount), n=LATE_DAYS,
-                task=self._task_text()))
+            text = _("%(cn)s: the customer has NOT been refunded %(amt)s after %(n)s days.",
+                     cn=self.credit_note_id.name, amt=self._fmt(self.amount), n=LATE_DAYS)
+            self.sale_order_id.message_post(body=text + " " + self._task_text())
+            self._email_staff(
+                _("NOT refunded after %(n)s days: %(so)s", n=LATE_DAYS, so=self.sale_order_id.name),
+                text, self._alert_emails())
         return False
+
+    # ----------------------------------------------------------------- emails
+    def _alert_emails(self):
+        raw = self.env["ir.config_parameter"].sudo().get_param(PARAM_ALERT)
+        extra = DEFAULT_ALERT_EMAILS if raw in (None, False) else raw
+        return [self._refund_user().email] + [e.strip() for e in extra.split(",")]
+
+    @api.model
+    def _email_from(self, company):
+        """A sender the Outlook server accepts: its from_filter lists the shop
+        domains only, so use the company's own address (a branch falls back
+        to its parent)."""
+        company = company or self.env.company
+        while company and not company.email:
+            company = company.parent_id
+        return company.email_formatted if company else False
+
+    def _email_staff(self, subject, headline, emails):
+        """Email staff (never the customer): one mail.mail, kept after sending,
+        and the mail queue run now rather than at its next 12-hourly slot."""
+        emails = sorted({e.strip().lower() for e in emails if e and "@" in e})
+        if not emails:
+            return self.env["mail.mail"]
+        base = self.env["ir.config_parameter"].sudo().get_param("web.base.url", "")
+        rows = []
+        for row in self:
+            rows.append(Markup(
+                "<tr><td>%s</td><td><a href='%s/odoo/sale.order/%s'>%s</a></td>"
+                "<td><a href='%s/odoo/account.move/%s'>%s</a></td><td>%s</td><td>%s</td></tr>") % (
+                row.sale_order_id.partner_id.display_name, base, row.sale_order_id.id,
+                row.sale_order_id.name, base, row.credit_note_id.id, row.credit_note_id.name,
+                row._fmt(row.amount), row._task_text()))
+        body = Markup("<p><b>%s</b></p><table border='1' cellpadding='4' style='border-collapse:collapse'>"
+                      "<tr><th>Customer</th><th>Order</th><th>Credit note</th><th>Amount</th>"
+                      "<th>What to do</th></tr>%s</table>") % (headline, Markup("").join(rows))
+        mail = self.env["mail.mail"].sudo().create({
+            "subject": subject,
+            "body_html": body,
+            "email_from": self._email_from(self[:1].company_id),
+            "email_to": ",".join(emails),
+            "auto_delete": False,
+        })
+        self.env.ref("mail.ir_cron_mail_scheduler_action").sudo()._trigger()
+        return mail
 
     def _close_task(self, feedback):
         activity = self.activity_id.sudo()

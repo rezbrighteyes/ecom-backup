@@ -395,6 +395,74 @@ class TestRefundShipped(TestExchangeShipped):
         self.assertIn("PayPal, transaction 8PAYPALCAPTURE", row.activity_id.note)
 
 
+    # ---------------------------------------------------------------- emails
+    def _mails(self, subject_part):
+        return self.env["mail.mail"].sudo().search([("subject", "ilike", subject_part)])
+
+    def test_task_sends_its_own_email(self):
+        self.accounts.email = "accounts-test@example.com"
+        self.partner.email = "customer-test@example.com"
+        order, __, __ = self._shipped()
+        self._stripe_tx(order)
+        self._fake()
+        cron = self.env.ref("mail.ir_cron_mail_scheduler_action")
+        # Active on production (cron 3); the April copy has it off, and Odoo
+        # drops a trigger for an inactive cron.
+        cron.sudo().active = True
+        before = self.env["ir.cron.trigger"].sudo().search_count([("cron_id", "=", cron.id)])
+        self._refund_it(order, {self.nobbies: 1})
+        mail = self._mails("Refund to do")
+        self.assertEqual(len(mail), 1, "no task email (or more than one)")
+        self.assertEqual(mail.email_to, "accounts-test@example.com")
+        self.assertNotIn("customer-test", mail.email_to or "")
+        self.assertFalse(mail.recipient_ids, "the email went to a partner list, not just Accounts")
+        self.assertFalse(mail.auto_delete, "the sent email would be deleted: no proof it went")
+        self.assertIn("pi_TEST123", mail.body_html)
+        self.assertTrue(mail.email_from, "no sender: Outlook refuses odoobot@")
+        self.assertGreater(self.env["ir.cron.trigger"].sudo().search_count([("cron_id", "=", cron.id)]),
+                           before, "the mail queue waits for its 12-hourly run")
+        # Odoo 18's own notice is a user_notification message ('"To-Do: ..."
+        # assigned to you'), emailed or not depending on the user's setting.
+        assigned = self.env["mail.message"].sudo().search([
+            ("message_type", "=", "user_notification"),
+            ("partner_ids", "in", self.accounts.partner_id.ids)])
+        self.assertFalse(assigned, "the built-in notification also went: Accounts gets two emails")
+
+    def test_late_and_mismatch_email_staff_once(self):
+        self.accounts.email = "accounts-test@example.com"
+        self.partner.email = "customer-test@example.com"
+        order, __, __ = self._shipped()
+        self._stripe_tx(order)
+        self._fake()
+        self._refund_it(order, {self.nobbies: 1})
+        self._refund_it(order, {self.nobbies: 1})
+        late, wrong = self._rows(order).sorted("id")
+        want = "accounts-test@example.com,luke@brighteyes.com.au,reza@brighteyes.com.au"
+        # late
+        self.patch(type(self.env["reza.customer.refund"]), "_provider_refunds",
+                   lambda r: [{"id": "re_x", "amount": 1.00, "date": fields.Date.today()}]
+                   if r == wrong else [])
+        self._age(late, 4)
+        self.env["reza.customer.refund"]._cron_check()
+        self.env["reza.customer.refund"]._cron_check()
+        mails = self._mails("NOT refunded")
+        self.assertEqual(len(mails), 1, "late alert sent %s times" % len(mails))
+        self.assertEqual(mails.email_to, want)
+        mism = self._mails("amount differs")
+        self.assertEqual(len(mism), 1, "mismatch alert sent %s times" % len(mism))
+        self.assertEqual(mism.email_to, want)
+        for m in mails | mism:
+            self.assertNotIn("customer-test", m.email_to)
+            self.assertFalse(m.recipient_ids)
+
+    def test_alert_list_is_a_setting(self):
+        self.env["ir.config_parameter"].sudo().set_param(
+            "reza_exchange_shipped.refund_alert_emails", "boss@example.com")
+        self.accounts.email = "accounts-test@example.com"
+        emails = self.env["reza.customer.refund"]._alert_emails()
+        self.assertEqual(sorted(emails), ["accounts-test@example.com", "boss@example.com"])
+
+
 # The exchange tests are inherited for their fixtures only; run them once, in
 # their own class.
 for _name in dir(TestExchangeShipped):
