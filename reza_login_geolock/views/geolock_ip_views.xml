@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_reza_login_geolock_ip_list" model="ir.ui.view">
+        <field name="name">reza.login.geolock.ip.list</field>
+        <field name="model">reza.login.geolock.ip</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" decoration-muted="not active">
+                <field name="name" placeholder="86.152.3.45 or 2a00:23c7:d7db:2500::/56"/>
+                <field name="user_ids" widget="many2many_tags" placeholder="All staff"/>
+                <field name="note"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="create_uid" string="Added By" optional="show" readonly="1"/>
+                <field name="create_date" string="Added" optional="show" readonly="1"/>
+                <field name="write_date" string="Changed" optional="hide" readonly="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_reza_login_geolock_ip_search" model="ir.ui.view">
+        <field name="name">reza.login.geolock.ip.search</field>
+        <field name="model">reza.login.geolock.ip</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="user_ids"/>
+                <field name="note"/>
+                <filter name="inactive" string="Archived" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_reza_login_geolock_ip" model="ir.actions.act_window">
+        <field name="name">Sign-in Geolock IP Addresses</field>
+        <field name="res_model">reza.login.geolock.ip</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No address is allowed from outside the allowed countries.</p>
+            <p>Add an IPv4 or IPv6 address or range that staff may sign in from while overseas,
+               optionally only for named users.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_reza_login_geolock_ip"
+              name="Sign-in Geolock IP Addresses"
+              parent="base.menu_users"
+              action="action_reza_login_geolock_ip"
+              groups="reza_login_geolock.group_geolock_manager"
+              sequence="91"/>
+</odoo>

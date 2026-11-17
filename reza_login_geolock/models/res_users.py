@@ -94,6 +94,8 @@ class ResUsers(models.Model):
         allowed = {c.strip().upper() for c in (params.get_param(PARAM_COUNTRIES) or "AU").split(",") if c.strip()}
         if country in allowed:
             return
+        if self.env["reza.login.geolock.ip"]._reza_allows(ip, user):
+            return
         action = "blocked" if mode == "block" else "would_block"
         _logger.warning("Staff sign-in geolock: %s login:%s from %s (%s) via %s",
                         action, user.login, ip, country, channel)

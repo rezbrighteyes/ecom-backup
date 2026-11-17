@@ -2,6 +2,7 @@ from odoo import models
 from odoo.exceptions import AccessDenied
 from odoo.http import SessionExpiredException, request
 
+from .geolock_ip import PARAM_IPS_STAMP
 from .res_users import PARAM_COUNTRIES, PARAM_MODE
 
 SESSION_KEY = "reza_geolock_ok"
@@ -30,9 +31,10 @@ class IrHttp(models.AbstractModel):
         if not uid:
             return
         params = request.env["ir.config_parameter"].sudo()
-        stamp = "%s|%s|%s" % (request.httprequest.remote_addr,
-                              params.get_param(PARAM_MODE, "report"),
-                              params.get_param(PARAM_COUNTRIES) or "AU")
+        stamp = "%s|%s|%s|%s" % (request.httprequest.remote_addr,
+                                 params.get_param(PARAM_MODE, "report"),
+                                 params.get_param(PARAM_COUNTRIES) or "AU",
+                                 params.get_param(PARAM_IPS_STAMP) or "")
         if session.get(SESSION_KEY) == stamp:
             return
         try:

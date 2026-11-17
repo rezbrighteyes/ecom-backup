@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from odoo.exceptions import AccessDenied
+from odoo.exceptions import AccessDenied, ValidationError
 from odoo.tests import HttpCase, TransactionCase, tagged
 
 from odoo.addons.reza_login_geolock.models import res_users as geo
@@ -54,6 +54,39 @@ class TestStaffGeolock(TransactionCase):
         self.assertEqual(len(event), 1)
         self.assertEqual((event.action, event.country, event.channel, event.ip),
                          ("blocked", "US", "web", "203.0.113.9"))
+
+    def _allow(self, name, users=None, active=True):
+        return self.env["reza.login.geolock.ip"].create({
+            "name": name, "active": active,
+            "user_ids": [(6, 0, users.ids)] if users else False,
+        })
+
+    def test_allowed_ip_lets_staff_in_from_overseas(self):
+        self._allow("203.0.113.0/24")
+        self._check(self.staff, "block", "GB")
+        self.assertFalse(self._events(self.staff))
+
+    def test_allowed_ip_for_another_user_still_blocks(self):
+        other = self.staff.copy({"login": "geolock.other.test"})
+        self._allow("203.0.113.9", users=other)
+        with self.assertRaises(AccessDenied):
+            self._check(self.staff, "block", "GB")
+        self._check(other, "block", "GB")
+
+    def test_archived_allowed_ip_does_not_count(self):
+        self._allow("203.0.113.9", active=False)
+        with self.assertRaises(AccessDenied):
+            self._check(self.staff, "block", "GB")
+
+    def test_allowed_ip_ipv6_range_and_validation(self):
+        rec = self._allow("2a00:23c7:d7db:2501:7817:2c1b:b4bc:14e7/56")
+        self.assertEqual(rec.name, "2a00:23c7:d7db:2500::/56")
+        model = self.env["reza.login.geolock.ip"]
+        self.assertTrue(model._reza_allows("2a00:23c7:d7db:25ff::1", self.staff))
+        self.assertFalse(model._reza_allows("2a00:23c7:d7db:2600::1", self.staff))
+        self.assertFalse(model._reza_allows("203.0.113.9", self.staff))
+        with self.assertRaises(ValidationError):
+            self._allow("not an address")
 
     def test_report_mode_records_but_allows(self):
         self._check(self.staff, "report", "US")

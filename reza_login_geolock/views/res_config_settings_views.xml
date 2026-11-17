@@ -15,6 +15,10 @@
                             <field name="reza_geolock_countries" placeholder="AU"/>
                         </div>
                         <div class="mt8">
+                            <button name="%(action_reza_login_geolock_ip)d" type="action"
+                                    string="Allowed IP Addresses" icon="oi-arrow-right" class="btn-link"/>
+                        </div>
+                        <div>
                             <button name="%(action_reza_login_geolock_event)d" type="action"
                                     string="Sign-in Geolock Log" icon="oi-arrow-right" class="btn-link"/>
                         </div>

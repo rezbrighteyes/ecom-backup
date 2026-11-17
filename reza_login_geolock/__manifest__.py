@@ -33,19 +33,26 @@ A user can be exempted with "Allow sign-in from any country" on the
 Account Security tab of the user form (travel, or an integration that runs from
 overseas, such as Claude's Odoo connector on the Administrator login).
 
+Specific addresses can be allowed from outside the allowed countries under
+Settings > Users & Companies > Sign-in Geolock IP Addresses: one IPv4 or IPv6
+address or CIDR range per line, optionally only for named users (a staff
+member's fixed line overseas, without exempting them from every country).
+Removing an address ends the open sessions using it on their next request.
+
 Private and loopback addresses (Odoo.sh's own scheduled jobs) and addresses
 the GeoIP database cannot place are always allowed. Every refusal or would-be
 refusal is listed under Settings > Users & Companies > Sign-in Geolock.
     """,
     "author": "Reza",
         "category": "Administration",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.1.0",
     "depends": ["base", "base_setup"],
     "data": [
         "security/security.xml",
         "security/ir.model.access.csv",
         "data/admin_exempt.xml",
         "views/geolock_event_views.xml",
+        "views/geolock_ip_views.xml",
         "views/res_config_settings_views.xml",
         "views/res_users_views.xml",
     ],
