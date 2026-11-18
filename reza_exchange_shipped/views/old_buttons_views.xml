@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Delivery: the core Return button. Members keep it everywhere. Other
+         staff keep it on receipts and internal transfers only; a customer
+         return goes through Exchange (shipped) or Refund (shipped). -->
+    <record id="view_picking_form_old_return" model="ir.ui.view">
+        <field name="name">stock.picking.form.reza.old.return</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='%(stock.act_stock_return_picking)d']" position="attributes">
+                <attribute name="groups">reza_exchange_shipped.group_old_return_buttons</attribute>
+            </xpath>
+            <xpath expr="//button[@name='%(stock.act_stock_return_picking)d']" position="after">
+                <button name="%(stock.act_stock_return_picking)d" string="Return" type="action"
+                        invisible="picking_type_code == 'outgoing'"
+                        groups="base.group_user,!reza_exchange_shipped.group_old_return_buttons"
+                        data-hotkey="k"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Invoice: the core Credit Note button. Members keep it. Other staff
+         keep it on vendor bills only; a customer credit note comes from the
+         buttons on the sale order. -->
+    <record id="view_move_form_old_credit_note" model="ir.ui.view">
+        <field name="name">account.move.form.reza.old.credit.note</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_reverse']" position="attributes">
+                <attribute name="groups">reza_exchange_shipped.group_old_return_buttons</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_reverse']" position="after">
+                <button name="action_reverse" string="Credit Note" type="object"
+                        invisible="move_type != 'in_invoice' or state != 'posted'"
+                        groups="account.group_account_invoice,!reza_exchange_shipped.group_old_return_buttons"
+                        data-hotkey="shift+n"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Reversal wizard. "Reverse and Create Invoice" bills the customer
+         again for returned goods (MJ00225): members only. "Reverse" stays for
+         everyone on journal entries and vendor bills, also when the wizard
+         is opened from the invoice list's Action menu. -->
+    <record id="view_account_move_reversal_old_buttons" model="ir.ui.view">
+        <field name="name">account.move.reversal.form.reza.old.buttons</field>
+        <field name="model">account.move.reversal</field>
+        <field name="inherit_id" ref="account.view_account_move_reversal"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='modify_moves']" position="attributes">
+                <attribute name="groups">reza_exchange_shipped.group_old_return_buttons</attribute>
+            </xpath>
+            <xpath expr="//button[@name='refund_moves']" position="attributes">
+                <attribute name="groups">reza_exchange_shipped.group_old_return_buttons</attribute>
+            </xpath>
+            <xpath expr="//button[@name='refund_moves']" position="after">
+                <button string="Reverse" name="refund_moves" type="object" class="btn-primary"
+                        invisible="move_type in ('out_invoice', 'out_refund', 'some_invoice')"
+                        groups="!reza_exchange_shipped.group_old_return_buttons"
+                        data-hotkey="q"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

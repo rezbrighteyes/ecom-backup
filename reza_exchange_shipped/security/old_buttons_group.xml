@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Who still sees the core Return / Credit Note / Reverse and Create
+         Invoice buttons for customer orders. Everybody else uses the
+         Cannot Supply, Exchange, Exchange (shipped) and Refund (shipped)
+         buttons on the sale order. Add a user here to give the old buttons
+         back. -->
+    <record id="group_old_return_buttons" model="res.groups">
+        <field name="name">Returns: old buttons</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+        <field name="comment">Members see the core Return button on customer deliveries, the Credit Note button on customer invoices, and Reverse / Reverse and Create Invoice in the reversal wizard for customer invoices. Everybody else uses the buttons on the sale order.</field>
+    </record>
+
+    <!-- First members, found by login so the same file works on every
+         database. Runs on every upgrade; Command.link only ADDS, so an
+         upgrade never removes a member, but it does add these four back. -->
+    <function model="res.users" name="write">
+        <value model="res.users" eval="obj().search([('login', 'in', ['reza@brighteyes.com.au', 'luke@brighteyes.com.au', 'accounts@brighteyes.com.au'])]).ids + [ref('base.user_admin')]"/>
+        <value eval="{'groups_id': [Command.link(ref('reza_exchange_shipped.group_old_return_buttons'))]}"/>
+    </function>
+</odoo>
