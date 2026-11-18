@@ -44,6 +44,9 @@ from odoo.tools import float_compare, float_is_zero
 
 _logger = logging.getLogger(__name__)
 
+# Largest gap, as a share of Edbert's credit, that is treated as rounding.
+ROUNDING_SHARE = 0.01
+
 MAX_ATTEMPTS = 5
 # Remote writes reach a database whose sale-order and picking hooks need these
 # (see reza_ecom_intercompany_po/models/purchase_order.py).
@@ -82,11 +85,19 @@ class RezaEdbertReturn(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        # The name is the Edbert marker, so it must be unique per row. Count
+        # the rows already saved ONCE per order, then go on counting inside
+        # the batch: rows of one batch are not in the table yet, so a fresh
+        # search_count per row gave every row of a 3-product refund "-R1"
+        # (MJ00827, 2026-11-17).
+        seen = {}
         for vals in vals_list:
             if vals.get("name", "/") == "/":
                 order = self.env["sale.order"].browse(vals["sale_order_id"])
-                n = self.search_count([("sale_order_id", "=", order.id)]) + 1
-                vals["name"] = "%s-R%d" % (order.name, n)
+                if order.id not in seen:
+                    seen[order.id] = self.search_count([("sale_order_id", "=", order.id)])
+                seen[order.id] += 1
+                vals["name"] = "%s-R%d" % (order.name, seen[order.id])
         return super().create(vals_list)
 
     def _get_marker(self):
@@ -373,6 +384,15 @@ class RezaEdbertReturn(models.Model):
                                 {"fields": ["name"]})[0]["name"]
         self.write({"remote_refund_id": rid, "remote_refund_name": name})
 
+    @api.model
+    def _rounding_gap(self, refund, theirs):
+        """True when the two credits differ by rounding only (at most 1 % of
+        Edbert's). A bigger gap is a real price or tax difference -- the 1/11
+        GST fault looked like this -- and a person must look at it."""
+        their_amount = abs(theirs["amount_untaxed"])
+        return bool(their_amount) and (
+            abs(refund.amount_untaxed - theirs["amount_untaxed"]) <= ROUNDING_SHARE * their_amount)
+
     def _step_post(self):
         """Post both credits, but only when they agree."""
         proxy, db, uid, pwd = self._remote()
@@ -381,6 +401,14 @@ class RezaEdbertReturn(models.Model):
                                   [[self.remote_refund_id]],
                                   {"fields": ["name", "state", "amount_untaxed"]})[0]
         gap = abs(refund.amount_untaxed - theirs["amount_untaxed"])
+        if gap > 0.01 and refund.state == "draft" and self._rounding_gap(refund, theirs):
+            # The credit follows what Edbert invoiced. Edbert keeps 2-decimal
+            # prices (8.97) where ecom kept the bridge's (8.965875), so the
+            # same 5 units come to 44.85 there and 44.83 here (RKS00086).
+            line = refund.invoice_line_ids.filtered(lambda l: l.display_type == "product")
+            if len(line) == 1 and line.quantity:
+                line.price_unit = theirs["amount_untaxed"] / line.quantity
+                gap = abs(refund.amount_untaxed - theirs["amount_untaxed"])
         if gap > 0.01:
             self.write({"state": "mismatch", "note": _(
                 "Edbert credit note %(n)s is %(theirs).2f ex GST but the vendor credit is "

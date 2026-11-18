@@ -11,6 +11,12 @@
                     are in the shed. Enter how many came back. Odoo receives them, makes the
                     credit note at the price the customer paid, and sends them back to Edbert.
                 </div>
+                <div class="alert alert-info" role="alert" invisible="not not_coming_back">
+                    Not coming back (lost parcel, or the customer keeps a faulty item): enter how
+                    many to refund. Odoo scraps them, makes the credit note and the refund
+                    task. Nothing goes into stock and nothing goes back to Edbert. Put the
+                    Aus Post enquiry number in the reason.
+                </div>
                 <div class="alert alert-warning" role="alert" invisible="auto_refund">
                     Odoo does not send the money. The refund user gets a task with the exact
                     amount, and Odoo checks Stripe or PayPal every day until it is refunded.
@@ -23,6 +29,7 @@
                     <field name="order_id" force_save="1"/>
                     <field name="reason"/>
                     <field name="refund_shipping"/>
+                    <field name="not_coming_back"/>
                     <field name="auto_refund" invisible="1"/>
                 </group>
                 <field name="line_ids" nolabel="1">

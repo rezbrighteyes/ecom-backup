@@ -462,6 +462,60 @@ class TestRefundShipped(TestExchangeShipped):
         emails = self.env["reza.customer.refund"]._alert_emails()
         self.assertEqual(sorted(emails), ["accounts-test@example.com", "boss@example.com"])
 
+    # ------------------------------------------------ round 3 (2026-11-18)
+    def test_batch_rows_get_distinct_names(self):
+        """MJ00827: three products in one refund all became "-R1", and the
+        name is the marker that finds the Edbert return."""
+        order, __, __ = self._shipped()
+        self._fake()
+        self._refund_it(order, {self.nobbies: 1, self.thongs: 1})
+        rows = order.reza_edbert_return_ids
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(sorted(rows.mapped("name")), ["%s-R1" % order.name, "%s-R2" % order.name])
+        self._refund_it(order, {self.nobbies: 1})
+        self.assertEqual(sorted(order.reza_edbert_return_ids.mapped("name")),
+                         ["%s-R%d" % (order.name, n) for n in (1, 2, 3)])
+
+    def test_not_coming_back(self):
+        """RKS00121: parcel lost in the post. Refund, but nothing comes back
+        into stock and nothing goes back to Edbert."""
+        order, __, __ = self._shipped()
+        self._stripe_tx(order)
+        self._fake()
+        before = self._onhand(self.nobbies)
+        wizard = self.env["reza.refund.shipped.wizard"].with_user(self.user) \
+            .with_context(default_order_id=order.id).create(
+                {"reason": "Lost in post - enquiry 74670855", "not_coming_back": True})
+        for wl in wizard.line_ids:
+            wl.qty_to_return = 1.0 if wl.product_id == self.nobbies else 0.0
+        wizard.action_apply()
+        line = self._line(order, self.nobbies)
+        self.assertEqual(line.qty_delivered, 1, "delivered did not drop: the order would read To invoice")
+        self.assertEqual(line.product_uom_qty, 1)
+        self.assertEqual(self._onhand(self.nobbies), before, "a lost item went into stock")
+        self.assertNotEqual(order.invoice_status, "to invoice")
+        self.assertFalse(order.reza_edbert_return_ids, "a lost item was sent back to Edbert")
+        scrap = self.env["stock.scrap"].search([("origin", "like", order.name)])
+        self.assertEqual(len(scrap), 1, "the lost item was not scrapped")
+        self.assertEqual((scrap.state, scrap.product_id, scrap.scrap_qty), ("done", self.nobbies, 1))
+        self.assertTrue(scrap.move_ids.location_dest_id.scrap_location)
+        # Valuation: the return brings the cost back (+1) and the scrap takes
+        # it out as a loss (-1). A return written straight to a loss location
+        # makes no layer at all, which left Stock Interim (Delivered) open on
+        # real-time companies (company 1, Mangrove Jacks).
+        back = line.move_ids.filtered(
+            lambda m: m.state == "done" and m.location_id.usage == "customer")
+        self.assertEqual(sum(back.stock_valuation_layer_ids.mapped("quantity")), 1)
+        self.assertEqual(sum(scrap.move_ids.stock_valuation_layer_ids.mapped("quantity")), -1)
+        refund = self._refund(order)
+        self.assertEqual(refund.state, "posted")
+        self.assertAlmostEqual(refund.amount_total, 24.99)
+        row = self._rows(order)
+        self.assertEqual(row.state, "waiting")
+        self.assertEqual(row.activity_id.user_id, self.accounts)
+        self.assertIn("Not coming back", order.message_ids.filtered(
+            lambda m: "Refund (shipped)" in (m.body or ""))[:1].body)
+
 
 # The exchange tests are inherited for their fixtures only; run them once, in
 # their own class.

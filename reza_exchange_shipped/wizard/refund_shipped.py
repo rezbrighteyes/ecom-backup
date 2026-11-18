@@ -38,6 +38,12 @@ class RezRefundShippedWizard(models.TransientModel):
         default=False,
         help="Also refund the shipping the customer paid. Tick it when the item was faulty, "
         "damaged or the wrong item. Leave it for a change of mind.")
+    not_coming_back = fields.Boolean(
+        "Not coming back",
+        help="Tick it when the customer gets their money but the items never come back: "
+        "a parcel lost in the post, or a faulty item the customer keeps or throws away. "
+        "Odoo then scraps the items instead of keeping them in stock, and nothing "
+        "goes back to Edbert.")
     auto_refund = fields.Boolean(compute="_compute_auto_refund")
 
     def _compute_auto_refund(self):
@@ -77,6 +83,8 @@ class RezRefundShippedWizard(models.TransientModel):
         pairs = [(wl.sale_line_id, wl.qty_to_return) for wl in todo]
 
         exchange._return_from_customer(pairs, prec)
+        if self.not_coming_back:
+            self._scrap_returned(order, pairs, prec)
 
         remove = [Command.create({"sale_line_id": sol.id, "qty_to_remove": qty})
                   for sol, qty in pairs]
@@ -91,7 +99,10 @@ class RezRefundShippedWizard(models.TransientModel):
         __, refunds = remover._remove_and_credit(edbert_handled=True)
 
         tracked = self.env["reza.customer.refund"]._start(order, refunds)
-        rows = exchange._queue_edbert(order, pairs, edbert)
+        # Goods that never came back cannot go back to Edbert: ecom bought
+        # them and they are lost.
+        rows = (self.env["reza.edbert.return"] if self.not_coming_back
+                else exchange._queue_edbert(order, pairs, edbert))
         self._log(order, todo, shipping, refunds, tracked, rows)
         for refund in refunds:
             refund.message_post(body=Markup("<p>%s</p>") % _(
@@ -134,6 +145,40 @@ class RezRefundShippedWizard(models.TransientModel):
             raise UserError(_("%s was invoiced with a discount. Do this refund by hand.",
                               order.name))
 
+    def _scrap_returned(self, order, pairs, prec):
+        """Goods that never come back (lost in the post, or kept by the
+        customer): the paper return above lowered "delivered", now scrap the
+        same quantity out of the location it landed in. The return is valued
+        exactly as a normal return, and the scrap exactly as a manual scrap.
+        On a real-time company (1, Mangrove Jacks) the scrap reaches an
+        expense account only when the Scrap location carries one
+        (`valuation_in_account_id`); on 2026-11-18 none did, so every scrap
+        there, manual or not, lands on Stock Interim (Delivered). Writing the
+        return straight to a loss location instead makes no valuation at all
+        (preflight 2026-11-18)."""
+        Scrap = self.env["stock.scrap"]
+        scraps = Scrap
+        for sol, qty in pairs:
+            back = sol.move_ids.filtered(
+                lambda m: m.state == "done" and m.location_id.usage == "customer"
+                and m.location_dest_id.usage == "internal").sorted("id", reverse=True)[:1]
+            if not back:
+                raise UserError(_("Could not find the return of %s to scrap.",
+                                  sol.product_id.display_name))
+            scraps |= Scrap.create({
+                "product_id": sol.product_id.id,
+                "scrap_qty": sol.product_uom._compute_quantity(qty, sol.product_id.uom_id),
+                "product_uom_id": sol.product_id.uom_id.id,
+                "location_id": back.location_dest_id.id,
+                "company_id": order.company_id.id,
+                "origin": "%s: %s" % (order.name, self.reason),
+            })
+        for scrap in scraps:
+            scrap.do_scrap()
+            if scrap.state != "done":
+                raise UserError(_("Scrap %s did not complete. Nothing was changed.", scrap.name))
+        return scraps
+
     @api.model
     def _shipping_line(self, order):
         """The paid shipping line still on the order: invoiced and not
@@ -154,7 +199,12 @@ class RezRefundShippedWizard(models.TransientModel):
             items += Markup("<li>%s</li>") % _("Shipping (%s)", format_amount(
                 self.env, shipping.price_total, order.currency_id))
         body = Markup("<p><b>%s</b> (%s)</p><ul>%s</ul>") % (_("Refund (shipped)"), self.reason, items)
-        body += Markup("<p>%s</p>") % _("Items received back.")
+        if self.not_coming_back:
+            body += Markup("<p>%s</p>") % _(
+                "Not coming back: the items are scrapped (not in stock) and nothing goes "
+                "back to Edbert.")
+        else:
+            body += Markup("<p>%s</p>") % _("Items received back.")
         if not refunds:
             body += Markup("<p>%s</p>") % _(
                 "Nothing was invoiced for these items, so there is nothing to refund.")

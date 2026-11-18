@@ -440,6 +440,19 @@ class TestExchangeShipped(UtsCommon):
         self.assertEqual(fake.invoices[701]["state"], "draft")
         self.assertIn("Neither was posted", row.note)
 
+    def test_rounding_gap_follows_edbert(self):
+        """RKS00086: Edbert keeps 2-decimal prices, ecom the bridge's, so the
+        same units come out a few cents apart. The credit follows Edbert."""
+        order, __, __ = self._shipped()
+        fake = self._fake(price=EDBERT_COST + 0.05)   # 0.5 %: rounding, not a real gap
+        self._exchange(order, {self.nobbies: (1, self.nobbies)})
+        row = order.reza_edbert_return_ids
+        self.env["reza.edbert.return"]._cron_process()
+        self.assertEqual(row.state, "done", row.note)
+        self.assertAlmostEqual(row.vendor_refund_id.amount_untaxed, EDBERT_COST + 0.05)
+        self.assertEqual(row.vendor_refund_id.state, "posted")
+        self.assertEqual(fake.invoices[701]["state"], "posted")
+
     def test_failure_resumes_without_repeating(self):
         order, __, __ = self._shipped()
         fake = self._fake()
