@@ -39,13 +39,20 @@ address or CIDR range per line, optionally only for named users (a staff
 member's fixed line overseas, without exempting them from every country).
 Removing an address ends the open sessions using it on their next request.
 
+IP lock: "Sign in only from allowed IP addresses" on the user form limits a
+user to the active allow-list entries that name them, in any country and in
+any geolock mode, so a VPN exiting in Australia does not get through. Every
+other sign-in with the right password is refused, listed as an IP lock breach
+and emailed to the geolock managers (or to the addresses in the system
+parameter reza_login_geolock.alert_to).
+
 Private and loopback addresses (Odoo.sh's own scheduled jobs) and addresses
 the GeoIP database cannot place are always allowed. Every refusal or would-be
 refusal is listed under Settings > Users & Companies > Sign-in Geolock.
     """,
     "author": "Reza",
         "category": "Administration",
-    "version": "18.0.1.1.0",
+    "version": "18.0.1.2.0",
     "depends": ["base", "base_setup"],
     "data": [
         "security/security.xml",

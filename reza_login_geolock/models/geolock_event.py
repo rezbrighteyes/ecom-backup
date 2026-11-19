@@ -17,7 +17,8 @@ class RezaLoginGeolockEvent(models.Model):
         required=True,
     )
     action = fields.Selection(
-        [("blocked", "Blocked"), ("would_block", "Would block (report only)")],
+        [("blocked", "Blocked"), ("would_block", "Would block (report only)"),
+         ("held", "IP lock breach (refused)")],
         required=True,
     )
     user_agent = fields.Char()

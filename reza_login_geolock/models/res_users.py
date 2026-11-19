@@ -2,6 +2,7 @@ import contextlib
 import ipaddress
 import logging
 import threading
+from html import escape
 from datetime import timedelta
 
 from odoo import SUPERUSER_ID, api, fields, models
@@ -13,6 +14,9 @@ _logger = logging.getLogger(__name__)
 
 PARAM_MODE = "reza_login_geolock.mode"
 PARAM_COUNTRIES = "reza_login_geolock.countries"
+# Who is emailed when a user on IP lock is refused, comma separated. When
+# unset, every active member of the Sign-in Geolock Manager group with an email.
+PARAM_ALERT_TO = "reza_login_geolock.alert_to"
 # A blocked RPC client retries on every call; one event per user, address,
 # channel and outcome per hour is enough to see it.
 EVENT_QUIET = timedelta(hours=1)
@@ -54,6 +58,23 @@ class ResUsers(models.Model):
         help="Exempt this user from the staff sign-in geolock, e.g. while travelling "
              "or for an integration that runs from overseas.",
     )
+    reza_geolock_ip_only = fields.Boolean(
+        string="Sign in only from allowed IP addresses",
+        groups="reza_login_geolock.group_geolock_manager",
+        help="IP lock: this user may sign in only from an active entry on the "
+             "Sign-in Geolock IP Addresses list that names them, whatever the "
+             "country, the geolock mode or the exemption box say. Any other "
+             "attempt with the right password is refused, logged as an IP lock "
+             "breach and emailed to the geolock managers.",
+    )
+
+    def write(self, vals):
+        res = super().write(vals)
+        if "reza_geolock_ip_only" in vals:
+            # Part of the open-session stamp: a session already open from an
+            # address the lock does not allow ends on its next request.
+            self.env["reza.login.geolock.ip"]._bump()
+        return res
 
     def _reza_geolock_check(self, channel):
         """Refuse (or record) a staff sign-in from outside the allowed countries.
@@ -76,9 +97,6 @@ class ResUsers(models.Model):
             return
         ip, user_agent = client
         params = self.env["ir.config_parameter"].sudo()
-        mode = params.get_param(PARAM_MODE, "report")
-        if mode not in ("report", "block"):
-            return
         # Core calls _check_credentials on an EMPTY recordset for a password
         # re-check (change_password, the portal /my/security and
         # /my/deactivate_account pages); the user is then the env user.
@@ -86,7 +104,31 @@ class ResUsers(models.Model):
         if len(user) != 1:
             return
         user = user.sudo()
-        if user.share or user.reza_geolock_exempt:
+        if user.share:
+            return
+        if user.reza_geolock_ip_only:
+            # IP lock comes before the mode, the country and the exemption box:
+            # a VPN that exits in Australia must not get through.
+            if self.env["reza.login.geolock.ip"]._reza_allows(ip, user):
+                return
+            country = _country_of(ip) or ""
+            _logger.warning("Staff sign-in geolock: IP lock refused login:%s from %s (%s) via %s",
+                            user.login, ip, country, channel)
+            self._reza_geolock_record({
+                "user_id": user.id,
+                "login": user.login,
+                "ip": ip,
+                "country": country,
+                "channel": channel,
+                "action": "held",
+                "user_agent": user_agent[:250],
+            })
+            raise AccessDenied(self.env._(
+                "This account may only sign in from approved addresses. Contact IT."))
+        mode = params.get_param(PARAM_MODE, "report")
+        if mode not in ("report", "block"):
+            return
+        if user.reza_geolock_exempt:
             return
         country = _country_of(ip)
         if country is None:
@@ -129,7 +171,9 @@ class ResUsers(models.Model):
                 ("create_date", ">=", since),
             ]):
                 return
-            events.create(vals)
+            event = events.create(vals)
+            if vals["action"] == "held":
+                self._reza_geolock_alert(env, event)
 
         try:
             # Under a TransactionCase the test's own cursor is used, so nothing
@@ -151,6 +195,39 @@ class ResUsers(models.Model):
                 write(api.Environment(cr, SUPERUSER_ID, {}))
         except Exception:                                    # noqa: BLE001
             _logger.exception("Staff sign-in geolock: could not record the event")
+
+    @api.model
+    def _reza_geolock_alert(self, env, event):
+        """Email an IP lock breach. Queued; the mail cron sends it."""
+        if "mail.mail" not in env:
+            return
+        to = env["ir.config_parameter"].get_param(PARAM_ALERT_TO)
+        if not to:
+            group = env.ref("reza_login_geolock.group_geolock_manager", raise_if_not_found=False)
+            members = env["res.users"]
+            if group:
+                members = group.user_ids if "user_ids" in group._fields else group.users
+            to = ",".join(u.email for u in members if u.active and u.email)
+        if not to:
+            _logger.warning("Staff sign-in geolock: IP lock breach not emailed, no recipient")
+            return
+        db = env.cr.dbname
+        body = (
+            "<p><b>IP lock breach:</b> someone signed in to <b>%s</b> with the right password "
+            "for <b>%s</b> from an address that is not on their allow-list. It was refused.</p>"
+            "<ul><li>When (UTC): %s</li><li>Address: %s</li><li>Country: %s</li>"
+            "<li>Channel: %s</li><li>Browser: %s</li></ul>"
+            "<p>If this was not them, change the password now. If it was, add the address "
+            "under Settings &gt; Users &amp; Companies &gt; Sign-in Geolock IP Addresses.</p>"
+        ) % tuple(escape(str(v or "")) for v in (
+            db, event.login, event.create_date, event.ip, event.country or "unknown",
+            event.channel, event.user_agent))
+        env["mail.mail"].create({
+            "subject": "IP lock breach: %s on %s from %s" % (event.login, db, event.ip),
+            "email_to": to,
+            "body_html": body,
+            "auto_delete": False,
+        })
 
     def _check_credentials(self, credential, env):
         auth_info = super()._check_credentials(credential, env)

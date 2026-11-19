@@ -88,6 +88,63 @@ class TestStaffGeolock(TransactionCase):
         with self.assertRaises(ValidationError):
             self._allow("not an address")
 
+    def _lock(self, user):
+        user.reza_geolock_ip_only = True
+        return user
+
+    def test_ip_lock_refuses_unlisted_address_even_in_australia(self):
+        self._lock(self.staff)
+        with self.assertRaisesRegex(AccessDenied, "approved addresses"):
+            self._check(self.staff, "block", "AU")
+        event = self._events(self.staff)
+        self.assertEqual((event.action, event.country), ("held", "AU"))
+
+    def test_ip_lock_beats_exemption_and_off_mode(self):
+        self._lock(self.staff).reza_geolock_exempt = True
+        with self.assertRaises(AccessDenied):
+            self._check(self.staff, "off", "AU")
+        with self.assertRaises(AccessDenied):
+            self._check(self.staff, "report", None)
+
+    def test_ip_lock_lets_listed_address_in(self):
+        self._lock(self.staff)
+        self._allow("203.0.113.9", users=self.staff)
+        self._check(self.staff, "block", "GB")
+        self.assertFalse(self._events(self.staff))
+
+    def test_ip_lock_ignores_archived_and_other_users_entries(self):
+        self._lock(self.staff)
+        other = self.staff.copy({"login": "geolock.other2.test"})
+        self._allow("203.0.113.9", users=self.staff, active=False)
+        self._allow("203.0.113.0/24", users=other)
+        with self.assertRaises(AccessDenied):
+            self._check(self.staff, "block", "AU")
+
+    def test_ip_lock_entry_for_everyone_counts(self):
+        self._lock(self.staff)
+        self._allow("203.0.113.9")
+        self._check(self.staff, "block", "AU")
+
+    def test_ip_lock_breach_is_emailed(self):
+        if "mail.mail" not in self.env:
+            self.skipTest("mail not installed")
+        self.params.set_param(geo.PARAM_ALERT_TO, "it@example.com")
+        self._lock(self.staff)
+        mails = self.env["mail.mail"].sudo()
+        before = mails.search_count([])
+        # Not assertRaises: Odoo's version rolls back to a savepoint, which
+        # would take the queued mail with it.
+        with self.assertRaisesRegex(AccessDenied, "approved addresses"):
+            self._check(self.staff, "block", "AU")
+        mail = mails.search([], order="id desc", limit=1)
+        self.assertEqual(mails.search_count([]), before + 1)
+        self.assertIn("IP lock breach", mail.subject)
+        self.assertEqual(mail.email_to, "it@example.com")
+
+    def test_plain_users_are_unaffected_by_ip_lock(self):
+        self._check(self.staff, "block", "AU")
+        self.assertFalse(self._events(self.staff))
+
     def test_report_mode_records_but_allows(self):
         self._check(self.staff, "report", "US")
         self.assertEqual(self._events(self.staff).action, "would_block")

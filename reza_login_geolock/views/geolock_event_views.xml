@@ -4,7 +4,7 @@
         <field name="name">reza.login.geolock.event.list</field>
         <field name="model">reza.login.geolock.event</field>
         <field name="arch" type="xml">
-            <list create="0" edit="0" decoration-danger="action == 'blocked'" decoration-warning="action == 'would_block'">
+            <list create="0" edit="0" decoration-danger="action in ('blocked', 'held')" decoration-warning="action == 'would_block'">
                 <field name="create_date" string="When"/>
                 <field name="login"/>
                 <field name="user_id" optional="hide"/>
@@ -26,6 +26,7 @@
                 <field name="ip"/>
                 <field name="country"/>
                 <filter name="blocked" string="Blocked" domain="[('action', '=', 'blocked')]"/>
+                <filter name="held" string="IP Lock Breach" domain="[('action', '=', 'held')]"/>
                 <filter name="would_block" string="Would Block" domain="[('action', '=', 'would_block')]"/>
                 <separator/>
                 <filter name="when" string="Date" date="create_date"/>

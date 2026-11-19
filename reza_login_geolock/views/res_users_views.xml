@@ -12,6 +12,7 @@
             <xpath expr="//page[@name='account_security']" position="inside">
                 <group string="Sign-in Geolock" name="reza_login_geolock" groups="reza_login_geolock.group_geolock_manager" invisible="share">
                     <field name="reza_geolock_exempt"/>
+                    <field name="reza_geolock_ip_only"/>
                 </group>
             </xpath>
         </field>
