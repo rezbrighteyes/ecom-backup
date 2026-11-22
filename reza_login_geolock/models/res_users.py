@@ -6,8 +6,8 @@ from html import escape
 from datetime import timedelta
 
 from odoo import SUPERUSER_ID, api, fields, models
-from odoo.exceptions import AccessDenied
-from odoo.http import GeoIP, request
+from odoo.exceptions import AccessDenied, AccessError
+from odoo.http import GeoIP, request, root
 from odoo.modules import module as odoo_module
 
 _logger = logging.getLogger(__name__)
@@ -228,6 +228,34 @@ class ResUsers(models.Model):
             "body_html": body,
             "auto_delete": False,
         })
+
+    def reza_geolock_end_sessions(self):
+        """End every open Odoo session of these users. Returns how many.
+
+        Called from outside (the office server's random sign-out, right after
+        it signs the same person out of Microsoft 365), so the person has to
+        sign in again on both. Core's own device "Log out" asks for the
+        caller's password, which an API call cannot give.
+
+        Only users on IP lock are touched, so this cannot be used to sign
+        arbitrary staff out, and only Settings administrators or geolock
+        managers may call it."""
+        me = self.env.user
+        if not (me.has_group("base.group_system")
+                or me.has_group("reza_login_geolock.group_geolock_manager")):
+            raise AccessError(self.env._("Only an administrator can end other users' sessions."))
+        users = self.sudo().filtered("reza_geolock_ip_only")
+        if not users:
+            return 0
+        logs = self.env["res.device.log"].sudo().search([
+            ("user_id", "in", users.ids), ("revoked", "=", False)])
+        identifiers = list(dict.fromkeys(logs.mapped("session_identifier")))
+        if identifiers:
+            root.session_store.delete_from_identifiers(identifiers)
+            logs.write({"revoked": True})
+        _logger.info("Staff sign-in geolock: ended %d session(s) of %s",
+                     len(identifiers), ", ".join(users.mapped("login")))
+        return len(identifiers)
 
     def _check_credentials(self, credential, env):
         auth_info = super()._check_credentials(credential, env)

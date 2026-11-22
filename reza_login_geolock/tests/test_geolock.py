@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from odoo.exceptions import AccessDenied, ValidationError
+from odoo.exceptions import AccessDenied, AccessError, ValidationError
 from odoo.tests import HttpCase, TransactionCase, tagged
 
 from odoo.addons.reza_login_geolock.models import res_users as geo
@@ -144,6 +144,29 @@ class TestStaffGeolock(TransactionCase):
     def test_plain_users_are_unaffected_by_ip_lock(self):
         self._check(self.staff, "block", "AU")
         self.assertFalse(self._events(self.staff))
+
+    def _device(self, user, ident):
+        return self.env["res.device.log"].sudo().create({
+            "session_identifier": ident, "user_id": user.id, "platform": "windows",
+            "browser": "chrome", "first_activity": "2026-11-20 00:00:00",
+            "last_activity": "2026-11-20 00:00:00", "revoked": False,
+        })
+
+    def test_end_sessions_revokes_only_ip_locked_users(self):
+        other = self.staff.copy({"login": "geolock.other3.test"})
+        mine = self._device(self._lock(self.staff), "a" * 42)
+        theirs = self._device(other, "b" * 42)
+        with patch("odoo.http.root.session_store.delete_from_identifiers") as delete:
+            n = (self.staff | other).reza_geolock_end_sessions()
+        self.assertEqual(n, 1)
+        delete.assert_called_once_with(["a" * 42])
+        self.assertTrue(mine.revoked)
+        self.assertFalse(theirs.revoked)
+
+    def test_end_sessions_needs_an_administrator(self):
+        self._lock(self.staff)
+        with self.assertRaises(AccessError):
+            self.staff.with_user(self.staff).reza_geolock_end_sessions()
 
     def test_report_mode_records_but_allows(self):
         self._check(self.staff, "report", "US")

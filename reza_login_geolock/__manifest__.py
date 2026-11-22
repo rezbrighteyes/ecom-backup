@@ -46,13 +46,18 @@ other sign-in with the right password is refused, listed as an IP lock breach
 and emailed to the geolock managers (or to the addresses in the system
 parameter reza_login_geolock.alert_to).
 
+res.users.reza_geolock_end_sessions() ends every open session of the IP-locked
+users it is called on, for administrators only. The office server calls it
+right after its random Microsoft 365 sign-out, so the person is signed out of
+Odoo at the same moment.
+
 Private and loopback addresses (Odoo.sh's own scheduled jobs) and addresses
 the GeoIP database cannot place are always allowed. Every refusal or would-be
 refusal is listed under Settings > Users & Companies > Sign-in Geolock.
     """,
     "author": "Reza",
         "category": "Administration",
-    "version": "18.0.1.2.0",
+    "version": "18.0.1.3.0",
     "depends": ["base", "base_setup"],
     "data": [
         "security/security.xml",
