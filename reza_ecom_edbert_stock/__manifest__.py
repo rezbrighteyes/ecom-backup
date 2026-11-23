@@ -1,15 +1,25 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Reza Ecom Edbert Stock",
-    "summary": "Show Edbert's free stock on ecom products, for staff",
+    "summary": "Show Edbert's free stock on ecom products, and let the shop sell it",
     "description": """
 Ecom holds almost no stock of its own. Edbert holds it, and the intercompany
 bridge (`reza_ecom_intercompany_po`) buys it order by order. So an ecom product
 reads zero on hand while Edbert may hold thousands.
 
-This module puts Edbert's figure on the ecom product, as a number to look at.
-It writes no quants, posts no journal entry, touches no valuation and does not
-change `allow_out_of_stock_order`. Nothing a customer sees changes.
+This module puts Edbert's figure on the ecom product. The sync writes no
+quants, posts no journal entry, touches no valuation and does not change
+`allow_out_of_stock_order`.
+
+SELLING ON EDBERT'S STOCK (18.0.1.1.0)
+
+For a product with "Continue selling when out-of-stock" OFF, the shop may sell
+its own free stock plus Edbert's free stock less a buffer of 1, less ecom
+orders not yet shipped, shown exact under 5 and otherwise rounded down to
+5, 10 or 20 so Edbert's real position never reaches the shop. Edbert's part counts only when the match is proved and
+the last sync is under 3 hours old. See models/website_stock.py. Settings:
+`reza_ecom_edbert_stock.sell_buffer_qty`, `reza_ecom_edbert_stock.sell_stale_hours`.
+Products with "Continue selling" ON are not affected.
 
     Measured on production 2026-09-07: Edbert's WH/Stock held 2,854 products
     and 1,427,419 free units. Of ecom's 1,688 published storable templates,
@@ -52,12 +62,19 @@ read cannot blank the catalogue.
     """,
     "author": "Reza",
     "category": "Inventory/Inventory",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.1.0",
     "license": "LGPL-3",
     "depends": [
         "product",
         "stock",
         "d3_external_api",
+        "website_sale_stock",
+        # Also overrides website._get_product_available_qty without calling
+        # super() in one branch; depending on it keeps this module ABOVE it.
+        "d3_website_product_extended",
+        # reza_edbert_status / reza_edbert_purchase_id on sale.order: which
+        # shipped units Edbert's figure does not show yet.
+        "reza_ecom_intercompany_po",
     ],
     "data": [
         "data/ir_cron_data.xml",

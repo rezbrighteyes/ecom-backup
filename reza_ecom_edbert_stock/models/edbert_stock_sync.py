@@ -413,6 +413,10 @@ class RezaEdbertStockSync(models.AbstractModel):
         location_id = self._int_param(self.PARAM_LOCATION, self.DEFAULT_LOCATION)
         location = self._check_location(call, location_id)
         self._check_budget(started_at, _("the warehouse settings"))
+        # Stamp the run with the time BEFORE the stock read: the shop treats
+        # anything bought from Edbert after last_sync as not yet in Edbert's
+        # figure, and a purchase confirmed during the run is not in this read.
+        read_at = fields.Datetime.now()
         free_by_id = self._read_quants(call, location_id, location["company_id"][0])
         self._check_budget(started_at, _("the stock position"))
 
@@ -437,7 +441,7 @@ class RezaEdbertStockSync(models.AbstractModel):
         planned = self._plan(local, free_by_id, identifiers)
         changed = self._apply(Product, planned)
 
-        self._param().set_param(self.PARAM_LAST_SYNC, fields.Datetime.now())
+        self._param().set_param(self.PARAM_LAST_SYNC, read_at)
         self._param().set_param(self.PARAM_LAST_RESOLVED, len(identifiers))
 
         _logger.info(

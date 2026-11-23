@@ -38,8 +38,10 @@ class ProductProduct(models.Model):
         help="Free quantity Edbert holds at its own warehouse, excluding stock "
         "already reserved for other orders. A negative position is shown as "
         "zero, because none of it can be sold. Read from the wholesale "
-        "database on a schedule. It is a display figure: no ecom stock, "
-        "valuation or website availability depends on it.",
+        "database on a schedule. No ecom stock or valuation depends on it. "
+        "The shop uses it (less a buffer, banded so the real figure is never "
+        "shown) for products with 'Continue selling' off -- see "
+        "models/website_stock.py.",
     )
 
     reza_edbert_stock_state = fields.Selection(

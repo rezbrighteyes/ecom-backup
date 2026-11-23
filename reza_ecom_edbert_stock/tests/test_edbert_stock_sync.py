@@ -654,10 +654,9 @@ class TestEdbertStockSync(TransactionCase):
     def test_no_ecom_stock_or_availability_is_touched(self):
         """The whole point of this design: it is a number, and nothing else.
 
-        `allow_out_of_stock_order` belongs to website_sale_stock, which this
-        module does not depend on and does not need. It is checked when it is
-        there and skipped when it is not, so the test cannot fail for the wrong
-        reason on a database without the website installed.
+        The SYNC writes nothing but the figures. Selling on them is done at
+        read time by models/website_stock.py, so `allow_out_of_stock_order`
+        must still be left exactly as it was.
         """
         qty_before = self.matched.qty_available
         free_before = self.matched.free_qty
