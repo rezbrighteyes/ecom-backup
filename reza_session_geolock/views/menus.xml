@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Same actions as Settings > Users & Companies; both places keep working.
+         Each menu needs the Sessions Manager group (to see the app) and the
+         Geolock Manager group (to read the records). -->
+    <menuitem id="menu_session_geolock_event"
+              name="Geolock Refusals"
+              parent="advanced_session_management.menu_main_login_log_ah"
+              action="reza_login_geolock.action_reza_login_geolock_event"
+              groups="reza_login_geolock.group_geolock_manager"
+              sequence="10"/>
+    <menuitem id="menu_session_geolock_ip"
+              name="Allowed IP Addresses"
+              parent="advanced_session_management.menu_main_login_log_ah"
+              action="reza_login_geolock.action_reza_login_geolock_ip"
+              groups="reza_login_geolock.group_geolock_manager"
+              sequence="11"/>
+</odoo>
