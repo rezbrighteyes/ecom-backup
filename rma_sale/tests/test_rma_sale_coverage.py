@@ -105,7 +105,7 @@ class TestRmaSaleCoverage(TestRmaSaleBase):
 
     def test_return_picking_sale_links(self):
         return_wizard = Form(
-            self.env["stock.return.picking"].with_context(
+            self.env["rma.return.picking"].with_context(
                 active_ids=self.order_out_picking.ids,
                 active_id=self.order_out_picking.id,
                 active_model="stock.picking",
@@ -125,7 +125,7 @@ class TestRmaSaleCoverage(TestRmaSaleBase):
 
         delivery = self._create_delivery()
         return_wizard = Form(
-            self.env["stock.return.picking"].with_context(
+            self.env["rma.return.picking"].with_context(
                 active_ids=delivery.ids,
                 active_id=delivery.id,
                 active_model="stock.picking",

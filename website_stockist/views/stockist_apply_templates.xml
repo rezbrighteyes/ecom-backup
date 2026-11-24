@@ -8,7 +8,7 @@
         <t t-if="website.stockist_cta_enabled">
             <a href="/stockists/apply"
                class="btn btn-primary btn_cta o_stockist_cta"
-               t-esc="website._stockist_cta_label()"/>
+               t-out="website._stockist_cta_label()"/>
         </t>
     </template>
 
@@ -22,19 +22,19 @@
                             <li class="breadcrumb-item"><a href="/">Home</a></li>
                             <li class="breadcrumb-item"><a href="/stockists">Stockists</a></li>
                             <li class="breadcrumb-item active" aria-current="page"
-                                t-esc="heading"/>
+                                t-out="heading"/>
                         </ol>
                     </nav>
 
-                    <h1 t-esc="heading"/>
-                    <p t-if="intro" class="lead" t-esc="intro"/>
+                    <h1 t-out="heading"/>
+                    <p t-if="intro" class="lead" t-out="intro"/>
                     <p t-else="" class="lead">
                         Tell us about your store and we will be in touch about
                         stocking the range.
                     </p>
 
                     <div t-if="errors.get('spam')" class="alert alert-danger"
-                         t-esc="errors['spam']"/>
+                         t-out="errors['spam']"/>
 
                     <form action="/stockists/apply/submit" method="post" class="mt-4">
                         <input type="hidden" name="csrf_token"
@@ -56,7 +56,7 @@
                                        name="business_name" required="required"
                                        t-att-value="values.get('business_name')"/>
                                 <div t-if="errors.get('business_name')" class="text-danger small"
-                                     t-esc="errors['business_name']"/>
+                                     t-out="errors['business_name']"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" for="contact_name">Your name</label>
@@ -69,7 +69,7 @@
                                        name="email" required="required"
                                        t-att-value="values.get('email')"/>
                                 <div t-if="errors.get('email')" class="text-danger small"
-                                     t-esc="errors['email']"/>
+                                     t-out="errors['email']"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label" for="phone">Phone</label>
@@ -82,7 +82,7 @@
                                        name="suburb" required="required"
                                        t-att-value="values.get('suburb')"/>
                                 <div t-if="errors.get('suburb')" class="text-danger small"
-                                     t-esc="errors['suburb']"/>
+                                     t-out="errors['suburb']"/>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label" for="state">State</label>
@@ -90,7 +90,7 @@
                                     <option value="">—</option>
                                     <t t-foreach="['QLD','NSW','VIC','SA','WA','TAS','NT','ACT']"
                                        t-as="code">
-                                        <option t-att-value="code" t-esc="code"
+                                        <option t-att-value="code" t-out="code"
                                                 t-att-selected="'selected' if values.get('state') == code else None"/>
                                     </t>
                                 </select>
@@ -107,11 +107,11 @@
                                 </label>
                                 <textarea class="form-control" id="message" name="message"
                                           rows="4"
-                                          placeholder="What you sell, who shops with you, how many stores."><t t-esc="values.get('message')"/></textarea>
+                                          placeholder="What you sell, who shops with you, how many stores."><t t-out="values.get('message')"/></textarea>
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-secondary mt-4" t-esc="submit_label"/>
+                        <button type="submit" class="btn btn-secondary mt-4" t-out="submit_label"/>
                         <p class="small text-muted mt-3">
                             Fields marked * are required. We use these details only to
                             answer your enquiry.
@@ -128,11 +128,11 @@
                 <div class="container py-5" style="max-width:44rem">
                     <h1>Thanks — we have it</h1>
                     <p class="lead">
-                        Your application for <strong t-esc="business_name"/> has reached
+                        Your application for <strong t-out="business_name"/> has reached
                         our customer service team.
                     </p>
                     <p t-if="reference" class="text-muted">
-                        Your reference is <strong t-esc="reference"/>. Quote it if you
+                        Your reference is <strong t-out="reference"/>. Quote it if you
                         need to follow up.
                     </p>
                     <p><a href="/stockists">← Back to stockists</a></p>

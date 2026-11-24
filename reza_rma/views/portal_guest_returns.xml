@@ -13,7 +13,7 @@
 
                         <t t-if="error">
                             <div class="rc-alert-danger">
-                                <t t-foreach="error.items()" t-as="err"><div><t t-esc="err[1]"/></div></t>
+                                <t t-foreach="error.items()" t-as="err"><div><t t-out="err[1]"/></div></t>
                             </div>
                         </t>
 
@@ -53,7 +53,7 @@
             <t t-if="error">
                 <div style="max-width:560px;margin:1.5rem auto 0;">
                     <div class="rc-alert-danger">
-                        <t t-foreach="error.items()" t-as="err"><div><t t-esc="err[1]"/></div></t>
+                        <t t-foreach="error.items()" t-as="err"><div><t t-out="err[1]"/></div></t>
                     </div>
                 </div>
             </t>
@@ -94,10 +94,10 @@
 
                                 <!-- Info -->
                                 <div class="rc-item-info">
-                                    <div class="rc-item-name"><t t-esc="line['product_name']"/></div>
+                                    <div class="rc-item-name"><t t-out="line['product_name']"/></div>
                                     <div class="rc-item-price">
-                                        <t t-esc="line['currency_symbol']"/><t t-esc="'%.2f' % line['price_subtotal']"/>
-                                        <t t-if="line['qty_delivered'] > 1 or line['qty'] > 1"> × <t t-esc="int(line['qty_delivered']) if line['qty_delivered'] else int(line['qty'])"/></t>
+                                        <t t-out="line['currency_symbol']"/><t t-out="'%.2f' % line['price_subtotal']"/>
+                                        <t t-if="line['qty_delivered'] > 1 or line['qty'] > 1"> × <t t-out="int(line['qty_delivered']) if line['qty_delivered'] else int(line['qty'])"/></t>
                                     </div>
                                     <t t-if="line['already_returned']">
                                         <span class="rc-badge-grey">Already returned</span>
@@ -154,7 +154,7 @@
                                         t-att-data-exclude-estimate="1 if reason.code == 'WARRANTY' else 0"
                                         t-att-data-allowed-resolution="reason.allowed_resolution"
                                         t-att-data-fee-waived="'1' if reason.reza_return_fee_waived else '0'">
-                                        <t t-esc="reason.name"/>
+                                        <t t-out="reason.name"/>
                                     </div>
                                 </t>
                             </div>
@@ -199,7 +199,7 @@
                                 Exchange for a different item
                             </div>
                             <div class="rc-option-row" data-outcome="store_credit" data-outcome-name="Store credit">
-                                Store credit<t t-if="(bonus_percent or 0) > 0"> <span style="color:#16a34a;font-size:.8em;">(earn <t t-esc="int(bonus_percent)"/>% extra on your first return!)</span></t>
+                                Store credit<t t-if="(bonus_percent or 0) > 0"> <span style="color:#16a34a;font-size:.8em;">(earn <t t-out="int(bonus_percent)"/>% extra on your first return!)</span></t>
                             </div>
 
                             <div id="exchange-wrap" class="mt-3" style="display:none;">
@@ -789,7 +789,7 @@
                             <div style="background:#f0f4f8;border:1.5px solid #c7d9eb;border-radius:10px;padding:.9rem 1rem;margin-bottom:1.25rem;">
                                 <div style="color:#888;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem;">Return Reference</div>
                                 <div style="font-size:1.1rem;font-weight:700;color:#1a3a5c;letter-spacing:.02em;">
-                                    <t t-esc="', '.join(rma_refs)"/>
+                                    <t t-out="', '.join(rma_refs)"/>
                                 </div>
                                 <div style="color:#888;font-size:.75rem;margin-top:.3rem;">Save this — you'll need it to track your return.</div>
                             </div>
@@ -848,7 +848,7 @@
 
                         <t t-if="error">
                             <div class="rc-alert-danger">
-                                <t t-foreach="error.items()" t-as="err"><div><t t-esc="err[1]"/></div></t>
+                                <t t-foreach="error.items()" t-as="err"><div><t t-out="err[1]"/></div></t>
                             </div>
                         </t>
 
@@ -893,7 +893,7 @@
                 <div class="rc-card" style="max-width:600px;">
                     <div class="rc-step-hdr">
                         <a href="/returns/track" class="rc-back-btn">←</a>
-                        <span class="rc-step-title">Return <t t-esc="rma.name"/></span>
+                        <span class="rc-step-title">Return <t t-out="rma.name"/></span>
                     </div>
                     <div class="rc-card-body">
 
@@ -927,11 +927,11 @@
                         <!-- Item summary -->
                         <div class="rc-info-row">
                             <span class="rc-info-label">Product</span>
-                            <span class="rc-info-val"><t t-esc="rma.product_id.name or '—'"/></span>
+                            <span class="rc-info-val"><t t-out="rma.product_id.name or '—'"/></span>
                         </div>
                         <div class="rc-info-row">
                             <span class="rc-info-label">Quantity</span>
-                            <span class="rc-info-val"><t t-esc="rma.product_uom_qty"/></span>
+                            <span class="rc-info-val"><t t-out="rma.product_uom_qty"/></span>
                         </div>
                         <div class="rc-info-row">
                             <span class="rc-info-label">Requested outcome</span>
@@ -946,7 +946,7 @@
                             <div class="rc-info-row">
                                 <span class="rc-info-label">Return shipping fee</span>
                                 <span class="rc-info-val">
-                                    <t t-esc="rma.company_id.currency_id.symbol"/><t t-esc="'%.2f' % rma.reza_return_shipping_fee"/>
+                                    <t t-out="rma.company_id.currency_id.symbol"/><t t-out="'%.2f' % rma.reza_return_shipping_fee"/>
                                     <span style="color:#999;font-size:.78rem;">
                                         <t t-if="rma.reza_operation_type == 'store_credit'"> (deducted from store credit)</t>
                                         <t t-else=""> (deducted from refund)</t>
@@ -962,14 +962,14 @@
                                 </span>
                                 <span class="rc-info-val">
                                     <t t-set="net_amount" t-value="grouped_request.expected_resolution_total - grouped_request.return_shipping_fee"/>
-                                    <t t-esc="grouped_request.currency_id.symbol"/><t t-esc="'%.2f' % (net_amount if net_amount > 0 else 0.0)"/>
+                                    <t t-out="grouped_request.currency_id.symbol"/><t t-out="'%.2f' % (net_amount if net_amount > 0 else 0.0)"/>
                                 </span>
                             </div>
                         </t>
                         <t t-if="rma.reza_return_tracking_ref">
                             <div class="rc-info-row">
                                 <span class="rc-info-label">Tracking number</span>
-                                <span class="rc-info-val"><t t-esc="rma.reza_return_tracking_ref"/></span>
+                                <span class="rc-info-val"><t t-out="rma.reza_return_tracking_ref"/></span>
                             </div>
                         </t>
 
@@ -1065,7 +1065,7 @@
                     </div>
                     <div class="rc-card-body">
                         <p style="color:#555;font-size:.88rem;margin-bottom:1.5rem;">
-                            A <strong><t t-esc="currency.symbol"/><t t-esc="'%.2f' % amount"/> AUD</strong>
+                            A <strong><t t-out="currency.symbol"/><t t-out="'%.2f' % amount"/> AUD</strong>
                             return postage fee applies for warranty returns. Please complete payment
                             below — your return label will be generated immediately after.
                         </p>

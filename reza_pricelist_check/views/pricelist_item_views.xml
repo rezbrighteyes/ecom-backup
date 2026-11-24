@@ -48,12 +48,12 @@
                 <filter name="level_category" string="Category rules" domain="[('applied_on', '=', '2_product_category')]"/>
                 <filter name="level_global" string="All-product rules" domain="[('applied_on', '=', '3_global')]"/>
                 <separator/>
-                <filter name="kind_pct" string="% discount" domain="[('compute_price', '=', 'percentage')]"/>
+                <filter name="kind_pct" string="% discount" domain="[('compute_price', '=', 'discount'), ('price_discount', '&gt;=', 0), ('price_round', '=', 0), ('price_surcharge', '=', 0), ('price_min_margin', '=', 0), ('price_max_margin', '=', 0)]"/>
                 <filter name="kind_fixed" string="Fixed price" domain="[('compute_price', '=', 'fixed')]"/>
-                <filter name="kind_formula" string="Formula" domain="[('compute_price', '=', 'formula')]"/>
+                <filter name="kind_formula" string="Formula" domain="['&amp;', ('compute_price', '!=', 'fixed'), '!', '&amp;', '&amp;', '&amp;', '&amp;', '&amp;', ('compute_price', '=', 'discount'), ('price_discount', '&gt;=', 0), ('price_round', '=', 0), ('price_surcharge', '=', 0), ('price_min_margin', '=', 0), ('price_max_margin', '=', 0)]"/>
                 <separator/>
                 <filter name="zero_pct" string="0% rules (keep full price, e.g. exclusions)"
-                        domain="[('compute_price', '=', 'percentage'), ('percent_price', '=', 0), ('base', '=', 'list_price')]"/>
+                        domain="[('compute_price', '=', 'discount'), ('price_discount', '=', 0), ('price_round', '=', 0), ('price_surcharge', '=', 0), ('price_min_margin', '=', 0), ('price_max_margin', '=', 0), ('base', '=', 'list_price')]"/>
                 <separator/>
                 <filter name="current" string="Current"
                         domain="['&amp;', '|', ('date_start', '=', False), ('date_start', '&lt;=', 'now'), '|', ('date_end', '=', False), ('date_end', '&gt;=', 'now')]"/>

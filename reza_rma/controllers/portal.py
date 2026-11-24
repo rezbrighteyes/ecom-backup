@@ -15,22 +15,21 @@ from odoo.addons.rma.controllers.main import PortalRma
 
 class RezaRmaPortal(PortalRma):
 
-    def _prepare_home_portal_values(self, counters):
-        values = super()._prepare_home_portal_values(counters)
-        if "reza_rma_count" in counters:
-            values["reza_rma_count"] = request.env["reza.rma.request"].sudo().search_count(
-                self._reza_get_request_domain()
-            )
-        return values
+    def _prepare_portal_counter_values(self, counter):
+        # Odoo 20: /my/counters asks each controller for (model, domain,
+        # access); "sudo" keeps the old sudo().search_count().
+        if counter == "reza_rma_count":
+            return "reza.rma.request", self._reza_get_request_domain(), "sudo"
+        return super()._prepare_portal_counter_values(counter)
 
     def _reza_get_request_domain(self):
         partner = request.env.user.partner_id.commercial_partner_id
         domain = [("partner_id", "child_of", partner.id)]
-        if request.website:
+        if request.env.website:
             domain.extend(
                 [
-                    ("website_id", "=", request.website.id),
-                    ("company_id", "=", request.website.company_id.id),
+                    ("website_id", "=", request.env.website.id),
+                    ("company_id", "=", request.env.website.company_id.id),
                 ]
             )
         return domain
@@ -41,8 +40,8 @@ class RezaRmaPortal(PortalRma):
             ("partner_id", "child_of", partner.id),
             ("reza_portal_visible", "=", True),
         ]
-        if request.website:
-            domain.append(("company_id", "=", request.website.company_id.id))
+        if request.env.website:
+            domain.append(("company_id", "=", request.env.website.company_id.id))
         return domain
 
     def _reza_get_rma_or_raise(self, rma_id):
@@ -52,8 +51,8 @@ class RezaRmaPortal(PortalRma):
         partner = request.env.user.partner_id.commercial_partner_id
         if rma.partner_id.commercial_partner_id.id != partner.id:
             raise AccessError(_("Access denied."))
-        if request.website:
-            if rma.company_id.id != request.website.company_id.id:
+        if request.env.website:
+            if rma.company_id.id != request.env.website.company_id.id:
                 raise AccessError(_("Access denied."))
         return rma
 
@@ -62,8 +61,8 @@ class RezaRmaPortal(PortalRma):
             ("partner_id", "child_of", partner.id),
             ("state", "in", ["sale", "done"]),
         ]
-        if request.website:
-            domain.append(("website_id", "=", request.website.id))
+        if request.env.website:
+            domain.append(("website_id", "=", request.env.website.id))
         all_orders = request.env["sale.order"].sudo().search(domain, order="id desc")
         return all_orders.filtered(
             lambda o: o.date_order
@@ -81,7 +80,7 @@ class RezaRmaPortal(PortalRma):
             for order in eligible_orders
             if order.date_order
         }
-        company = request.website.company_id if request.website else request.env.company
+        company = request.env.website.company_id if request.env.website else request.env.company
         return request.render("reza_rma.portal_rma_create", {
             "eligible_orders": eligible_orders,
             "reasons": reasons,
@@ -119,15 +118,15 @@ class RezaRmaPortal(PortalRma):
 
     def _reza_get_request_by_token(self, token):
         domain = [("portal_access_token", "=", token)]
-        if request.website:
+        if request.env.website:
             domain.extend([
-                ("website_id", "=", request.website.id),
-                ("company_id", "=", request.website.company_id.id),
+                ("website_id", "=", request.env.website.id),
+                ("company_id", "=", request.env.website.company_id.id),
             ])
         return request.env["reza.rma.request"].sudo().search(domain, limit=1)
 
     def _reza_hash_guest_value(self, value):
-        secret = request.env["ir.config_parameter"].sudo().get_param(
+        secret = request.env["ir.config_parameter"].sudo().get_str(
             "database.secret", "reza-rma"
         )
         return hashlib.sha256(f"{secret}:{value}".encode()).hexdigest()
@@ -146,7 +145,7 @@ class RezaRmaPortal(PortalRma):
         cutoff = fields.Datetime.subtract(fields.Datetime.now(), minutes=15)
         attempts = Attempt.search_count(
             [
-                ("website_id", "=", request.website.id),
+                ("website_id", "=", request.env.website.id),
                 ("create_date", ">=", cutoff),
                 "|",
                 ("ip_hash", "=", ip_hash),
@@ -159,7 +158,7 @@ class RezaRmaPortal(PortalRma):
             {
                 "ip_hash": ip_hash,
                 "lookup_hash": lookup_hash,
-                "website_id": request.website.id,
+                "website_id": request.env.website.id,
                 "successful": successful,
             }
         )
@@ -211,7 +210,7 @@ class RezaRmaPortal(PortalRma):
                 raise ValidationError(
                     _("The selected return reason does not allow this resolution.")
                 )
-        website = order.website_id or request.website
+        website = order.website_id or request.env.website
         if not website or website.company_id != order.company_id:
             raise ValidationError(_("The order is not linked to a valid return website."))
         all_fees_waived = all(item["reason"].reza_return_fee_waived for item in selections)
@@ -282,7 +281,7 @@ class RezaRmaPortal(PortalRma):
                     "move_id": move.id if move else False,
                     "product_id": line.product_id.id,
                     "product_uom_qty": quantity,
-                    "product_uom": line.product_uom.id,
+                    "product_uom": line.product_uom_id.id,
                     "company_id": order.company_id.id,
                     "operation_id": operation.id,
                     "reza_reason_id": item["reason"].id,
@@ -302,7 +301,7 @@ class RezaRmaPortal(PortalRma):
                     "sale_order_line_id": line.id,
                     "source_move_id": move.id if move else False,
                     "product_id": line.product_id.id,
-                    "uom_id": line.product_uom.id,
+                    "uom_id": line.product_uom_id.id,
                     "quantity": quantity,
                     "reason_id": item["reason"].id,
                     "resolution": resolution_map[operation_type],
@@ -331,8 +330,8 @@ class RezaRmaPortal(PortalRma):
             ("name", "=", order_number),
             ("state", "in", ["sale", "done"]),
         ]
-        if request.website:
-            domain.append(("website_id", "=", request.website.id))
+        if request.env.website:
+            domain.append(("website_id", "=", request.env.website.id))
 
         orders = request.env["sale.order"].sudo().search(domain, limit=20)
         email_lower = email.strip().lower()
@@ -378,7 +377,7 @@ class RezaRmaPortal(PortalRma):
                 "max_qty": max_qty,
                 "price_subtotal": line.price_subtotal,
                 "currency_symbol": order.currency_id.symbol,
-                "uom": line.product_uom.name if line.product_uom else "",
+                "uom": line.product_uom_id.name if line.product_uom_id else "",
                 "already_returned": max_qty <= 0,
                 "returnable": not product_tmpl.reza_non_returnable and max_qty > 0,
                 "return_policy_note": product_tmpl.reza_return_policy_note or "",
@@ -419,7 +418,7 @@ class RezaRmaPortal(PortalRma):
             else:
                 request.env["reza.rma.lookup.attempt"].sudo().search(
                     [
-                        ("website_id", "=", request.website.id),
+                        ("website_id", "=", request.env.website.id),
                         ("lookup_hash", "=", self._reza_hash_guest_value(
                             f"{order_number.strip().lower()}:{email.strip().lower()}"
                         )),
@@ -490,7 +489,7 @@ class RezaRmaPortal(PortalRma):
             not order.exists()
             or not continuation_token
             or lookup.get("token") != continuation_token
-            or (request.website and order.website_id != request.website)
+            or (request.env.website and order.website_id != request.env.website)
         ):
             return request.redirect("/returns")
 
@@ -663,26 +662,25 @@ class RezaRmaPortal(PortalRma):
         partner_id = order.partner_id.id
         company_id = order.company_id.id
 
-        providers_sudo = request.env["payment.provider"].sudo()._get_compatible_providers(
-            company_id=company_id,
-            partner_id=partner_id,
-            amount=amount,
+        # Odoo 20 renamed the payment availability API: _get_compatible_* is
+        # now provider._find_available_providers / _find_available_payment_methods
+        # / _find_available_tokens (same calls as PaymentPortal._prepare_payment_form_values).
+        providers_sudo = request.env["payment.provider"].sudo()._find_available_providers(
+            company_id,
+            partner_id,
+            amount,
             currency_id=currency.id,
         )
-        try:
-            payment_methods_sudo = request.env["payment.method"].sudo()._get_compatible_payment_methods(
-                providers_sudo.ids,
-                partner_id,
-                currency_id=currency.id,
-            )
-        except AttributeError:
-            payment_methods_sudo = request.env["payment.method"].sudo()
-        try:
-            tokens_sudo = request.env["payment.token"].sudo()._get_available_tokens(
-                providers_sudo.ids, partner_id
-            )
-        except AttributeError:
-            tokens_sudo = request.env["payment.token"].sudo()
+        payment_methods_sudo = providers_sudo._find_available_payment_methods(
+            partner_id,
+            currency_id=currency.id,
+        )._deduplicate_by_code()
+        tokens_sudo = providers_sudo._find_available_tokens(partner_id)
+        show_tokenize_input_mapping = {
+            provider.id: provider.allow_tokenization
+            and not provider._is_tokenization_required()
+            for provider in providers_sudo
+        }
 
         access_token = payment_utils.generate_access_token(partner_id, amount, currency.id)
 
@@ -700,6 +698,7 @@ class RezaRmaPortal(PortalRma):
             "tokens_sudo": tokens_sudo,
             "tokens": tokens_sudo,
             "default_token_id": None,
+            "show_tokenize_input_mapping": show_tokenize_input_mapping,
             "access_token": access_token,
             "transaction_route": "/payment/transaction",
             "landing_route": f"/returns/pay/{token}/done",
@@ -760,9 +759,9 @@ class RezaRmaPortal(PortalRma):
         )
         if not grouped_request:
             return None
-        if request.website and (
-            grouped_request.website_id != request.website
-            or grouped_request.company_id != request.website.company_id
+        if request.env.website and (
+            grouped_request.website_id != request.env.website
+            or grouped_request.company_id != request.env.website.company_id
         ):
             return None
         email_lower = email.strip().lower()
@@ -908,7 +907,7 @@ class RezaRmaPortal(PortalRma):
             return {"lines": [], "error": "Order not found."}
         if order.partner_id.commercial_partner_id.id != partner.id:
             return {"lines": [], "error": "Access denied."}
-        if request.website and order.website_id.id != request.website.id:
+        if request.env.website and order.website_id.id != request.env.website.id:
             return {"lines": [], "error": "Access denied."}
         if not order.date_order:
             return {"lines": [], "error": "Invalid order."}
@@ -932,7 +931,7 @@ class RezaRmaPortal(PortalRma):
                 "qty": line.product_uom_qty,
                 "qty_delivered": line.qty_delivered,
                 "max_qty": max_qty,
-                "uom": line.product_uom.name if line.product_uom else "",
+                "uom": line.product_uom_id.name if line.product_uom_id else "",
                 "already_returned": max_qty <= 0,
                 "returnable": not product_tmpl.reza_non_returnable and max_qty > 0,
                 "return_policy_note": product_tmpl.reza_return_policy_note or "",

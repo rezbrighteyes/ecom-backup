@@ -14,6 +14,11 @@ from .. import hooks
 
 
 class TestRma(BaseCommon):
+    # Odoo 20's BaseCommon runs each test as a fresh `test_user` holding
+    # only base.group_user. These tests were written for the superuser
+    # environment BaseCommon gave up to Odoo 19, so keep that.
+    _test_user_groups = ()
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -397,7 +402,7 @@ class TestRmaCase(TestRma):
         self.assertEqual(rma.reception_move_id.picking_id.state, "assigned")
         self.assertEqual(rma.reception_move_id.product_id, rma.product_id)
         self.assertEqual(rma.reception_move_id.product_uom_qty, 10)
-        self.assertEqual(rma.reception_move_id.product_uom, rma.product_uom)
+        self.assertEqual(rma.reception_move_id.uom_id, rma.product_uom)
         self.assertEqual(rma.state, "confirmed")
         rma.reception_move_id.quantity = 9
         with self.assertRaises(ValidationError):
@@ -846,7 +851,7 @@ class TestRmaCase(TestRma):
         for rma in all_rmas:
             self.assertEqual(rma.product_id, rma.delivery_move_ids.product_id)
             self.assertEqual(rma.product_uom_qty, rma.delivery_move_ids.product_uom_qty)
-            self.assertEqual(rma.product_uom, rma.delivery_move_ids.product_uom)
+            self.assertEqual(rma.product_uom, rma.delivery_move_ids.uom_id)
             rma.delivery_move_ids.quantity = rma.product_uom_qty
         pick_1.button_validate()
         pick_2.button_validate()
@@ -889,7 +894,7 @@ class TestRmaCase(TestRma):
         # Create a return from a delivery picking
         origin_delivery = self._create_delivery()
         stock_return_picking_form = Form(
-            self.env["stock.return.picking"].with_context(
+            self.env["rma.return.picking"].with_context(
                 active_ids=origin_delivery.ids,
                 active_id=origin_delivery.id,
                 active_model="stock.picking",
@@ -1365,13 +1370,13 @@ class TestRmaCase(TestRma):
 
         rma.action_confirm()
         self.assertEqual(
-            rma._track_subtype({"state": "draft"}),
+            rma._track_log_get_default_subtype({"state": "draft"}),
             self.env.ref("rma.mt_rma_notification"),
         )
         rma.action_cancel()
         rma.action_draft()
         self.assertEqual(
-            rma._track_subtype({"state": "cancelled"}),
+            rma._track_log_get_default_subtype({"state": "cancelled"}),
             self.env.ref("rma.mt_rma_draft"),
         )
         rma.with_context(mark_rma_as_sent=True).message_post(body="Sent")
@@ -1434,7 +1439,7 @@ class TestRmaCase(TestRma):
         self.assertTrue(draft.sent)
         draft.action_confirm()
         self.assertNotEqual(draft._creation_subtype(), self.env.ref("rma.mt_rma_draft"))
-        self.assertIsNotNone(draft._track_subtype({}))
+        self.assertIsNotNone(draft._track_log_get_default_subtype({}))
 
         anonymous = self.env["rma"].message_new(
             {"subject": "Anonymous RMA", "body": "No custom values"}

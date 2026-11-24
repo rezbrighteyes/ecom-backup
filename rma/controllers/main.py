@@ -12,15 +12,13 @@ from odoo.addons.portal.controllers.portal import pager as portal_pager
 
 
 class PortalRma(CustomerPortal):
-    def _prepare_home_portal_values(self, counters):
-        values = super()._prepare_home_portal_values(counters)
-        if "rma_count" in counters:
-            rma_model = request.env["rma"]
-            rma_count = (
-                rma_model.search_count([]) if rma_model.has_access("read") else 0
-            )
-            values["rma_count"] = rma_count
-        return values
+    def _prepare_portal_counter_values(self, counter):
+        # Odoo 20: the /my cards are `portal.entry` records (data/portal_entry_data.xml)
+        # and /my/counters asks for (model, domain, access) per counter;
+        # core returns 0 when the user lacks `read` on rma.
+        if counter == "rma_count":
+            return "rma", [], "read"
+        return super()._prepare_portal_counter_values(counter)
 
     def _rma_get_page_view_values(self, rma, access_token, **kwargs):
         values = {
@@ -94,6 +92,9 @@ class PortalRma(CustomerPortal):
     def portal_my_rma_detail(
         self, rma_id, access_token=None, report_type=None, download=False, **kw
     ):
+        if not rma_id:
+            # Odoo 20 browse() refuses id 0 with an AssertionError.
+            return request.redirect("/my")
         try:
             rma_sudo = self._document_check_access("rma", rma_id, access_token)
         except (AccessError, MissingError):

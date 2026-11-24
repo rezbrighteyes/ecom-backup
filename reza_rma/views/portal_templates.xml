@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Deactivate OCA portal home tile and breadcrumb — replaced below -->
-    <record id="rma.portal_my_home_rma" model="ir.ui.view">
-        <field name="active">False</field>
+    <!-- Odoo 20: the /my home tiles are portal.entry records. Turn the OCA
+         "RMA Orders" tile into our "Returns" tile instead of adding a second
+         one (it used to be a portal_my_home xpath, deactivated here). -->
+    <record id="rma.portal_entry_rma" model="portal.entry">
+        <field name="name">Returns</field>
+        <field name="description">View and manage your return requests</field>
+        <field name="url">/my/rmas</field>
+        <field name="image" type="bytes" file="sale/static/src/img/bag.svg"/>
+        <field name="placeholder_count">reza_rma_count</field>
     </record>
+    <!-- Deactivate the OCA breadcrumb, replaced below -->
     <record id="rma.portal_my_home_menu_rma" model="ir.ui.view">
         <field name="active">False</field>
     </record>
@@ -19,26 +26,11 @@
                 <t t-else="">My Returns</t>
             </li>
             <li t-if="rma and page_name == 'rma_return'" class="breadcrumb-item active">
-                <t t-esc="rma.name"/>
+                <t t-out="rma.name"/>
             </li>
         </xpath>
     </template>
 
-    <!-- Portal Home Tile — add "Returns" entry -->
-    <template
-        id="portal_my_home_reza_rma"
-        name="Portal Home: Returns"
-        inherit_id="portal.portal_my_home"
-        priority="35">
-        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
-            <t t-call="portal.portal_docs_entry"
-                title.translate="Returns"
-                text.translate="View and manage your return requests"
-                url.f="/my/rmas"
-                placeholder_count.f="reza_rma_count"
-                icon.f="/sale/static/src/img/bag.svg"/>
-        </xpath>
-    </template>
 
 
     <!-- /my/rmas — List page -->
@@ -77,20 +69,20 @@
                             <tr>
                                 <td>
                                     <a t-attf-href="/my/rmas/#{rma.id}">
-                                        <t t-esc="rma.reza_request_line_id.request_id.name or rma.name"/>
+                                        <t t-out="rma.reza_request_line_id.request_id.name or rma.name"/>
                                     </a>
                                 </td>
                                 <td class="d-none d-md-table-cell">
                                     <t t-if="rma.order_id">
-                                        <t t-esc="rma.order_id.name"/>
+                                        <t t-out="rma.order_id.name"/>
                                     </t>
                                 </td>
                                 <td class="d-none d-md-table-cell">
-                                    <t t-esc="rma.create_date" t-options='{"widget": "date"}'/>
+                                    <t t-out="rma.create_date" t-options='{"widget": "date"}'/>
                                 </td>
                                 <td class="d-none d-md-table-cell">
                                     <t t-if="rma.reza_reason_id">
-                                        <t t-esc="rma.reza_reason_id.name"/>
+                                        <t t-out="rma.reza_reason_id.name"/>
                                     </t>
                                 </td>
                                 <td class="d-none d-md-table-cell">
@@ -100,7 +92,7 @@
                                 </td>
                                 <td>
                                     <span t-attf-class="badge #{rma.reza_portal_badge_class}">
-                                        <t t-esc="rma.reza_portal_state_label"/>
+                                        <t t-out="rma.reza_portal_state_label"/>
                                     </span>
                                 </td>
                             </tr>
@@ -137,9 +129,9 @@
 
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h2>
-                    <t t-esc="rma.name"/>
+                    <t t-out="rma.name"/>
                     <span t-attf-class="badge #{rma.reza_portal_badge_class} ms-2 fs-6">
-                        <t t-esc="rma.reza_portal_state_label"/>
+                        <t t-out="rma.reza_portal_state_label"/>
                     </span>
                 </h2>
             </div>
@@ -152,14 +144,14 @@
                         <dd class="col-sm-7">
                             <t t-if="rma.order_id">
                                 <a t-attf-href="/my/orders/#{rma.order_id.id}">
-                                    <t t-esc="rma.order_id.name"/>
+                                    <t t-out="rma.order_id.name"/>
                                 </a>
                             </t>
                             <t t-else="">—</t>
                         </dd>
                         <dt class="col-sm-5">Return Reason</dt>
                         <dd class="col-sm-7">
-                            <t t-esc="rma.reza_reason_id.name or '—'"/>
+                            <t t-out="rma.reza_reason_id.name or '—'"/>
                         </dd>
                         <dt class="col-sm-5">Requested Outcome</dt>
                         <dd class="col-sm-7">
@@ -177,14 +169,14 @@
                         <dt class="col-sm-5">Return Tracking</dt>
                         <dd class="col-sm-7">
                             <t t-if="rma.reza_return_tracking_ref">
-                                <t t-esc="rma.reza_return_tracking_ref"/>
+                                <t t-out="rma.reza_return_tracking_ref"/>
                             </t>
                             <t t-else="">Pending</t>
                         </dd>
                         <t t-if="rma.reza_return_shipping_fee">
                             <dt class="col-sm-5">Return Shipping Fee</dt>
                             <dd class="col-sm-7">
-                                <t t-esc="rma.company_id.currency_id.symbol"/><t t-esc="'%.2f' % rma.reza_return_shipping_fee"/>
+                                <t t-out="rma.company_id.currency_id.symbol"/><t t-out="'%.2f' % rma.reza_return_shipping_fee"/>
                                 <span class="text-muted small"> (deducted from refund)</span>
                             </dd>
                         </t>
@@ -194,19 +186,19 @@
                     <dl class="row">
                         <dt class="col-sm-5">Submitted</dt>
                         <dd class="col-sm-7">
-                            <t t-esc="rma.create_date" t-options='{"widget": "date"}'/>
+                            <t t-out="rma.create_date" t-options='{"widget": "date"}'/>
                         </dd>
                         <dt class="col-sm-5">Received at Warehouse</dt>
                         <dd class="col-sm-7">
                             <t t-if="rma.reza_warehouse_received_date">
-                                <t t-esc="rma.reza_warehouse_received_date" t-options='{"widget": "date"}'/>
+                                <t t-out="rma.reza_warehouse_received_date" t-options='{"widget": "date"}'/>
                             </t>
                             <t t-else="">Pending</t>
                         </dd>
                         <dt class="col-sm-5">Processing Due</dt>
                         <dd class="col-sm-7">
                             <t t-if="rma.reza_sla_due_date">
-                                <t t-esc="rma.reza_sla_due_date" t-options='{"widget": "date"}'/>
+                                <t t-out="rma.reza_sla_due_date" t-options='{"widget": "date"}'/>
                             </t>
                             <t t-else="">Pending</t>
                         </dd>
@@ -249,7 +241,7 @@
             <t t-if="rma.reza_customer_notes">
                 <div class="mb-4">
                     <h5>Notes</h5>
-                    <p><t t-esc="rma.reza_customer_notes"/></p>
+                    <p><t t-out="rma.reza_customer_notes"/></p>
                 </div>
             </t>
 
@@ -265,7 +257,7 @@
                             </a>
                             <t t-if="rma.reza_return_shipping_fee">
                                 <p class="mt-2 mb-0 small text-muted">
-                                    Return shipping fee of <strong><t t-esc="rma.company_id.currency_id.symbol"/><t t-esc="'%.2f' % rma.reza_return_shipping_fee"/></strong>
+                                    Return shipping fee of <strong><t t-out="rma.company_id.currency_id.symbol"/><t t-out="'%.2f' % rma.reza_return_shipping_fee"/></strong>
                                     will be deducted from your refund — no upfront payment required.
                                 </p>
                             </t>
@@ -285,7 +277,7 @@
 
             <t t-if="rma.reza_operation_type == 'store_credit' and rma.reza_store_credit_bonus_amount">
                 <div class="alert alert-success mb-4">
-                    First-return bonus applied: <strong><t t-esc="rma.company_id.currency_id.symbol"/><t t-esc="rma.reza_store_credit_bonus_amount"/></strong>
+                    First-return bonus applied: <strong><t t-out="rma.company_id.currency_id.symbol"/><t t-out="rma.reza_store_credit_bonus_amount"/></strong>
                     extra store credit.
                 </div>
             </t>
@@ -299,7 +291,7 @@
                         <t t-foreach="attachments" t-as="att">
                             <li>
                                 <a t-attf-href="/web/content/#{att.id}?download=true" target="_blank">
-                                    <t t-esc="att.name"/>
+                                    <t t-out="att.name"/>
                                 </a>
                             </li>
                         </t>

@@ -59,6 +59,17 @@ class Website(models.Model):
         self.ensure_one()
         return (self.stockist_apply_submit_label or "").strip() or DEFAULT_SUBMIT
 
+    @api.model
+    def _stockist_current_website(self):
+        """The current website, as Odoo 18's get_current_website() gave it.
+
+        Odoo 20 removed get_current_website(); env.website reads only the
+        context's website_id (set during a website request) and is empty
+        otherwise. 18 then fell back to the first website, so keep that for
+        crons, the backend and tests.
+        """
+        return self.env.website or self.search([], limit=1)
+
     def _stockist_team(self):
         """The helpdesk team an application from this site belongs to.
 

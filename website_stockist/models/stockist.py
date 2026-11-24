@@ -268,7 +268,7 @@ class WebsiteStockist(models.Model):
         """The content row for a website, or an empty recordset."""
         self.ensure_one()
         if website is None:
-            website = self.env["website"].get_current_website()
+            website = self.env["website"]._stockist_current_website()
         if not website:
             return self.env["website.stockist.content"]
         return self.content_ids.filtered(
@@ -304,7 +304,7 @@ class WebsiteStockist(models.Model):
             if brand:
                 return brand
         if website is None:
-            website = self.env["website"].get_current_website()
+            website = self.env["website"]._stockist_current_website()
         return (website.name if website else "") or ""
 
     def _stock_domain(self, website=None):
@@ -426,7 +426,7 @@ class WebsiteStockist(models.Model):
 
     def _default_website_meta(self):
         res = super()._default_website_meta()
-        website = self.env["website"].get_current_website()
+        website = self.env["website"]._stockist_current_website()
         for stockist in self:
             title = stockist._meta_title(website)
             if title:
@@ -457,7 +457,7 @@ class WebsiteStockist(models.Model):
         field = "image_1920" if self.image_1920 else ("logo" if self.logo else None)
         if not field:
             return None
-        base = self.env["website"].get_current_website().get_base_url()
+        base = self.env["website"]._stockist_current_website().get_base_url()
         return "%s/web/image/website.stockist/%s/%s" % (base.rstrip("/"), self.id, field)
 
     def _products_for(self, website=None):

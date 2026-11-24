@@ -172,7 +172,7 @@ class SaleOrderLine(models.Model):
                     {
                         "product": move.product_id,
                         "quantity": qty,
-                        "uom": move.product_uom,
+                        "uom": move.uom_id,
                         "picking": move.picking_id,
                         "sale_line_id": self,
                     }

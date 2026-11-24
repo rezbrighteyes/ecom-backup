@@ -52,13 +52,17 @@ class ProductPricelist(models.Model):
     # own search would have returned, in the same order. Outside a check this
     # changes nothing.
 
-    def _get_applicable_rules(self, products, date, **kwargs):
-        rules = self._reza_cached_rules(products, date, **kwargs)
-        if rules is not None:
-            return rules
-        return super()._get_applicable_rules(products, date, **kwargs)
+    def _get_applicable_rules(self, products, quantity, date, *, uom=None, **kwargs):
+        # Odoo 20 added `quantity` and `uom`: with no uom, core drops rules
+        # whose min_quantity exceeds `quantity`; the cache does the same. A
+        # call with a uom goes to core.
+        if uom is None:
+            rules = self._reza_cached_rules(products, date, quantity=quantity, **kwargs)
+            if rules is not None:
+                return rules
+        return super()._get_applicable_rules(products, quantity, date, uom=uom, **kwargs)
 
-    def _reza_cached_rules(self, products, date, **kwargs):
+    def _reza_cached_rules(self, products, date, quantity=None, **kwargs):
         """The rules core's search would return for one product, or None."""
         state = self.env.context.get(REPORT_RULES_KEY)
         if (
@@ -99,7 +103,9 @@ class ProductPricelist(models.Model):
             + index["global"]
         )
         picked = []
-        for pos, rule_id, r_categ, r_tmpl, r_prod, r_prod_tmpl in candidates:
+        for pos, rule_id, r_categ, r_tmpl, r_prod, r_prod_tmpl, r_min_qty in candidates:
+            if quantity and r_min_qty and r_min_qty > quantity:
+                continue
             if r_categ and r_categ not in ancestors:
                 continue
             if r_tmpl and r_tmpl != tmpl_id:
@@ -127,6 +133,7 @@ class ProductPricelist(models.Model):
                 rule.product_tmpl_id.id,
                 rule.product_id.id,
                 rule.product_id.product_tmpl_id.id,
+                rule.min_quantity,
             )
             if rule.product_id:
                 bucket_key = rec[5] if by_template else rec[4]

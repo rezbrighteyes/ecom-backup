@@ -2,15 +2,37 @@
 # Copyright 2023 Michael Tietz (MT Software) <mtietz@mt-software.de>
 # Copyright 2025 Tecnativa - Víctor Martínez
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+#
+# Odoo 20 port: core deleted the `stock.return.picking` wizard (a return is
+# now `stock.picking._create_return()`, a draft picking). This module used to
+# extend that wizard with "Create RMAs". It now owns an equivalent wizard,
+# `rma.return.picking`, with the same fields and methods, opened from the
+# "Return / RMA" button on a done delivery.
 from copy import deepcopy
 
-from odoo import api, fields, models
-from odoo.exceptions import ValidationError
-from odoo.tools import float_is_zero
+from odoo import Command, api, fields, models
+from odoo.exceptions import UserError, ValidationError
 
 
 class ReturnPickingLine(models.TransientModel):
-    _inherit = "stock.return.picking.line"
+    _name = "rma.return.picking.line"
+    _rec_name = "product_id"
+    _description = "RMA Return Picking Line"
+
+    product_id = fields.Many2one("product.product", string="Product", required=True)
+    move_quantity = fields.Float(related="move_id.quantity", string="Move Quantity")
+    quantity = fields.Float("Quantity", digits="Product Unit", default=1, required=True)
+    uom_id = fields.Many2one(
+        "uom.uom", string="Unit of Measure", related="product_id.uom_id"
+    )
+    wizard_id = fields.Many2one("rma.return.picking", string="Wizard")
+    move_id = fields.Many2one("stock.move", "Move")
+    to_refund = fields.Boolean(
+        string="Update quantities on SO/PO",
+        default=True,
+        help="Trigger a decrease of the delivered/received quantity in the "
+        "associated Sale Order/Purchase Order",
+    )
 
     rma_operation_id = fields.Many2one(
         comodel_name="rma.operation",
@@ -64,8 +86,32 @@ class ReturnPickingLine(models.TransientModel):
 
 
 class ReturnPicking(models.TransientModel):
-    _inherit = "stock.return.picking"
+    _name = "rma.return.picking"
+    _description = "RMA Return Picking"
 
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        ctx = self.env.context
+        if ctx.get("active_id") and ctx.get("active_model") == "stock.picking":
+            if len(ctx.get("active_ids", [])) > 1:
+                raise UserError(self.env._("You may only return one picking at a time."))
+            picking = self.env["stock.picking"].browse(ctx.get("active_id"))
+            if picking.exists():
+                res.update({"picking_id": picking.id})
+        return res
+
+    picking_id = fields.Many2one("stock.picking")
+    product_return_moves = fields.One2many(
+        "rma.return.picking.line",
+        "wizard_id",
+        "Moves",
+        compute="_compute_moves_locations",
+        precompute=True,
+        readonly=False,
+        store=True,
+    )
+    company_id = fields.Many2one(related="picking_id.company_id")
     create_rma = fields.Boolean(string="Create RMAs")
     picking_type_code = fields.Selection(related="picking_id.picking_type_id.code")
     rma_operation_id = fields.Many2one(
@@ -110,14 +156,96 @@ class ReturnPicking(models.TransientModel):
         for return_picking in self:
             global_vals = return_picking._prepare_rma_vals()
             for line in return_picking.product_return_moves:
-                if not line.move_id or float_is_zero(
-                    line.quantity, precision_rounding=line.uom_id.rounding
-                ):
+                if not line.move_id or line.uom_id.is_zero(line.quantity):
                     continue
                 vals = deepcopy(global_vals)
                 vals.update(line._prepare_rma_vals())
                 vals_list.append(vals)
         return vals_list
+
+    @api.depends("picking_id")
+    def _compute_moves_locations(self):
+        for wizard in self:
+            if not wizard.picking_id:
+                continue
+            if wizard.picking_id.state != "done":
+                raise UserError(self.env._("You may only return Done pickings."))
+            line_fields = list(self.env["rma.return.picking.line"]._fields)
+            line_defaults = self.env["rma.return.picking.line"].default_get(line_fields)
+            commands = [Command.clear()]
+            for move in wizard.picking_id.move_ids:
+                if move.state == "cancel" or move.is_scrap:
+                    continue
+                vals = dict(line_defaults)
+                vals.update(wizard._prepare_stock_return_picking_line_vals_from_move(move))
+                commands.append(Command.create(vals))
+            if len(commands) == 1:
+                raise UserError(
+                    self.env._(
+                        "No products to return (only lines in Done state and not "
+                        "fully returned yet can be returned)."
+                    )
+                )
+            wizard.product_return_moves = commands
+
+    @api.model
+    def _prepare_stock_return_picking_line_vals_from_move(self, stock_move):
+        return {
+            "product_id": stock_move.product_id.id,
+            "quantity": 0,
+            "move_id": stock_move.id,
+            "to_refund": stock_move.to_refund,
+        }
+
+    def _create_return(self):
+        """Plain (non-RMA) return through the Odoo 20 core flow: core drafts
+        a return with every move at zero, the wizard's quantities are copied
+        onto it, zero moves are dropped, then it is confirmed and reserved."""
+        self.ensure_one()
+        new_picking = self.picking_id._create_return()
+        lines_by_move = {line.move_id: line for line in self.product_return_moves}
+        for move in new_picking.move_ids:
+            line = lines_by_move.get(move.origin_returned_move_id)
+            if not line or line.uom_id.is_zero(line.quantity):
+                move.product_uom_qty = 0
+                continue
+            move.write(
+                {
+                    "product_uom_qty": line.uom_id._compute_quantity(
+                        line.quantity, move.uom_id
+                    ),
+                    "to_refund": line.to_refund,
+                }
+            )
+        zero = new_picking.move_ids.filtered(
+            lambda m: m.uom_id.is_zero(m.product_uom_qty)
+        )
+        if zero == new_picking.move_ids:
+            new_picking.unlink()
+            raise UserError(self.env._("Please specify at least one non-zero quantity."))
+        zero.unlink()
+        new_picking.action_confirm()
+        new_picking.action_assign()
+        return new_picking
+
+    def action_create_returns_all(self):
+        """Set every line to what can still be returned (the done quantity
+        less anything already returned), then create the returns."""
+        self.ensure_one()
+        for line in self.product_return_moves:
+            stock_move = line.move_id
+            if not stock_move or stock_move.state == "cancel" or stock_move.is_scrap:
+                continue
+            quantity = stock_move.quantity
+            for move in stock_move.move_dest_ids:
+                if (
+                    not move.origin_returned_move_id
+                    or move.origin_returned_move_id != stock_move
+                ):
+                    continue
+                quantity -= move.quantity
+            line.quantity = stock_move.product_id.uom_id.round(quantity)
+        return self.action_create_returns()
 
     def action_create_returns(self):
         """Override create_returns method for creating one or more
@@ -161,4 +289,12 @@ class ReturnPicking(models.TransientModel):
                 "type": "ir.actions.act_window",
                 "context": ctx,
             }
-        return super().action_create_returns()
+        new_picking = self._create_return()
+        return {
+            "name": self.env._("Returned Picking"),
+            "view_mode": "form",
+            "res_model": "stock.picking",
+            "res_id": new_picking.id,
+            "type": "ir.actions.act_window",
+            "context": self.env.context,
+        }

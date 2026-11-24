@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo noupdate="1">
+    <record id="portal_entry_rma" model="portal.entry">
+        <field name="name">RMA Orders</field>
+        <field name="description">Manage your RMA Orders</field>
+        <field name="url">/my/rmas</field>
+        <field name="image" type="bytes" file="rma/static/src/img/rma_icon.svg" />
+        <field name="placeholder_count">rma_count</field>
+        <field name="category">client_category</field>
+        <field name="sequence" eval="60" />
+    </record>
+</odoo>

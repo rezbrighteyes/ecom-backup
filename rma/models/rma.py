@@ -415,10 +415,10 @@ class Rma(models.Model):
     @api.depends(
         "delivery_move_ids",
         "delivery_move_ids.state",
-        "delivery_move_ids.scrap_id",
+        "delivery_move_ids.is_scrap",
         "delivery_move_ids.product_uom_qty",
         "delivery_move_ids.quantity",
-        "delivery_move_ids.product_uom",
+        "delivery_move_ids.uom_id",
         "product_uom",
     )
     def _compute_delivered_qty(self):
@@ -432,15 +432,15 @@ class Rma(models.Model):
         for record in self:
             delivered_qty = 0.0
             for move in record.delivery_move_ids.filtered(
-                lambda r: r.state != "cancel" and not r.scrap_id
+                lambda r: r.state != "cancel" and not r.is_scrap
             ):
                 if move.quantity:
-                    quantity = move.product_uom._compute_quantity(
+                    quantity = move.uom_id._compute_quantity(
                         move.quantity, record.product_uom
                     )
                     delivered_qty += quantity
                 elif move.product_uom_qty:
-                    delivered_qty += move.product_uom._compute_quantity(
+                    delivered_qty += move.uom_id._compute_quantity(
                         move.product_uom_qty, record.product_uom
                     )
             record.delivered_qty = delivered_qty
@@ -448,9 +448,9 @@ class Rma(models.Model):
     @api.depends(
         "delivery_move_ids",
         "delivery_move_ids.state",
-        "delivery_move_ids.scrap_id",
+        "delivery_move_ids.is_scrap",
         "delivery_move_ids.quantity",
-        "delivery_move_ids.product_uom",
+        "delivery_move_ids.uom_id",
     )
     def _compute_delivered_qty_done(self):
         """Compute 'delivered_qty_done' field.
@@ -463,9 +463,9 @@ class Rma(models.Model):
         for record in self:
             delivered_qty_done = 0.0
             for move in record.delivery_move_ids.filtered(
-                lambda r: r.state == "done" and not r.scrap_id and r.quantity
+                lambda r: r.state == "done" and not r.is_scrap and r.quantity
             ):
-                quantity = move.product_uom._compute_quantity(
+                quantity = move.uom_id._compute_quantity(
                     move.quantity, record.product_uom
                 )
                 delivered_qty_done += quantity
@@ -663,7 +663,7 @@ class Rma(models.Model):
     def _compute_product_uom(self):
         for record in self:
             if record.move_id:
-                record.product_uom = record.move_id.product_uom.id
+                record.product_uom = record.move_id.uom_id.id
             elif record.product_id:
                 record.product_uom = record.product_id.uom_id
             else:
@@ -1576,14 +1576,14 @@ class Rma(models.Model):
         else:
             return super()._creation_subtype()
 
-    def _track_subtype(self, init_values):
+    def _track_log_get_default_subtype(self, init_values):
         self.ensure_one()
         if "state" in init_values:
             if self.state == "draft":
                 return self.env.ref("rma.mt_rma_draft")
             elif self.state == "confirmed":
                 return self.env.ref("rma.mt_rma_notification")
-        return super()._track_subtype(init_values)
+        return super()._track_log_get_default_subtype(init_values)
 
     def message_new(self, msg_dict, custom_values=None):
         """Extract the needed values from an incoming rma emails data-set

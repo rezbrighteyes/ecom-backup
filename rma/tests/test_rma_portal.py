@@ -14,6 +14,11 @@ from ..controllers.main import PortalRma
 
 @tagged("-at_install", "post_install")
 class TestRmaPortal(BaseCommon, HttpCase):
+    # Odoo 20's BaseCommon runs each test as a fresh `test_user` holding
+    # only base.group_user. These tests were written for the superuser
+    # environment BaseCommon gave up to Odoo 19, so keep that.
+    _test_user_groups = ()
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -97,15 +102,23 @@ class TestRmaPortal(BaseCommon, HttpCase):
         self.assertIn(self.rma.name, response.text)
 
     def test_portal_home_counter_values(self):
+        # Odoo 20: /my counters go through _prepare_portal_counter_values and
+        # core's counters(), which only checks that one record exists for a
+        # card (search_count(limit=1)), so the count is 0 or 1.
         controller = PortalRma()
+        self.assertEqual(
+            controller._prepare_portal_counter_values("rma_count"),
+            ("rma", [], "read"),
+        )
+        self.assertTrue(self.env["rma"].search_count([]))
         with MockRequest(self.env):
-            values = controller._prepare_home_portal_values({"rma_count"})
-        self.assertEqual(values["rma_count"], self.env["rma"].search_count([]))
+            values = controller.counters({"rma_count": "client_category"})
+        self.assertEqual(values["rma_count"], 1)
 
         rma_model_class = type(self.env["rma"])
         with patch.object(rma_model_class, "has_access", return_value=False):
             with MockRequest(self.env):
-                values = controller._prepare_home_portal_values({"rma_count"})
+                values = controller.counters({"rma_count": "client_category"})
         self.assertEqual(values["rma_count"], 0)
 
     def test_portal_without_rma_access(self):

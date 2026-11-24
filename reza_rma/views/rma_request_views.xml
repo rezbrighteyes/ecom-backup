@@ -121,7 +121,7 @@
                 <filter name="label_failed" string="Label Failed" domain="[('label_state', '=', 'failed')]"/>
                 <filter name="migration_review" string="Migration Review" domain="[('migration_review_required', '=', True)]"/>
                 <filter name="resolution_pending" string="Resolution Pending" domain="[('state', '=', 'resolution_pending')]"/>
-                <group expand="0" string="Group By">
+                <group>
                     <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
                     <filter name="group_website" string="Website" context="{'group_by': 'website_id'}"/>
                     <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>

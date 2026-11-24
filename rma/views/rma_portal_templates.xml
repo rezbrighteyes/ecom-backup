@@ -15,25 +15,13 @@
                 <t t-else="">RMA Orders</t>
             </li>
             <li t-if="rma" class="breadcrumb-item active">
-                <t t-esc="rma.name" />
+                <t t-out="rma.name" />
             </li>
         </xpath>
     </template>
-    <template
-        id="portal_my_home_rma"
-        name="Portal My Home : RMA entries"
-        inherit_id="portal.portal_my_home"
-        priority="30"
-    >
-        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
-            <t t-call="portal.portal_docs_entry"
-                icon.f="/rma/static/src/img/rma_icon.svg"
-                title.translate="RMA Orders"
-                text.translate="Manage your RMA Orders"
-                url.f="/my/rmas"
-                placeholder_count.f="rma_count"/>
-        </xpath>
-    </template>
+    <!-- Odoo 20: the "RMA Orders" card on /my is the portal.entry record
+         rma.portal_entry_rma (data/portal_entry_data.xml); portal_my_home no
+         longer takes inline portal_docs_entry calls. -->
     <template id="portal_my_rmas" name="My RMA Orders">
         <t t-call="portal.portal_layout" breadcrumbs_searchbar="True">
             <t t-call="portal.portal_searchbar" title.translate="RMA Orders"/>
@@ -57,7 +45,7 @@
                                     t-att-href="rma.get_portal_url()"
                                     t-att-title="rma.name"
                                 >
-                                    <t t-esc="rma.name" />
+                                    <t t-out="rma.name" />
                                 </a>
                             </td>
                             <td name="td_date" class="d-none d-md-table-cell">
@@ -68,7 +56,7 @@
                             </td>
                             <!-- Portal users don't have access to unpublished products -->
                             <td name="td_product">
-                                <span t-esc="rma.sudo().product_id.display_name" />
+                                <span t-out="rma.sudo().product_id.display_name" />
                             </td>
                             <td name="td_product_uom_qty" class='text-right'>
                                 <span t-field="rma.product_uom_qty" />
@@ -120,7 +108,7 @@
                     <t t-foreach="tags" t-as="tag">
                         <span
                             class="badge badge-pill badge-info label-text-align"
-                            t-esc="tag.name"
+                            t-out="tag.name"
                         />
                     </t>
                     <t t-if="rma.state in ['refunded', 'returned', 'replaced']">
@@ -238,7 +226,7 @@
                                 <strong>Product</strong>
                             </div>
                             <div class="col-12 col-sm-8">
-                                <span t-esc="rma.sudo().product_id.display_name" />
+                                <span t-out="rma.sudo().product_id.display_name" />
                             </div>
                         </div>
                         <div t-if="rma.product_uom_qty" class="row mb-2 mb-sm-1">
@@ -340,7 +328,7 @@
                             aria-label="Download"
                             title="Download"
                         />
-                        <span t-esc="picking.name" class="mr-lg-3" />
+                        <span t-out="picking.name" class="mr-lg-3" />
                         <div
                             t-if="picking.date_done or picking.scheduled_date"
                             class="d-lg-inline-block"
@@ -411,7 +399,7 @@
                             aria-label="Download"
                             title="Download"
                         />
-                        <span t-esc="refund.name" class="mr-lg-3" />
+                        <span t-out="refund.name" class="mr-lg-3" />
                         <div class="d-lg-inline-block">
                             Date:
                             <span class="text-muted" t-field="refund.invoice_date" />
@@ -457,7 +445,7 @@
                                     aria-label="Download"
                                     title="Download"
                                 />
-                                <span t-esc="picking.name" class="mr-lg-3" />
+                                <span t-out="picking.name" class="mr-lg-3" />
                                 <div
                                     t-if="picking.date_done or picking.scheduled_date"
                                     class="d-lg-inline-block"
@@ -531,7 +519,7 @@
                                     aria-label="Rma"
                                     title="RMA"
                                 />
-                                <span t-esc="child_rma.name" class="mr-lg-3" />
+                                <span t-out="child_rma.name" class="mr-lg-3" />
                             </div>
                         </a>
                     </t>

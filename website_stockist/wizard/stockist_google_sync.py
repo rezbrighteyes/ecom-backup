@@ -60,7 +60,7 @@ class StockistGoogleSync(models.TransientModel):
     # ------------------------------------------------------------------
     @api.model
     def _api_key(self):
-        key = self.env["ir.config_parameter"].sudo().get_param(PARAM_KEY)
+        key = self.env["ir.config_parameter"].sudo().get_str(PARAM_KEY)
         if not key:
             raise UserError(_(
                 "No Google Places API key is configured.\n\n"

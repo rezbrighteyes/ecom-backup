@@ -10,7 +10,7 @@
                 <div class="alert alert-danger" role="alert">
                     <ul class="mb-0">
                         <t t-foreach="error.items()" t-as="err">
-                            <li><t t-esc="err[1]"/></li>
+                            <li><t t-out="err[1]"/></li>
                         </t>
                     </ul>
                 </div>
@@ -48,9 +48,9 @@
                                     t-att-value="order.id"
                                     t-att-data-deadline="order_deadlines.get(order.id)"
                                     t-att-selected="'selected' if order.id == selected_order_id else None">
-                                    <t t-esc="order.name"/> —
-                                    <t t-esc="order.date_order" t-options='{"widget": "date", "format": "dd MMM yyyy"}'/> —
-                                    <t t-esc="order.currency_id.symbol"/><t t-esc="order.amount_total"/>
+                                    <t t-out="order.name"/> —
+                                    <t t-out="order.date_order" t-options='{"widget": "date", "format": "dd MMM yyyy"}'/> —
+                                    <t t-out="order.currency_id.symbol"/><t t-out="order.amount_total"/>
                                 </option>
                             </t>
                         </select>
@@ -58,10 +58,10 @@
                             id="order_deadline_hint"
                             class="form-text"
                             t-att-data-default-window="return_window_days">
-                            Standard return window: <t t-esc="return_window_days"/> days from purchase.
+                            Standard return window: <t t-out="return_window_days"/> days from purchase.
                         </div>
                         <t t-if="error.get('sale_order_id')">
-                            <div class="invalid-feedback d-block"><t t-esc="error['sale_order_id']"/></div>
+                            <div class="invalid-feedback d-block"><t t-out="error['sale_order_id']"/></div>
                         </t>
                     </div>
 
@@ -69,7 +69,7 @@
                     <div id="section_order_lines" class="mb-4" style="display:none;">
                         <p class="form-label fw-bold mb-2">Which items are you returning?</p>
                         <t t-if="error.get('lines')">
-                            <div class="text-danger mb-2" id="lines_error"><t t-esc="error['lines']"/></div>
+                            <div class="text-danger mb-2" id="lines_error"><t t-out="error['lines']"/></div>
                         </t>
                         <div id="order_lines_container">
                             <!-- populated by JS -->
@@ -92,12 +92,12 @@
                             <option value="">— Select a reason —</option>
                             <t t-foreach="reasons" t-as="reason">
                                 <option t-att-value="reason.id">
-                                    <t t-esc="reason.name"/>
+                                    <t t-out="reason.name"/>
                                 </option>
                             </t>
                         </select>
                         <t t-if="error.get('reza_reason_id')">
-                            <div class="invalid-feedback d-block"><t t-esc="error['reza_reason_id']"/></div>
+                            <div class="invalid-feedback d-block"><t t-out="error['reza_reason_id']"/></div>
                         </t>
                     </div>
 
@@ -105,7 +105,7 @@
                     <div class="mb-4">
                         <p class="form-label fw-bold mb-2">What would you like?</p>
                         <t t-if="error.get('reza_operation_type')">
-                            <div class="text-danger mb-2"><t t-esc="error['reza_operation_type']"/></div>
+                            <div class="text-danger mb-2"><t t-out="error['reza_operation_type']"/></div>
                         </t>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="reza_operation_type"
@@ -113,7 +113,7 @@
                             <label class="form-check-label" for="op_credit_note">
                                 Refund to original payment method
                                 <t t-if="return_shipping_fee">
-                                    <span class="text-muted small">(less <t t-esc="'%.2f' % return_shipping_fee"/> return shipping)</span>
+                                    <span class="text-muted small">(less <t t-out="'%.2f' % return_shipping_fee"/> return shipping)</span>
                                 </t>
                             </label>
                         </div>
@@ -168,7 +168,7 @@
                     <!-- Disclaimer -->
                     <div class="mb-4">
                         <t t-if="error.get('disclaimer')">
-                            <div class="text-danger small mb-2"><t t-esc="error['disclaimer']"/></div>
+                            <div class="text-danger small mb-2"><t t-out="error['disclaimer']"/></div>
                         </t>
                         <div class="form-check">
                             <input
@@ -179,7 +179,7 @@
                                 value="1"
                                 required="required"/>
                             <label class="form-check-label small" for="reza_disclaimer_accepted">
-                                <t t-esc="disclaimer_text"/>
+                                <t t-out="disclaimer_text"/>
                             </label>
                         </div>
                     </div>
@@ -194,7 +194,7 @@
             <!-- Pass selected_order_id to JS for error-state re-population -->
             <t t-if="selected_order_id">
                 <script type="text/javascript">
-                    window._rezaRmaSelectedOrderId = <t t-esc="selected_order_id"/>;
+                    window._rezaRmaSelectedOrderId = <t t-out="selected_order_id"/>;
                 </script>
             </t>
 

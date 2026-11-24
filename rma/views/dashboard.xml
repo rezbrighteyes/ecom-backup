@@ -123,7 +123,7 @@
                                         name="get_action_rma_tree_draft"
                                         type="object"
                                     >
-                                        <span t-esc="record.count_rma_draft.value" />
+                                        <span t-out="record.count_rma_draft.value" />
                                     </button>
                                 </div>
                                 <div class="col-9">
@@ -142,7 +142,7 @@
                                         type="object"
                                     >
                                         <span
-                                            t-esc="record.count_rma_awaiting_action.value"
+                                            t-out="record.count_rma_awaiting_action.value"
                                         />
                                     </button>
                                 </div>
@@ -162,7 +162,7 @@
                                         type="object"
                                     >
                                         <span
-                                            t-esc="record.count_rma_processed.value"
+                                            t-out="record.count_rma_processed.value"
                                         />
                                     </button>
                                 </div>

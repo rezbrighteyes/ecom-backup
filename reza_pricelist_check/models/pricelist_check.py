@@ -121,7 +121,7 @@ class PricelistCheck(models.TransientModel):
         first match IS the winner and the rest are the rules it beat.
         Returns (conflict, text, number of matching rules).
         """
-        rules = engine._get_applicable_rules(product, date)
+        rules = engine._get_applicable_rules(product, 1.0, date)
         matching = [r for r in rules if r._is_applicable_for(product, 1.0)]
         losers = [r for r in matching if r != winner]
         if not losers:
@@ -270,7 +270,9 @@ class PricelistCheckLine(models.TransientModel):
         """This list's 0% rules aimed at exactly this product or variant."""
         return self.env["product.pricelist.item"].search([
             ("pricelist_id", "=", row.pricelist_id.id),
-            ("compute_price", "=", "percentage"), ("percent_price", "=", 0),
+            ("compute_price", "=", "discount"), ("price_discount", "=", 0),
+            ("price_round", "=", 0), ("price_surcharge", "=", 0),
+            ("price_min_margin", "=", 0), ("price_max_margin", "=", 0),
             ("base", "=", "list_price"),
             "|", "&", ("applied_on", "=", "0_product_variant"), ("product_id", "=", row.product_id.id),
             "&", ("applied_on", "=", "1_product"), ("product_tmpl_id", "=", row.product_tmpl_id.id),
@@ -293,8 +295,8 @@ class PricelistCheckLine(models.TransientModel):
                 "applied_on": "0_product_variant",
                 "product_id": row.product_id.id,
                 "product_tmpl_id": row.product_tmpl_id.id,
-                "compute_price": "percentage",
-                "percent_price": 0.0,
+                "compute_price": "discount",
+                "price_discount": 0.0,
                 "base": "list_price",
             })
         self._reza_refresh()

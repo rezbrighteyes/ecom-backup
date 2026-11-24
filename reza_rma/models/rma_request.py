@@ -545,7 +545,7 @@ class RezaRmaRequestLine(models.Model):
     source_move_id = fields.Many2one("stock.move", copy=False, index=True)
     product_id = fields.Many2one("product.product", required=True, index=True)
     uom_id = fields.Many2one("uom.uom", required=True)
-    quantity = fields.Float(required=True, digits="Product Unit of Measure")
+    quantity = fields.Float(required=True, digits="Product Unit")
     reason_id = fields.Many2one("reza.rma.reason", required=True)
     resolution = fields.Selection(
         [("refund", "Refund"), ("store_credit", "Store Credit"), ("exchange", "Exchange")],
@@ -589,7 +589,7 @@ class RezaRmaRequestLine(models.Model):
     store_credit_reference = fields.Char(copy=False)
     store_credit_id = fields.Many2one("loyalty.card", copy=False)
     exchange_product_id = fields.Many2one("product.product")
-    exchange_quantity = fields.Float(digits="Product Unit of Measure")
+    exchange_quantity = fields.Float(digits="Product Unit")
     exchange_value = fields.Monetary(compute="_compute_exchange_amounts", store=True)
     exchange_difference = fields.Monetary(compute="_compute_exchange_amounts", store=True)
     exchange_order_id = fields.Many2one("sale.order", copy=False)
@@ -642,11 +642,7 @@ class RezaRmaRequestLine(models.Model):
                     ]
                 ).mapped("quantity")
             )
-            if float_compare(
-                line.quantity + other_qty,
-                max_qty,
-                precision_rounding=line.uom_id.rounding,
-            ) > 0:
+            if line.uom_id.compare(line.quantity + other_qty, max_qty) > 0:
                 raise ValidationError(
                     _("Total active return quantity cannot exceed the delivered quantity.")
                 )

@@ -169,7 +169,7 @@ class TestRmaAuxiliary(TestRma):
     def test_return_wizard_validation_and_dropship_fallback(self):
         picking = self._create_delivery()
         return_wizard = Form(
-            self.env["stock.return.picking"].with_context(
+            self.env["rma.return.picking"].with_context(
                 active_id=picking.id,
                 active_ids=picking.ids,
                 active_model="stock.picking",

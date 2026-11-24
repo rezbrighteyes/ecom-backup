@@ -210,7 +210,7 @@
                 <filter name="no_coords" string="Missing coordinates"
                         domain="['|',('partner_latitude','=',0),('partner_longitude','=',0)]"/>
                 <filter name="inactive" string="Archived" domain="[('active','=',False)]"/>
-                <group expand="0" string="Group By">
+                <group>
                     <filter name="group_state" string="State" context="{'group_by':'state_id'}"/>
                     <filter name="group_ownership" string="Ownership" context="{'group_by':'ownership'}"/>
                 </group>

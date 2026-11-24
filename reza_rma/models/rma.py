@@ -339,7 +339,7 @@ class Rma(models.Model):
         return {
             "name": partner.name,
             "email": partner.email or "",
-            "phone": partner.phone or partner.mobile or "",
+            "phone": partner.phone or "",  # res.partner.mobile is gone in Odoo 20
             "street": partner.street or "",
             "suburb": partner.street2 or "",
             "city": partner.city or "",

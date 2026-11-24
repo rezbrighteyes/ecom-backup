@@ -18,7 +18,7 @@ class TestPricelistCheck(TransactionCase):
             "company_id": False,
             "item_ids": [
                 (0, 0, {"applied_on": "2_product_category", "categ_id": cls.categ.id,
-                        "compute_price": "percentage", "percent_price": 25.0}),
+                        "compute_price": "discount", "price_discount": 25.0}),
                 (0, 0, {"applied_on": "0_product_variant", "product_id": cls.fixed.id,
                         "product_tmpl_id": cls.fixed.product_tmpl_id.id,
                         "compute_price": "fixed", "fixed_price": 12.0}),
@@ -85,7 +85,7 @@ class TestPricelistCheck(TransactionCase):
         self._run()
         other = self.env["res.users"].create({
             "name": "Check Other", "login": "check.other.user",
-            "groups_id": [(6, 0, [self.env.ref("sales_team.group_sale_salesman").id,
+            "group_ids": [(6, 0, [self.env.ref("sales_team.group_sale_salesman").id,
                                    self.env.ref("base.group_user").id])],
         })
         self.env.invalidate_all()
@@ -123,7 +123,7 @@ class TestPricelistCheck(TransactionCase):
         self.env["product.pricelist.item"].create({
             "pricelist_id": self.pricelist.id, "applied_on": "0_product_variant",
             "product_id": excluded.id, "product_tmpl_id": excluded.product_tmpl_id.id,
-            "compute_price": "percentage", "percent_price": 0.0,
+            "compute_price": "discount", "price_discount": 0.0,
         })
         Line = self.env["reza.pricelist.check.line"]
         action = self.pricelist.action_reza_not_discounted()
@@ -168,7 +168,7 @@ class TestPricelistCheck(TransactionCase):
         self.env["product.pricelist.item"].create({
             "pricelist_id": self.pricelist.id, "applied_on": "1_product",
             "product_tmpl_id": self.discounted.product_tmpl_id.id,
-            "compute_price": "percentage", "percent_price": 10.0,
+            "compute_price": "discount", "price_discount": 10.0,
         })
         line = {l.product_id: l for l in self._run()}[self.discounted]
         self.assertEqual(line.conflict, "conflict")
@@ -263,18 +263,18 @@ class TestPricelistCheck(TransactionCase):
         self.env["product.pricelist.item"].create({
             "pricelist_id": self.pricelist.id, "applied_on": "1_product",
             "product_tmpl_id": self.discounted.product_tmpl_id.id,
-            "compute_price": "percentage", "percent_price": 10.0,
+            "compute_price": "discount", "price_discount": 10.0,
         })
         self.env["product.pricelist.item"].create({
             "pricelist_id": self.pricelist.id, "applied_on": "3_global",
-            "compute_price": "percentage", "percent_price": 5.0,
+            "compute_price": "discount", "price_discount": 5.0,
         })
         now = fields.Datetime.now()
         products = self.discounted | self.missed | self.fixed
         state = {"date": now, "ids": {"product.product": frozenset(products.ids)}, "rules": {}}
         cached = self.pricelist.with_context(**{REPORT_RULES_KEY: state})
         for product in products:
-            self.assertEqual(cached._get_applicable_rules(product, now),
-                             self.pricelist._get_applicable_rules(product, now))
+            self.assertEqual(cached._get_applicable_rules(product, 1.0, now),
+                             self.pricelist._get_applicable_rules(product, 1.0, now))
             self.assertEqual(cached._get_product_price_rule(product, 1.0, date=now),
                              self.pricelist._get_product_price_rule(product, 1.0, date=now))

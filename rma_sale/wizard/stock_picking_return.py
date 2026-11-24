@@ -5,7 +5,7 @@ from odoo import models
 
 
 class ReturnPicking(models.TransientModel):
-    _inherit = "stock.return.picking"
+    _inherit = "rma.return.picking"
 
     def _prepare_rma_partner_values(self):
         sale_order = self.picking_id.sale_id

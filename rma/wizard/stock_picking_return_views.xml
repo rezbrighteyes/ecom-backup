@@ -1,27 +1,18 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- Copyright 2020 Tecnativa - Ernesto Tejeda
      Copyright 2023 Tecnativa - Pedro M. Baeza
-     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+     Odoo 20: core has no return wizard any more, so this form is standalone
+     (it used to inherit stock.view_stock_return_picking_form). -->
 <odoo>
     <record id="view_stock_return_picking_form" model="ir.ui.view">
-        <field name="name">Return lines inherit RMA</field>
-        <field name="model">stock.return.picking</field>
-        <field name="inherit_id" ref="stock.view_stock_return_picking_form" />
+        <field name="name">rma.return.picking.form</field>
+        <field name="model">rma.return.picking</field>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='product_return_moves']//list" position="inside">
-                <field
-                    name="rma_operation_id"
-                    required="parent.create_rma and quantity>0"
-                    column_invisible="not parent.create_rma"
-                />
-                <field
-                    name="return_product_id"
-                    column_invisible="not parent.create_rma"
-                    invisible="not different_return_product"
-                    required="different_return_product and quantity>0"
-                />
-            </xpath>
-            <field name="product_return_moves" position="before">
+            <form string="Return / RMA">
+                <field name="picking_id" invisible="1" />
+                <field name="company_id" invisible="1" />
+                <field name="picking_type_code" invisible="1" />
                 <group name="group_rma">
                     <field
                         name="create_rma"
@@ -29,7 +20,54 @@
                     />
                     <field name="rma_operation_id" invisible="not create_rma" />
                 </group>
-            </field>
+                <field name="product_return_moves">
+                    <list editable="top" create="0">
+                        <field name="product_id" readonly="1" force_save="1" />
+                        <field name="move_id" column_invisible="1" />
+                        <field name="move_quantity" string="Delivered" />
+                        <field name="quantity" />
+                        <field name="uom_id" groups="uom.group_uom" />
+                        <field
+                            name="to_refund"
+                            column_invisible="parent.create_rma"
+                            groups="base.group_no_one"
+                        />
+                        <field name="different_return_product" column_invisible="1" />
+                        <field
+                            name="rma_operation_id"
+                            required="parent.create_rma and quantity>0"
+                            column_invisible="not parent.create_rma"
+                        />
+                        <field
+                            name="return_product_id"
+                            column_invisible="not parent.create_rma"
+                            invisible="not different_return_product"
+                            required="different_return_product and quantity>0"
+                        />
+                    </list>
+                </field>
+                <footer>
+                    <button
+                        name="action_create_returns"
+                        string="Return"
+                        type="object"
+                        class="btn-primary"
+                    />
+                    <button
+                        name="action_create_returns_all"
+                        string="Return All"
+                        type="object"
+                    />
+                    <button string="Discard" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
         </field>
+    </record>
+
+    <record id="action_rma_return_picking" model="ir.actions.act_window">
+        <field name="name">Return / RMA</field>
+        <field name="res_model">rma.return.picking</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
     </record>
 </odoo>

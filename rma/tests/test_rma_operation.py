@@ -248,7 +248,7 @@ class TestRmaOperation(TestRma):
         self.operation.action_create_refund = "manual_after_receipt"
         origin_delivery = self._create_delivery()
         stock_return_picking_form = Form(
-            self.env["stock.return.picking"].with_context(
+            self.env["rma.return.picking"].with_context(
                 active_ids=origin_delivery.ids,
                 active_id=origin_delivery.id,
                 active_model="stock.picking",
@@ -273,7 +273,7 @@ class TestRmaOperation(TestRma):
         self.operation.action_create_refund = "update_quantity"
         origin_delivery = self._create_delivery()
         stock_return_picking_form = Form(
-            self.env["stock.return.picking"].with_context(
+            self.env["rma.return.picking"].with_context(
                 active_ids=origin_delivery.ids,
                 active_id=origin_delivery.id,
                 active_model="stock.picking",

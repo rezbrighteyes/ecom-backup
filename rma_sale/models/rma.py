@@ -127,11 +127,7 @@ class Rma(models.Model):
         move = self.sudo().reception_move_id
         if (
             move
-            and float_compare(
-                self.product_uom_qty,
-                move.product_uom_qty,
-                precision_rounding=move.product_uom.rounding,
-            )
+            and move.uom_id.compare(self.product_uom_qty, move.product_uom_qty)
             == 0
         ):
             move.sale_line_id = self.sale_line_id.id
@@ -245,11 +241,7 @@ class Rma(models.Model):
             move = self.sudo().reception_move_id
             if (
                 move
-                and float_compare(
-                    self.product_uom_qty,
-                    move.product_uom_qty,
-                    precision_rounding=move.product_uom.rounding,
-                )
+                and move.uom_id.compare(self.product_uom_qty, move.product_uom_qty)
                 == 0
             ):
                 vals["sale_line_ids"] = [(4, line.id)]

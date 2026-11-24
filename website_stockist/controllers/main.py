@@ -18,7 +18,7 @@ def _sitemap_stockists(env, rule, qs):
     'loc' key. Anything not yielded here never reaches the sitemap.
     """
     Stockist = env["website.stockist"]
-    website = env["website"].get_current_website()
+    website = env["website"]._stockist_current_website()
     domain = Stockist._get_published_domain(website.id)
     stockists = Stockist.sudo().search(domain)
 
@@ -48,7 +48,7 @@ class WebsiteStockistController(http.Controller):
     def _published_stockists(self, extra_domain=None):
         """Stockists visible to the public on the current website."""
         Stockist = request.env["website.stockist"]
-        website = request.env["website"].get_current_website()
+        website = request.env["website"]._stockist_current_website()
         domain = Stockist._get_published_domain(website.id)
         if extra_domain:
             domain = domain + extra_domain
@@ -73,7 +73,7 @@ class WebsiteStockistController(http.Controller):
         stockists = self._published_stockists(extra_domain) if state else all_stockists
 
         total = len(stockists)
-        pager = request.website.pager(
+        pager = request.env.website.pager(
             url="/stockists",
             total=total,
             page=page,
@@ -132,7 +132,7 @@ class WebsiteStockistController(http.Controller):
         # publish/website rules, so re-check them here. Without this an
         # unpublished stockist, or one belonging to another website, would be
         # reachable by guessing its URL.
-        website = request.env["website"].get_current_website()
+        website = request.env["website"]._stockist_current_website()
         Stockist = request.env["website.stockist"]
         domain = [("id", "=", stockist.id)] + Stockist._get_published_domain(website.id)
         if not Stockist.sudo().search_count(domain):
@@ -148,12 +148,12 @@ class WebsiteStockistController(http.Controller):
                 "main_object": stockist,
                 "base_url": request.httprequest.url_root,
                 "json_ld": stockist._json_ld(request.httprequest.url_root,
-                                                  request.env["website"].get_current_website()),
+                                                  request.env["website"]._stockist_current_website()),
                 # website.layout assigns `title` only when the context has not.
                 # Passing it here is what makes the title per-website instead of
                 # whatever single string is stored on the record.
                 "title": stockist._meta_title(
-                    request.env["website"].get_current_website()),
+                    request.env["website"]._stockist_current_website()),
                 # seo_object MUST be passed alongside title. The layout computes
                 #   website_meta = seo_object and seo_object.get_website_meta()
                 # BEFORE it defaults seo_object to main_object, and that default
@@ -188,7 +188,7 @@ class WebsiteStockistApplication(http.Controller):
     @http.route(["/stockists/apply"], type="http", auth="public",
                 website=True, sitemap=True)
     def stockist_apply(self, **kwargs):
-        website = request.env["website"].get_current_website()
+        website = request.env["website"]._stockist_current_website()
         return request.render("website_stockist.stockist_apply", {
             "website": website,
             "cta_label": website._stockist_cta_label(),
@@ -203,7 +203,7 @@ class WebsiteStockistApplication(http.Controller):
     @http.route(["/stockists/apply/submit"], type="http", auth="public",
                 website=True, methods=["POST"], csrf=True)
     def stockist_apply_submit(self, **post):
-        website = request.env["website"].get_current_website()
+        website = request.env["website"]._stockist_current_website()
         values = {k: (post.get(k) or "").strip() for k in self.FIELDS}
         errors = {}
 

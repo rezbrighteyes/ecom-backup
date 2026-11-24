@@ -21,3 +21,7 @@ access_rma_finalization_wizard_user_own,rma.finalization.wizard.user.own,rma.fin
 rma_account_move_personal_rule,RMA Personal Invoice,account.move,rma.rma_group_user_own,r,"[('move_type', '=', 'out_refund'), '|', ('invoice_user_id', '=', user.id), ('invoice_user_id', '=', False)]"
 rma_account_move_line_personal_rule,RMA Personal Invoice Lines,account.move.line,rma.rma_group_user_own,r,"[('move_id.move_type', '=', 'out_refund'), '|', ('move_id.invoice_user_id', '=', user.id), ('move_id.invoice_user_id', '=', False)]"
 access_rma_rma_wizard_user,rma.rma.wizard.user,rma.rma.wizard,rma.rma_group_user_own,crud,
+access_rma_return_picking_stock_user,rma.return.picking.stock.user,rma.return.picking,stock.group_stock_user,crud,
+access_rma_return_picking_line_stock_user,rma.return.picking.line.stock.user,rma.return.picking.line,stock.group_stock_user,crud,
+access_rma_return_picking_rma_user,rma.return.picking.rma.user,rma.return.picking,rma.rma_group_user_own,crud,
+access_rma_return_picking_line_rma_user,rma.return.picking.line.rma.user,rma.return.picking.line,rma.rma_group_user_own,crud,

@@ -14,6 +14,7 @@
     "license": "AGPL-3",
     "depends": ["stock_account"],
     "data": [
+        "data/portal_entry_data.xml",
         "views/report_rma.xml",
         "report/report.xml",
         "data/mail_data.xml",

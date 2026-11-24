@@ -545,14 +545,15 @@ class TestOpeningHoursSpecification(TransactionCase):
 
     def test_social_image_prefers_the_shopfront(self):
         import base64
+        # Odoo 20 refuses raw bytes on a Binary field; pass the base64 text.
         png = base64.b64encode(
-            b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
+            b"\x89PNG\r\n\x1a\n" + b"\x00" * 64).decode()
         self.stockist.write({"image_1920": png, "logo": png})
         self.assertIn("/image_1920", self.stockist._social_image_url())
 
     def test_social_image_falls_back_to_the_logo(self):
         import base64
-        png = base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
+        png = base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"\x00" * 64).decode()
         self.stockist.write({"image_1920": False, "logo": png})
         self.assertIn("/logo", self.stockist._social_image_url())
 
@@ -723,6 +724,15 @@ class TestStockistApplication(TransactionCase):
             {"name": "Test Brand", "company_id": self.company.id})
         self.team = self.env["helpdesk.team"].create(
             {"name": "Customer Care", "company_id": self.company.id})
+        # Six tests below use self.stockist and self._two_sites(), which only
+        # TestOpeningHoursSpecification defined, so they errored on Odoo 18
+        # too (AttributeError). Give this class the same fixture.
+        self.stockist = self.env["website.stockist"].create({"name": "Test Store"})
+
+    def _two_sites(self):
+        rockos = self.env["website"].create({"name": "Rockos"})
+        mj = self.env["website"].create({"name": "Mangrove Jacks Test"})
+        return rockos, mj
 
     def test_label_defaults_but_can_speak_per_brand(self):
         self.assertEqual(self.website._stockist_cta_label(), "Become a stockist")

@@ -42,7 +42,7 @@ class RmaRmaWizard(models.TransientModel):
         pickings = delivery_moves.picking_id.filtered(lambda x: x.state == "done")
         picking = pickings[:1]
         return_wizard = (
-            self.env["stock.return.picking"]
+            self.env["rma.return.picking"]
             .sudo()
             .create(self._stock_return_picking_vals(picking))
         )

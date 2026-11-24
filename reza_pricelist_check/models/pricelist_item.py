@@ -102,17 +102,28 @@ class ProductPricelistItem(models.Model):
             if item.reza_sale_price:
                 item.reza_off_pct = 1 - item.reza_rule_price / item.reza_sale_price
 
-    @api.depends("compute_price", "fixed_price", "percent_price", "base", "base_pricelist_id",
-                 "price_discount", "price_surcharge")
+    @api.depends("compute_price", "fixed_price", "base", "base_pricelist_id",
+                 "price_discount", "price_surcharge", "price_round",
+                 "price_min_margin", "price_max_margin")
     def _compute_reza_rule_text(self):
         for item in self:
             item.reza_rule_text = item._reza_rule_text()
             if item.compute_price == "fixed":
                 item.reza_kind = "fixed"
-            elif item.compute_price == "formula":
-                item.reza_kind = "formula"
+            elif item._reza_is_simple_pct():
+                item.reza_kind = "pct" if item.price_discount else "full"
             else:
-                item.reza_kind = "pct" if item.percent_price else "full"
+                item.reza_kind = "formula"
+
+    def _reza_is_simple_pct(self):
+        """Odoo 20 folded the old "percentage" rule into "discount": a plain
+        % off is a discount rule with no rounding, extra fee or margins. Such
+        a rule (including a 0% one) is what Odoo 18 called a percentage rule;
+        anything else is a formula."""
+        self.ensure_one()
+        return (self.compute_price == "discount" and self.price_discount >= 0
+                and not (self.price_round or self.price_surcharge
+                         or self.price_min_margin or self.price_max_margin))
 
     def _reza_rule_text(self):
         """The rule in words, e.g. "Fixed price $8.00" or "25% off normal price"."""
@@ -127,10 +138,10 @@ class ProductPricelistItem(models.Model):
             base = "normal price"
         if self.compute_price == "fixed":
             return "Fixed price $%.2f" % self.fixed_price
-        if self.compute_price == "percentage":
-            if not self.percent_price:
+        if self._reza_is_simple_pct():
+            if not self.price_discount:
                 return "No discount (%s)" % base
-            return "%g%% off %s" % (self.percent_price, base)
+            return "%g%% off %s" % (self.price_discount, base)
         text = "Formula on %s" % base
         if self.price_discount:
             text += ", %g%% off" % self.price_discount
