@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Ecom port: the activity log records staff, not shoppers, customers or crons."""
 
-from odoo.addons.website.tools import MockRequest
+from odoo.addons.http_routing.tests.common import MockRequest
 from odoo.tests import TransactionCase, tagged
 
 
@@ -14,13 +14,13 @@ class TestEcomPort(TransactionCase):
         cls.staff = cls.env["res.users"].create({
             "name": "ASM Staff",
             "login": "asm_staff@example.com",
-            "groups_id": [(6, 0, [cls.env.ref("base.group_user").id,
+            "group_ids": [(6, 0, [cls.env.ref("base.group_user").id,
                                   cls.env.ref("base.group_partner_manager").id])],
         })
         cls.portal = cls.env["res.users"].create({
             "name": "ASM Customer",
             "login": "asm_portal@example.com",
-            "groups_id": [(6, 0, [cls.env.ref("base.group_portal").id])],
+            "group_ids": [(6, 0, [cls.env.ref("base.group_portal").id])],
         })
         cls.partner = cls.env["res.partner"].create({"name": "ASM Target"})
         cls.Log = cls.env["activity.log"].sudo()

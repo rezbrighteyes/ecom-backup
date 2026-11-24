@@ -24,7 +24,7 @@ def getting_ip(row):
     return respond
 
 def post_init_hook(env):
-    env.ref('advanced_session_management.group_login_log_user_ah').users = [(5, 0, 0)]
+    env.ref('advanced_session_management.group_login_log_user_ah').user_ids = [(5, 0, 0)]
     # Do not revoke every live user session during module installation.
     # Session cleanup is handled later by the module's explicit timeout/revoke flows.
 #     http.root.session_store.list()

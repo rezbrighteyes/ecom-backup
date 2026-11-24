@@ -12,7 +12,7 @@ class TestSessionGeolock(TransactionCase):
         super().setUpClass()
         cls.user = cls.env["res.users"].create({
             "name": "SG Staff", "login": "sg_staff@example.com",
-            "groups_id": [(6, 0, [cls.env.ref("base.group_user").id])],
+            "group_ids": [(6, 0, [cls.env.ref("base.group_user").id])],
         })
         cls.Event = cls.env["reza.login.geolock.event"].sudo()
         cls.Log = cls.env["activity.log"].sudo()
@@ -49,5 +49,7 @@ class TestSessionGeolock(TransactionCase):
             self.assertEqual(self.env.ref(xmlid).parent_id, root)
 
     def test_sessions_list_shows_country(self):
-        arch = self.env["res.device"].get_views([(False, "list")])["views"]["list"]["arch"]
-        self.assertRegex(arch, r'name="country"[^>]*optional="show"')
+        # Odoo 20: the Sessions menu opens res.session; res.device is kept too.
+        for model in ("res.session", "res.device"):
+            arch = self.env[model].get_views([(False, "list")])["views"]["list"]["arch"]
+            self.assertRegex(arch, r'name="country"[^>]*optional="show"', model)

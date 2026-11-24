@@ -4,7 +4,7 @@
 
         <!-- <record id="login_log_form_view_ah" model="ir.ui.view">
             <field name="name">login.log.form.view.ah</field>
-            <field name="groups_id" eval="[(4, ref('group_login_log_user_ah'))]"/>
+            <field name="group_ids" eval="[(4, ref('group_login_log_user_ah'))]"/>
             <field name="model">login.log</field>
             <field name="arch" type="xml">
                 <form create='0'>
@@ -99,13 +99,13 @@
 
         <record id="login_log_tree_view_ah" model="ir.ui.view">
             <field name="name">login.log.tree.view.ah</field>
-            <field name="groups_id" eval="[(4, ref('advanced_session_management.group_login_log_user_ah'))]"/>
+            <field name="group_ids" eval="[(4, ref('advanced_session_management.group_login_log_user_ah'))]"/>
             <field name="model">login.log</field>
             <field name="arch" type="xml">
                 <list create='0'>
                     <field name="is_active" invisible='1' />
-                    <button class="oi oi-fw oi-filled o_button_icon text-danger" data-icon="circle" name="dummy_btn" type='object' title='Offline' invisible="is_active == True"/>
-                    <button class="oi oi-fw oi-filled o_button_icon text-success" data-icon="circle" name="dummy_btn" type='object' title='Online' invisible="is_active == False"/>
+                    <button icon="circle" icon_class="oi-filled text-danger" name="dummy_btn" type='object' title='Offline' invisible="is_active == True"/>
+                    <button icon="circle" icon_class="oi-filled text-success" name="dummy_btn" type='object' title='Online' invisible="is_active == False"/>
                     <field name="name"/>
                     <field name="user_id"/>
                     <field name="login_date" />  
@@ -129,7 +129,7 @@
         </record> -->
 
         <menuitem id="menu_main_login_log_ah" name="Sessions"  groups="group_login_log_admin_ah" web_icon="advanced_session_management,static/description/icon.png"/>
-        <menuitem id="menu_login_log_ah" name="Sessions" parent="menu_main_login_log_ah" action="base.action_user_device" groups="group_login_log_admin_ah" sequence='1'/>
+        <menuitem id="menu_login_log_ah" name="Sessions" parent="menu_main_login_log_ah" action="base.action_user_session" groups="group_login_log_admin_ah" sequence="1"/>
 
     </data>
 </odoo>

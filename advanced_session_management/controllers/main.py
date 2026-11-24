@@ -81,9 +81,9 @@ class Controller(http.Controller):
                     'country':country,
                     'city':city
                 })
-            url = config_parameter_obj.get_param('web.base.url')
+            url = config_parameter_obj.get_str('web.base.url')
             if login_log:
-                active_timeout = config_parameter_obj.get_param('advanced_session_management.session_timeout_active') or 'none'
+                active_timeout = config_parameter_obj.get_str('advanced_session_management.session_timeout_active') or 'none'
                 
                 try:
                     # with request.env.registry.cursor() as cr:
@@ -95,7 +95,7 @@ class Controller(http.Controller):
                     
                     if active_timeout in ['active', 'inactive']:
                         try:
-                            interval_number = int(config_parameter_obj.get_param('advanced_session_management.remove_sesions'))
+                            interval_number = config_parameter_obj.get_int('advanced_session_management.remove_sesions')
                             
                             if interval_number > 0 and 'timeout_date' in res_device._fields:
                                 res_device.timeout_date = datetime.now() + timedelta(days=interval_number)
@@ -173,7 +173,7 @@ class Controller(http.Controller):
                         'view':view_type or 'n/a',
                         # 'login_log_id':login_log.id,
                         'device_id':login_log.id or False,
-                        'user_id':login_log.user_id.id or request.env.uid,
+                        'user_id':login_log.user_id or request.env.uid,
                         'url':full_url,
                         # 'view':'n/a',
                     })
@@ -187,8 +187,8 @@ class Controller(http.Controller):
     def _get_ip_params(self):
         vals = {}
         config_parameter_obj = request.env['ir.config_parameter'].sudo()
-        ip_url = config_parameter_obj.get_param('advanced_session_management.ip_url') or 'none'
-        ip_key = config_parameter_obj.get_param('advanced_session_management.ip_key') or 'none'
+        ip_url = config_parameter_obj.get_str('advanced_session_management.ip_url') or 'none'
+        ip_key = config_parameter_obj.get_str('advanced_session_management.ip_key') or 'none'
     
         vals['ip_url'] = ip_url
         vals['ip_key'] = ip_key

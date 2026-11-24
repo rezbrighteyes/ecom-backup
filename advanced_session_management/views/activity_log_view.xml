@@ -4,7 +4,7 @@
 
         <record id="activity_log_form_view_ah" model="ir.ui.view">
             <field name="name">activity.log.form.view.ah</field>
-            <field name="groups_id" eval="[(4, ref('group_login_log_admin_ah'))]"/>
+            <field name="group_ids" eval="[(4, ref('group_login_log_admin_ah'))]"/>
             <field name="model">activity.log</field>
             <field name="arch" type="xml">
                 <form>
@@ -72,7 +72,7 @@
 
         <record id="activity_log_tree_view_ah" model="ir.ui.view">
             <field name="name">activity_log.tree.view.ah</field>
-            <field name="groups_id" eval="[(4, ref('group_login_log_admin_ah'))]"/>
+            <field name="group_ids" eval="[(4, ref('group_login_log_admin_ah'))]"/>
             <field name="model">activity.log</field>
             <field name="arch" type="xml">
                 <list>

@@ -1,11 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- Core hides country and city on the Sessions list; show them so a
-         session from outside Australia stands out. -->
+         session from outside Australia stands out. Odoo 20: the Sessions menu
+         opens res.session (one row per session, Revoke button); res.device is
+         the per-device list. Both are covered. -->
     <record id="res_device_view_tree_country" model="ir.ui.view">
         <field name="name">res.device.list.country</field>
         <field name="model">res.device</field>
         <field name="inherit_id" ref="base.res_device_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='country']" position="attributes">
+                <attribute name="optional">show</attribute>
+            </xpath>
+            <xpath expr="//field[@name='city']" position="attributes">
+                <attribute name="optional">show</attribute>
+            </xpath>
+        </field>
+    </record>
+    <record id="res_session_view_tree_country" model="ir.ui.view">
+        <field name="name">res.session.list.country</field>
+        <field name="model">res.session</field>
+        <field name="inherit_id" ref="base.res_session_view_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='country']" position="attributes">
                 <attribute name="optional">show</attribute>

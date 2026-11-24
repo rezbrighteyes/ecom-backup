@@ -123,8 +123,8 @@ class BaseModel(models.AbstractModel):
                                                 for m2m_rec in vals[val]:
                                                     browse_rec = obj.browse(m2m_rec[1])
                                                     categ_name = ''
-                                                    if record._name == 'res.users' and field_name.name == 'groups_id':
-                                                        categ_name = browse_rec.category_id.name + '/'
+                                                    if record._name == 'res.users' and field_name.name == 'group_ids':
+                                                        categ_name = (browse_rec.privilege_id.name + '/') if browse_rec.privilege_id else ''
                                                     if m2m_rec[1] in record[val].ids:
                                                         value = value + """ <b>%s</b> is removed in <b>%s</b>. <br/>""" % (categ_name+browse_rec.name,field_name.field_description)
                                                     else:
@@ -150,7 +150,7 @@ class BaseModel(models.AbstractModel):
                                     'res_id':str(record.id),
                                     'action':'edit',
                                     'device_id':login_log.id or False,
-                                    'user_id':login_log.user_id.id or request.session.uid or self.env.uid,
+                                    'user_id':login_log.user_id or request.session.uid or self.env.uid,
                                     # 'edit_value_id':edit_value.id,
                                     'value':value,
                                     'view':'n/a',
@@ -185,7 +185,7 @@ class BaseModel(models.AbstractModel):
                                 'res_id':str(record.id),
                                 'action':'create',
                                 'device_id':login_log.id or False,
-                                'user_id':login_log.user_id.id or request.session.uid or self.env.uid,
+                                'user_id':login_log.user_id or request.session.uid or self.env.uid,
                                 'view':'n/a',
                             })
         except:
@@ -213,7 +213,7 @@ class BaseModel(models.AbstractModel):
                                 'res_id':str(record.id),
                                 'action':'delete',
                                 'device_id':login_log.id or False,
-                                'user_id':login_log.user_id.id or request.session.uid or self.env.uid,
+                                'user_id':login_log.user_id or request.session.uid or self.env.uid,
                                 'view':'n/a',
                             })
             except:

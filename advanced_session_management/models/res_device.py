@@ -1,5 +1,7 @@
 from odoo import api, fields, models, _
 from odoo.http import request
+from odoo.http.session import session_store
+from odoo.tools import SQL
 import base64
 import csv
 import io
@@ -9,38 +11,76 @@ from datetime import datetime, timedelta
 class ResDevice(models.Model):
     _inherit = 'res.device'
 
-    @api.model
-    def _where(self):
+    # Odoo 20: res.device no longer inherits res.device.log (18 did), so the
+    # fields the Sessions views show are declared here. res.session inherits
+    # res.device and picks them up too. A device row's id IS a res.device.log
+    # id, but activity rows point at whichever log of the session was found,
+    # so they are matched on the session identifier.
+    activity_log_ids = fields.Many2many(
+        "activity.log", string="Activity Logs", compute="_compute_activity_log_ids")
+    is_active = fields.Boolean("Is Active", compute="_compute_is_active")
+
+    def _compute_activity_log_ids(self):
+        identifiers = [i for i in self.mapped("session_identifier") if i]
+        logs = self.env["activity.log"]
+        if identifiers:
+            logs = logs.search([("device_id.session_identifier", "in", identifiers)])
+        for record in self:
+            record.activity_log_ids = logs.filtered(
+                lambda l: l.device_id.session_identifier == record.session_identifier)
+
+    def _compute_is_active(self):
+        for record in self:
+            record.is_active = bool(
+                record.last_activity and not record.revoked
+                and (datetime.now() - record.last_activity) < timedelta(minutes=5))
+
+    def dummy_btn(self):
+        pass
+
+    @property
+    def _query(self):
+        """Core's query (odoo/addons/base/models/res_device.py, ResDevice._query)
+        plus revoked devices whose last activity is inside the retention window,
+        so a revoked session stays visible for the retention period. Odoo 18
+        did this through _where(), which 20 no longer has. The cutoff is fixed
+        when the view is (re)built, as it was on 18."""
         config_parameter_obj = self.env['ir.config_parameter'].sudo()
         value = config_parameter_obj.search([('key', '=', 'advanced_session_management.remove_sesions')], limit=1)
-        if value and value.value:
-            retention_days = max(int(value.value), 365)
-        else:
+        try:
+            retention_days = max(int(value.value), 365) if value and value.value else 365
+        except ValueError:
             retention_days = 365
-        
-        cutoff_date = (datetime.now() - timedelta(days=retention_days)).strftime('%Y-%m-%d %H:%M:%S')
-        
-        return f"""
+        cutoff_date = datetime.now() - timedelta(days=retention_days)
+        return SQL("""
+            SELECT
+                L1.id,
+                L1.session_identifier,
+                L1.user_id,
+                L1.ip_address,
+                L1.user_agent,
+                L1.country,
+                L1.city,
+                L1.first_activity,
+                L1.last_activity,
+                L1.revoked
+            FROM res_device_log L1
             WHERE
-                NOT EXISTS (
+                (L1.revoked IS NOT TRUE OR L1.last_activity >= %s)
+                AND NOT ( EXISTS (
                     SELECT 1
-                    FROM res_device_log D2
+                    FROM
+                        res_device_log L2
                     WHERE
-                        D2.user_id = D.user_id
-                        AND D2.session_identifier = D.session_identifier
-                        AND D2.platform IS NOT DISTINCT FROM D.platform
-                        AND D2.browser IS NOT DISTINCT FROM D.browser
-                        AND (
-                            D2.last_activity > D.last_activity
-                            OR (D2.last_activity = D.last_activity AND D2.id > D.id)
-                        )
-                        AND D2.revoked = False
-                )
-                AND (
-                    D.revoked = False
-                    OR (D.revoked = True AND D.last_activity >= '{cutoff_date}')
-                )
-        """
+                        L2.user_id = L1.user_id
+                        AND L2.session_identifier = L1.session_identifier
+                        AND L2.ip_address = L1.ip_address
+                        AND L2.user_agent = L1.user_agent
+                        AND L2.id > L1.id
+                        AND L2.revoked IS NOT TRUE
+                ))
+        """, cutoff_date)
+
 
 class ResDeviceLog(models.Model):
     _inherit = "res.device.log"
@@ -96,17 +136,15 @@ class ResDeviceLog(models.Model):
 
     def session_timeout_ah(self):
         config_parameter_obj = self.env["ir.config_parameter"].sudo()
-        active_timeout = config_parameter_obj.get_param(
+        active_timeout = config_parameter_obj.get_str(
             "advanced_session_management.session_timeout_active"
         )
 
-        interval_number = int(
-            config_parameter_obj.get_param(
-                "advanced_session_management.session_timeout_interval_number", default=0
-            )
+        interval_number = config_parameter_obj.get_int(
+            "advanced_session_management.session_timeout_interval_number", 0
         )
-        interval_type = config_parameter_obj.get_param(
-            "advanced_session_management.session_timeout_interval_type", default="hours"
+        interval_type = config_parameter_obj.get_str(
+            "advanced_session_management.session_timeout_interval_type", "hours"
         )
 
         if active_timeout == "none" or interval_number <= 0:
@@ -128,9 +166,11 @@ class ResDeviceLog(models.Model):
         for session in active_sessions:
             # Staff sessions only: on ecom most rows are shop customers
             # (portal), and a timeout must not sign them out of the shop.
-            if not session.user_id._is_internal():
+            # Odoo 20: res.device.log.user_id is an Integer, not a Many2one.
+            user = self.env["res.users"].sudo().browse(session.user_id).exists()
+            if not user or not user._is_internal():
                 continue
-            if session.user_id.has_group(
+            if user.has_group(
                 "advanced_session_management.group_login_log_admin_ah"
             ):
                 continue
@@ -141,9 +181,22 @@ class ResDeviceLog(models.Model):
                 if expire_time < now:
                     if active_timeout == "active":
                         if not session.is_active:
-                            self.env["res.device"].browse(session.id)._revoke()
+                            session._asm_revoke()
                     elif active_timeout == "inactive":
-                        self.env["res.device"].browse(session.id)._revoke()
+                        session._asm_revoke()
+
+    def _asm_revoke(self):
+        """End these sessions: delete the session files and mark every log of
+        them revoked. Odoo 18 did this with res.device._revoke(); on 20 that
+        method lives on res.session and also logs out the CURRENT request,
+        which a cron does not have."""
+        identifiers = list(dict.fromkeys(i for i in self.mapped("session_identifier") if i))
+        if not identifiers:
+            return
+        session_store().delete_from_identifiers(identifiers)
+        self.sudo().search([
+            ("session_identifier", "in", identifiers), ("revoked", "=", False),
+        ]).write({"revoked": True})
 
     def remove_old_log(self):
         config_parameter_obj = self.env["ir.config_parameter"].sudo()
@@ -161,7 +214,15 @@ class ResDeviceLog(models.Model):
         # cron -- so the leaf only ever meant "do not delete the device I am
         # using right now". Filtered in Python to keep exactly that.
         device_logs = self.sudo().search([("last_activity", "<=", cutoff)])
-        device_logs = device_logs.filtered(lambda d: not d.is_current)
+        # Odoo 20 has no is_current on res.device.log; same test as 18's.
+        current_sid = ""
+        try:
+            current_sid = (request and request.session.sid) or ""
+        except Exception:  # noqa: BLE001 - no request / no session
+            current_sid = ""
+        device_logs = device_logs.filtered(
+            lambda d: not (current_sid and d.session_identifier
+                           and current_sid.startswith(d.session_identifier)))
         activity_logs = self.env["activity.log"].sudo().search([
             ("create_date", "<=", cutoff)
         ])
@@ -183,6 +244,11 @@ class ResDeviceLog(models.Model):
                 return value.display_name
             return value
 
+        device_users = {
+            u.id: (u.display_name, u.login)
+            for u in self.env["res.users"].sudo().with_context(active_test=False).browse(
+                list(set(device_logs.mapped("user_id")))).exists()
+        }
         payload = {
             "generated_at": fields.Datetime.to_string(fields.Datetime.now()),
             "cutoff": fields.Datetime.to_string(cutoff),
@@ -215,14 +281,14 @@ class ResDeviceLog(models.Model):
             "device_logs": [
                 {
                     "id": log.id,
-                    "user": log.user_id.display_name,
-                    "user_login": log.user_id.login,
+                    "user": device_users.get(log.user_id, (str(log.user_id), ""))[0],
+                    "user_login": device_users.get(log.user_id, ("", ""))[1],
                     "platform": field_value(log, "platform"),
                     "browser": field_value(log, "browser"),
                     "ip_address": field_value(log, "ip_address"),
                     "session_identifier": field_value(log, "session_identifier"),
                     "revoked": field_value(log, "revoked"),
-                    "is_current": field_value(log, "is_current"),
+                    "user_agent": field_value(log, "user_agent"),
                     "last_activity": fields.Datetime.to_string(log.last_activity),
                     "create_date": fields.Datetime.to_string(log.create_date),
                 }
@@ -265,7 +331,7 @@ class ResDeviceLog(models.Model):
                 "ip_address",
                 "session_identifier",
                 "revoked",
-                "is_current",
+                "user_agent",
                 "last_activity",
                 "create_date",
             ],
@@ -298,7 +364,7 @@ class ResDeviceLog(models.Model):
                 "ip_address": log["ip_address"],
                 "session_identifier": log["session_identifier"],
                 "revoked": log["revoked"],
-                "is_current": log["is_current"],
+                "user_agent": log["user_agent"],
                 "last_activity": log["last_activity"],
                 "create_date": log["create_date"],
             })

@@ -5,6 +5,7 @@ import os
 from datetime import datetime, timedelta
 from odoo.tools.misc import _format_time_ago
 from odoo.http import request
+from odoo.http.session import session_store as http_session_store
 from odoo.exceptions import UserError
 import werkzeug
 
@@ -35,7 +36,7 @@ class login_log(models.Model):
 
     def session_timeout_ah(self):
         config_parameter_obj = self.env['ir.config_parameter'].sudo()
-        active_timeout = config_parameter_obj.get_param('advanced_session_management.session_timeout_active')
+        active_timeout = config_parameter_obj.get_str('advanced_session_management.session_timeout_active')
 
         if active_timeout == 'active':
             self.search([('state','=','active'),('timeout_date','<',datetime.now())]).logout_button()
@@ -72,11 +73,11 @@ class login_log(models.Model):
         not_found = True
         db_name = ''
         config_parameter_obj = self.env['ir.config_parameter'].sudo()
-        active_timeout = config_parameter_obj.get_param('advanced_session_management.session_timeout_active')
+        active_timeout = config_parameter_obj.get_str('advanced_session_management.session_timeout_active')
         for record in self:
             if record.state == 'active':
                 # request.session.logout(keep_db=True)
-                session_store = http.root.session_store
+                session_store = http_session_store()
                 get_session = session_store.get(record.session_id)
              
                 if get_session.db and get_session.uid == record.user_id.id and get_session.sid == record.session_id:

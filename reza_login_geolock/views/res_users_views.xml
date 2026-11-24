@@ -4,12 +4,12 @@
         <field name="name">res.users.form.reza.login.geolock</field>
         <field name="model">res.users</field>
         <field name="inherit_id" ref="base.view_users_form"/>
-        <!-- Applied before auth_totp / auth_passkey (priority 16), which also
-             fill the Account Security page, so the box sits at the top of the
-             page: below the device list it was easy to miss. -->
+        <!-- Odoo 20: the page is "Security" (page_security). The box goes
+             before the first block so it sits at the top of the page: below
+             the device list it was easy to miss. -->
         <field name="priority">5</field>
         <field name="arch" type="xml">
-            <xpath expr="//page[@name='account_security']" position="inside">
+            <xpath expr="//page[@name='page_security']/div[@name='auth']" position="before">
                 <group string="Sign-in Geolock" name="reza_login_geolock" groups="reza_login_geolock.group_geolock_manager" invisible="share">
                     <field name="reza_geolock_exempt"/>
                     <field name="reza_geolock_ip_only"/>

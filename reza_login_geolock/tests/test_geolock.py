@@ -16,40 +16,46 @@ class TestStaffGeolock(TransactionCase):
         super().setUpClass()
         cls.staff = cls.env["res.users"].create({
             "name": "Geolock Staff", "login": "geolock.staff.test",
-            "groups_id": [(6, 0, [cls.env.ref("base.group_user").id])],
+            "group_ids": [(6, 0, [cls.env.ref("base.group_user").id])],
         })
         cls.portal = cls.env["res.users"].create({
             "name": "Geolock Portal", "login": "geolock.portal.test",
-            "groups_id": [(6, 0, [cls.env.ref("base.group_portal").id])],
+            "group_ids": [(6, 0, [cls.env.ref("base.group_portal").id])],
         })
         cls.params = cls.env["ir.config_parameter"].sudo()
-        cls.params.set_param(geo.PARAM_COUNTRIES, "AU")
+        cls.params.set_str(geo.PARAM_COUNTRIES, "AU")
 
     def _events(self, user):
         return self.env["reza.login.geolock.event"].search([("user_id", "=", user.id)])
 
     def _rpc_check(self, user, password):
-        """res.users.check() (the per-call RPC password check) opens its own
-        cursor in Odoo 18. Point the registry at the test transaction for the
-        call, as core's ir.cron tests do, so it sees the test user and writes
-        nothing outside the test."""
+        """res.users._check_uid_passwd() is the per-call RPC password check on
+        Odoo 20 (odoo/service/model.py calls it as superuser on the call's own
+        cursor), so it runs on the test cursor directly."""
         self.env.flush_all()
-        self.registry.enter_test_mode(self.cr)
+        self.env["res.users"]._check_uid_passwd(user.id, password)
+
+    def _denied(self, pattern, fn, *args, **kwargs):
+        """assertRaisesRegex without the savepoint rollback. On Odoo 20 both
+        assertRaises AND assertRaisesRegex roll back to a savepoint
+        (odoo/tests/common.py _raisesContext); 18 rolled back only for
+        assertRaises. The event written before the refusal would vanish, so
+        the exception is caught by hand and its message still checked."""
         try:
-            self.env["res.users"].check(self.cr.dbname, user.id, password)
-        finally:
-            self.registry.leave_test_mode()
-            self.env.invalidate_all()
+            fn(*args, **kwargs)
+        except AccessDenied as e:
+            self.assertRegex(str(e), pattern)
+        else:
+            self.fail("AccessDenied not raised")
 
     def _check(self, user, mode, country, channel="web"):
-        self.params.set_param(geo.PARAM_MODE, mode)
+        self.params.set_str(geo.PARAM_MODE, mode)
         with patch(MOD + "._client", return_value=("203.0.113.9", "test-agent")), \
                 patch(MOD + "._country_of", return_value=country):
             user._reza_geolock_check(channel)
 
     def test_block_mode_refuses_staff_from_overseas(self):
-        with self.assertRaisesRegex(AccessDenied, "not allowed from this country"):
-            self._check(self.staff, "block", "US")
+        self._denied("not allowed from this country", self._check, self.staff, "block", "US")
         event = self._events(self.staff)
         self.assertEqual(len(event), 1)
         self.assertEqual((event.action, event.country, event.channel, event.ip),
@@ -94,8 +100,7 @@ class TestStaffGeolock(TransactionCase):
 
     def test_ip_lock_refuses_unlisted_address_even_in_australia(self):
         self._lock(self.staff)
-        with self.assertRaisesRegex(AccessDenied, "approved addresses"):
-            self._check(self.staff, "block", "AU")
+        self._denied("approved addresses", self._check, self.staff, "block", "AU")
         event = self._events(self.staff)
         self.assertEqual((event.action, event.country), ("held", "AU"))
 
@@ -128,14 +133,13 @@ class TestStaffGeolock(TransactionCase):
     def test_ip_lock_breach_is_emailed(self):
         if "mail.mail" not in self.env:
             self.skipTest("mail not installed")
-        self.params.set_param(geo.PARAM_ALERT_TO, "it@example.com")
+        self.params.set_str(geo.PARAM_ALERT_TO, "it@example.com")
         self._lock(self.staff)
         mails = self.env["mail.mail"].sudo()
         before = mails.search_count([])
-        # Not assertRaises: Odoo's version rolls back to a savepoint, which
-        # would take the queued mail with it.
-        with self.assertRaisesRegex(AccessDenied, "approved addresses"):
-            self._check(self.staff, "block", "AU")
+        # Not assertRaises/assertRaisesRegex: on Odoo 20 both roll back to a
+        # savepoint, which would take the queued mail with it.
+        self._denied("approved addresses", self._check, self.staff, "block", "AU")
         mail = mails.search([], order="id desc", limit=1)
         self.assertEqual(mails.search_count([]), before + 1)
         self.assertIn("IP lock breach", mail.subject)
@@ -147,8 +151,10 @@ class TestStaffGeolock(TransactionCase):
 
     def _device(self, user, ident):
         return self.env["res.device.log"].sudo().create({
-            "session_identifier": ident, "user_id": user.id, "platform": "windows",
-            "browser": "chrome", "first_activity": "2026-11-20 00:00:00",
+            # Odoo 20: platform/browser are no longer stored on the log; it
+            # needs ip_address and user_agent instead.
+            "session_identifier": ident, "user_id": user.id, "ip_address": "203.0.113.9",
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0) Chrome/120", "first_activity": "2026-11-20 00:00:00",
             "last_activity": "2026-11-20 00:00:00", "revoked": False,
         })
 
@@ -156,7 +162,7 @@ class TestStaffGeolock(TransactionCase):
         other = self.staff.copy({"login": "geolock.other3.test"})
         mine = self._device(self._lock(self.staff), "a" * 42)
         theirs = self._device(other, "b" * 42)
-        with patch("odoo.http.root.session_store.delete_from_identifiers") as delete:
+        with patch("odoo.http.session.SessionStore.delete_from_identifiers") as delete:
             n = (self.staff | other).reza_geolock_end_sessions()
         self.assertEqual(n, 1)
         delete.assert_called_once_with(["a" * 42])
@@ -194,7 +200,7 @@ class TestStaffGeolock(TransactionCase):
         self.assertFalse(self._events(self.staff))
 
     def test_no_http_client_is_not_judged(self):
-        self.params.set_param(geo.PARAM_MODE, "block")
+        self.params.set_str(geo.PARAM_MODE, "block")
         with patch(MOD + "._client", return_value=None), patch(MOD + "._country_of", return_value="US"):
             self.staff._reza_geolock_check("rpc")
         self.assertFalse(self._events(self.staff))
@@ -205,7 +211,7 @@ class TestStaffGeolock(TransactionCase):
         self.assertEqual(len(self._events(self.staff)), 1)
 
     def test_extra_allowed_country(self):
-        self.params.set_param(geo.PARAM_COUNTRIES, "AU, nz")
+        self.params.set_str(geo.PARAM_COUNTRIES, "AU, nz")
         self._check(self.staff, "block", "NZ")
         self.assertFalse(self._events(self.staff))
 
@@ -216,7 +222,7 @@ class TestStaffGeolock(TransactionCase):
     def test_rpc_password_check_is_geolocked_on_every_call(self):
         """res.users.check is cached after the first call; the geolock must not be."""
         self.staff.password = "Geolock-test-pw-1"
-        self.params.set_param(geo.PARAM_MODE, "block")
+        self.params.set_str(geo.PARAM_MODE, "block")
         with patch(MOD + "._client", return_value=("203.0.113.9", "")):
             with patch(MOD + "._country_of", return_value="AU"):
                 self._rpc_check(self.staff, "Geolock-test-pw-1")
@@ -226,7 +232,7 @@ class TestStaffGeolock(TransactionCase):
 
     def test_wrong_password_is_not_recorded(self):
         self.staff.password = "Geolock-test-pw-1"
-        self.params.set_param(geo.PARAM_MODE, "block")
+        self.params.set_str(geo.PARAM_MODE, "block")
         # Odoo's assertRaises rolls back a savepoint, which would hide an
         # event; catch the exception by hand so the check below means something.
         with patch(MOD + "._client", return_value=("203.0.113.9", "")), \
@@ -240,18 +246,20 @@ class TestStaffGeolock(TransactionCase):
         self.assertFalse(self._events(self.staff))
 
     def test_bearer_api_key_is_geolocked(self):
-        key = self.env["res.users.apikeys"].with_user(self.staff).sudo()._generate(None, "geolock test", None)
-        self.params.set_param(geo.PARAM_MODE, "block")
+        # Odoo 20 matches the key scope exactly (18 also accepted a NULL
+        # scope); /json/1 and /json/2 use bearer_scope='rpc'.
+        key = self.env["res.users.apikeys"].with_user(self.staff).sudo()._generate("rpc", "geolock test", None)
+        self.params.set_str(geo.PARAM_MODE, "block")
         with patch(MOD + "._client", return_value=("203.0.113.9", "")), \
-                patch(MOD + "._country_of", return_value="US"), \
-                self.assertRaisesRegex(AccessDenied, "not allowed from this country"):
-            self.env["res.users.apikeys"]._check_credentials(scope="rpc", key=key)
+                patch(MOD + "._country_of", return_value="US"):
+            self._denied("not allowed from this country",
+                         self.env["res.users.apikeys"]._check_credentials, scope="rpc", key=key)
         self.assertEqual(self._events(self.staff).channel, "apikey")
 
     def test_empty_recordset_password_recheck_does_not_crash(self):
         """change_password and the portal security pages call _check_credentials
         on an empty recordset; the check must resolve the env user, not crash."""
-        self.params.set_param(geo.PARAM_MODE, "report")
+        self.params.set_str(geo.PARAM_MODE, "report")
         with patch(MOD + "._client", return_value=("203.0.113.9", "")), \
                 patch(MOD + "._country_of", return_value="US"):
             self.env["res.users"].with_user(self.portal)._reza_geolock_check("web")
@@ -261,13 +269,13 @@ class TestStaffGeolock(TransactionCase):
 
     def test_portal_change_password_from_overseas_works(self):
         self.portal.password = "Geolock-portal-pw-1"
-        self.params.set_param(geo.PARAM_MODE, "block")
+        self.params.set_str(geo.PARAM_MODE, "block")
         with patch(MOD + "._client", return_value=("203.0.113.9", "")), \
                 patch(MOD + "._country_of", return_value="US"):
             self.env["res.users"].with_user(self.portal).change_password("Geolock-portal-pw-1", "Geolock-portal-pw-2")
 
     def test_a_fault_in_the_check_lets_the_user_in(self):
-        self.params.set_param(geo.PARAM_MODE, "block")
+        self.params.set_str(geo.PARAM_MODE, "block")
         with patch(MOD + "._client", return_value=("203.0.113.9", "")), \
                 patch(MOD + "._country_of", side_effect=RuntimeError("geoip broke")):
             self.staff._reza_geolock_check("web")
@@ -281,11 +289,11 @@ class TestStaffGeolock(TransactionCase):
 
     def test_only_the_administrator_manages_the_geolock(self):
         group = self.env.ref("reza_login_geolock.group_geolock_manager")
-        # Odoo 18 stores implied memberships in res.groups.users itself.
-        self.assertIn(self.env.ref("base.user_admin"), group.users)
-        self.assertNotIn(self.staff, group.users)
+        # Odoo 20: res.groups.users is renamed user_ids.
+        self.assertIn(self.env.ref("base.user_admin"), group.user_ids)
+        self.assertNotIn(self.staff, group.user_ids)
         menu = self.env.ref("reza_login_geolock.menu_reza_login_geolock_event")
-        self.assertEqual(menu.groups_id, group)
+        self.assertEqual(menu.group_ids, group)
 
 
 @tagged("post_install", "-at_install")
@@ -294,18 +302,18 @@ class TestStaffGeolockSession(HttpCase):
     def test_open_session_is_ended_from_overseas(self):
         user = self.env["res.users"].create({
             "name": "Geolock Session", "login": "geolock.session.test", "password": "Geolock-sess-pw-1",
-            "groups_id": [(6, 0, [self.env.ref("base.group_user").id])],
+            "group_ids": [(6, 0, [self.env.ref("base.group_user").id])],
         })
         params = self.env["ir.config_parameter"].sudo()
-        params.set_param(geo.PARAM_MODE, "block")
-        params.set_param(geo.PARAM_COUNTRIES, "AU")
+        params.set_str(geo.PARAM_MODE, "block")
+        params.set_str(geo.PARAM_COUNTRIES, "AU")
         with patch(MOD + "._country_of", return_value="AU"):
             self.authenticate("geolock.session.test", "Geolock-sess-pw-1")
             ok = self.url_open("/odoo", allow_redirects=False)
             self.assertNotIn("/web/login", ok.headers.get("Location", ""))
         # The verdict is cached per address and setting; the test server's
         # address never changes, so change the setting to force a fresh look.
-        params.set_param(geo.PARAM_COUNTRIES, "AU,NZ")
+        params.set_str(geo.PARAM_COUNTRIES, "AU,NZ")
         with patch(MOD + "._country_of", return_value="US"):
             res = self.url_open("/odoo", allow_redirects=False)
         self.assertIn("/web/login", res.headers.get("Location", ""))

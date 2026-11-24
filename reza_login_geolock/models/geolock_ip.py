@@ -63,7 +63,7 @@ class RezaLoginGeolockIp(models.Model):
 
     @api.model
     def _bump(self):
-        self.env["ir.config_parameter"].sudo().set_param(PARAM_IPS_STAMP, fields.Datetime.now().isoformat())
+        self.env["ir.config_parameter"].sudo().set_str(PARAM_IPS_STAMP, fields.Datetime.now().isoformat())
 
     @api.model
     def _reza_allows(self, ip, user):

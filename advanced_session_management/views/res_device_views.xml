@@ -1,22 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Odoo 20: the one-row-per-session list with the Revoke button is
+         res.session (18 had it on res.device). res.session inherits
+         res.device, so the fields added there are available on both. -->
     <record id="res_device_view_form_inherit" model="ir.ui.view">
         <field name="name">res.device.form.inherit</field>
         <field name="model">res.device</field>
         <field name="inherit_id" ref="base.res_device_view_form"/>
         <field name="arch" type="xml">
-            
-            <xpath expr="//group/group[2]" position="inside">
+            <xpath expr="//field[@name='browser']" position="after">
                 <field name="device_type"/>
             </xpath>
-            <xpath expr="//group/group[2]" position="after">
-                <group>
-                    <field name="country"/>
-                    <field name="city"/>
-                </group>
-            </xpath>
-            <xpath expr="//group" position="after">
-                <notebook> 
+            <xpath expr="//form" position="inside">
+                <notebook>
                     <page string='Activity Log'>
                         <field name="activity_log_ids"/>
                     </page>
@@ -24,7 +20,7 @@
             </xpath>
         </field>
     </record>
-    <!-- is_current -->
+
     <record id="res_device_view_tree_inherit" model="ir.ui.view">
         <field name="name">res.device.list.inherit</field>
         <field name="model">res.device</field>
@@ -32,8 +28,36 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='user_id']" position="before">
                 <field name="is_active" column_invisible="1"/>
-                <button class="oi oi-fw oi-filled o_button_icon text-danger" data-icon="circle" name="dummy_btn" type='object' title='Offline' invisible="is_active == True"/>
-                <button class="oi oi-fw oi-filled o_button_icon text-success" data-icon="circle" name="dummy_btn" type='object' title='Online' invisible="is_active == False"/>
+                <button icon="circle" icon_class="oi-filled text-danger" name="dummy_btn" type='object' title='Offline' invisible="is_active == True"/>
+                <button icon="circle" icon_class="oi-filled text-success" name="dummy_btn" type='object' title='Online' invisible="is_active == False"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="res_session_view_form_inherit" model="ir.ui.view">
+        <field name="name">res.session.form.inherit</field>
+        <field name="model">res.session</field>
+        <field name="inherit_id" ref="base.res_session_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//footer" position="before">
+                <notebook>
+                    <page string='Activity Log'>
+                        <field name="activity_log_ids"/>
+                    </page>
+                </notebook>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="res_session_view_tree_inherit" model="ir.ui.view">
+        <field name="name">res.session.list.inherit</field>
+        <field name="model">res.session</field>
+        <field name="inherit_id" ref="base.res_session_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="before">
+                <field name="is_active" column_invisible="1"/>
+                <button icon="circle" icon_class="oi-filled text-danger" name="dummy_btn" type='object' title='Offline' invisible="is_active == True"/>
+                <button icon="circle" icon_class="oi-filled text-success" name="dummy_btn" type='object' title='Online' invisible="is_active == False"/>
             </xpath>
         </field>
     </record>

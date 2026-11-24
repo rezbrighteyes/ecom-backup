@@ -30,7 +30,7 @@ to nobody else.
 The Administrator login is exempt from install.
 
 A user can be exempted with "Allow sign-in from any country" on the
-Account Security tab of the user form (travel, or an integration that runs from
+Security tab of the user form (travel, or an integration that runs from
 overseas, such as Claude's Odoo connector on the Administrator login).
 
 Specific addresses can be allowed from outside the allowed countries under
@@ -58,7 +58,7 @@ refusal is listed under Settings > Users & Companies > Sign-in Geolock.
     "author": "Reza",
         "category": "Administration",
     "version": "20.0.1.3.0",
-    "depends": ["base", "base_setup"],
+    "depends": ["base", "base_setup", "rpc"],
     "data": [
         "security/security.xml",
         "data/admin_exempt.xml",

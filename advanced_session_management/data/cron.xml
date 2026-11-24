@@ -93,7 +93,7 @@
 
         <function
             model="ir.config_parameter"
-            name="set_param"
+            name="set_str"
             eval="('advanced_session_management.remove_sesions', '365')"
         />
         

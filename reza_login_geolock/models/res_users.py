@@ -1,4 +1,3 @@
-import contextlib
 import ipaddress
 import logging
 import threading
@@ -7,7 +6,9 @@ from datetime import timedelta
 
 from odoo import SUPERUSER_ID, api, fields, models
 from odoo.exceptions import AccessDenied, AccessError
-from odoo.http import GeoIP, request, root
+from odoo.http import request
+from odoo.http.geoip import GeoIP
+from odoo.http.session import session_store
 from odoo.modules import module as odoo_module
 
 _logger = logging.getLogger(__name__)
@@ -125,7 +126,7 @@ class ResUsers(models.Model):
             })
             raise AccessDenied(self.env._(
                 "This account may only sign in from approved addresses. Contact IT."))
-        mode = params.get_param(PARAM_MODE, "report")
+        mode = params.get_str(PARAM_MODE, "report")
         if mode not in ("report", "block"):
             return
         if user.reza_geolock_exempt:
@@ -133,7 +134,7 @@ class ResUsers(models.Model):
         country = _country_of(ip)
         if country is None:
             return
-        allowed = {c.strip().upper() for c in (params.get_param(PARAM_COUNTRIES) or "AU").split(",") if c.strip()}
+        allowed = {c.strip().upper() for c in (params.get_str(PARAM_COUNTRIES) or "AU").split(",") if c.strip()}
         if country in allowed:
             return
         if self.env["reza.login.geolock.ip"]._reza_allows(ip, user):
@@ -201,7 +202,7 @@ class ResUsers(models.Model):
         """Email an IP lock breach. Queued; the mail cron sends it."""
         if "mail.mail" not in env:
             return
-        to = env["ir.config_parameter"].get_param(PARAM_ALERT_TO)
+        to = env["ir.config_parameter"].get_str(PARAM_ALERT_TO)
         if not to:
             group = env.ref("reza_login_geolock.group_geolock_manager", raise_if_not_found=False)
             members = env["res.users"]
@@ -251,7 +252,7 @@ class ResUsers(models.Model):
             ("user_id", "in", users.ids), ("revoked", "=", False)])
         identifiers = list(dict.fromkeys(logs.mapped("session_identifier")))
         if identifiers:
-            root.session_store.delete_from_identifiers(identifiers)
+            session_store().delete_from_identifiers(identifiers)
             logs.write({"revoked": True})
         _logger.info("Staff sign-in geolock: ended %d session(s) of %s",
                      len(identifiers), ", ".join(users.mapped("login")))
@@ -263,24 +264,17 @@ class ResUsers(models.Model):
         self._reza_geolock_check("web" if interactive else "rpc")
         return auth_info
 
-    @classmethod
-    def check(cls, db, uid, passwd):
+    @api.model
+    def _check_uid_passwd(self, uid, passwd):
         # The parent is ormcached on (uid, passwd), so after the first RPC call
         # it no longer reaches _check_credentials. Check the address on every
-        # call, outside the cache. In Odoo 18 this is a classmethod with no
-        # environment (19 renamed it _check_uid_passwd on an env), so the check
-        # needs a cursor of its own, opened only when an RPC client is known.
-        super().check(db, uid, passwd)
+        # call, outside the cache (this override carries no ormcache). Odoo 20
+        # calls it on the RPC call's own cursor as superuser
+        # (odoo/service/model.py, execute_kw), so no cursor is opened here.
+        super()._check_uid_passwd(uid, passwd)
         if not _client():
             return
-        try:
-            cr = cls.pool.cursor()
-        except Exception:                                    # noqa: BLE001
-            _logger.exception("Staff sign-in geolock: check failed, sign-in allowed")
-            return
-        with contextlib.closing(cr):
-            env = api.Environment(cr, uid, {})
-            env[cls._name].browse(uid)._reza_geolock_check("rpc")
+        self.browse(uid)._reza_geolock_check("rpc")
 
 
 class ResUsersApikeys(models.Model):

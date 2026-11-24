@@ -3,7 +3,7 @@ import threading
 
 from odoo.http import request, route
 
-from odoo.addons.base.controllers.rpc import RPC
+from odoo.addons.rpc.controllers import RPC
 
 THREAD_ATTR = "reza_geolock_rpc_client"
 
@@ -12,8 +12,7 @@ THREAD_ATTR = "reza_geolock_rpc_client"
 def expose_client():
     """Make the caller's address visible to model code for one RPC call.
 
-    odoo.http.dispatch_rpc() runs inside borrow_request(), which takes the
-    request off the stack, so res.users code sees request = None for every
+    odoo.http.router.dispatch_rpc() takes the request off the stack, so res.users code sees request = None for every
     XML-RPC and JSON-RPC call. The address is parked on the thread for the
     call only and always removed, so a later request on the same worker
     thread can never inherit it."""
@@ -28,9 +27,8 @@ def expose_client():
 
 
 class GeolockRPC(RPC):
-    """Odoo 18 serves /xmlrpc, /xmlrpc/2 and /jsonrpc from one controller in
-    base (Odoo 19 split them into the ``rpc`` module). Both XML-RPC routes go
-    through _xmlrpc()."""
+    """Odoo 20 serves /xmlrpc, /xmlrpc/2 and /jsonrpc from the ``rpc`` addon
+    (odoo/addons/rpc/controllers). Both XML-RPC routes go through _xmlrpc()."""
 
     def _xmlrpc(self, service):
         with expose_client():

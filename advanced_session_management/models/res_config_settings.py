@@ -23,30 +23,26 @@ class res_config_settings(models.TransientModel):
     def get_values(self):
         res = super(res_config_settings, self).get_values()
         config_parameter_obj = self.env["ir.config_parameter"].sudo()
-        res["remove_sesions"] = int(
-            config_parameter_obj.get_param(
-                "advanced_session_management.remove_sesions", default=365
-            )
+        res["remove_sesions"] = config_parameter_obj.get_int(
+            "advanced_session_management.remove_sesions", 365
         )
         if res["remove_sesions"] < 365:
             res["remove_sesions"] = 365
         res["send_mail"] = (
-            config_parameter_obj.get_param(
-                "advanced_session_management.send_mail", default="False"
+            config_parameter_obj.get_str(
+                "advanced_session_management.send_mail", "False"
             )
             == "True"
         )
 
-        res["session_timeout_interval_number"] = int(
-            config_parameter_obj.get_param(
-                "advanced_session_management.session_timeout_interval_number", default=0
-            )
+        res["session_timeout_interval_number"] = config_parameter_obj.get_int(
+            "advanced_session_management.session_timeout_interval_number", 0
         )
-        res["session_timeout_interval_type"] = config_parameter_obj.get_param(
-            "advanced_session_management.session_timeout_interval_type", default="hours"
+        res["session_timeout_interval_type"] = config_parameter_obj.get_str(
+            "advanced_session_management.session_timeout_interval_type", "hours"
         )
-        res["session_timeout_active"] = config_parameter_obj.get_param(
-            "advanced_session_management.session_timeout_active", default="none"
+        res["session_timeout_active"] = config_parameter_obj.get_str(
+            "advanced_session_management.session_timeout_active", "none"
         )
 
         return res
@@ -59,18 +55,18 @@ class res_config_settings(models.TransientModel):
             remove_sesions = 365
         else:
             remove_sesions = max(self.remove_sesions, 365)
-        config_parameter_obj.set_param(
+        config_parameter_obj.set_str(
             "advanced_session_management.remove_sesions", remove_sesions
         )
-        config_parameter_obj.set_param(
+        config_parameter_obj.set_str(
             "advanced_session_management.send_mail", str(self.send_mail)
         )
 
-        config_parameter_obj.set_param(
+        config_parameter_obj.set_str(
             "advanced_session_management.session_timeout_interval_number",
             str(self.session_timeout_interval_number or 0),
         )
-        config_parameter_obj.set_param(
+        config_parameter_obj.set_str(
             "advanced_session_management.session_timeout_interval_type",
             self.session_timeout_interval_type or "hours",
         )
@@ -100,7 +96,7 @@ class res_config_settings(models.TransientModel):
             for login_log in login_logs:
                 login_log.timeout_date = False
 
-        config_parameter_obj.set_param(
+        config_parameter_obj.set_str(
             "advanced_session_management.session_timeout_active",
             self.session_timeout_active,
         )
@@ -132,4 +128,4 @@ class ir_config_parameter(models.Model):
         if enable_log:
             enable_log.sudo().write({"active": False})
 
-        self.sudo().set_param("advanced_session_management.remove_sesions", "365")
+        self.sudo().set_str("advanced_session_management.remove_sesions", "365")
