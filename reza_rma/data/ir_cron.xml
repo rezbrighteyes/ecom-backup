@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ir_cron_reza_rma_sla_alert" model="ir.cron">
+        <field name="name">RMA: SLA Overdue Alert</field>
+        <field name="model_id" ref="rma.model_rma"/>
+        <field name="state">code</field>
+        <field name="code">
+overdue = env["rma"].search([
+    ("reza_sla_due_date", "&lt;", datetime.now()),
+    ("reza_sla_alerted", "=", False),
+    ("state", "not in", ["finished", "locked", "cancelled"]),
+])
+for rma in overdue:
+    rma.activity_schedule(
+        "mail.mail_activity_data_warning",
+        summary="RMA SLA overdue — please process within 2 business days",
+        note="RMA %s received on %s. SLA deadline was %s." % (
+            rma.name,
+            rma.reza_warehouse_received_date,
+            rma.reza_sla_due_date,
+        ),
+    )
+    rma.write({"reza_sla_alerted": True})
+        </field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

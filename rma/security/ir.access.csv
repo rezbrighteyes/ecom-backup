@@ -1,0 +1,23 @@
+id,name,model_id,group_id/id,operation,domain
+access_rma_team_user_own,rma.team.user.own,rma.team,rma.rma_group_user_own,r,
+access_rma_team_manager,rma.team.manager,rma.team,rma.rma_group_manager,crud,
+rma_team_rule_multi_company,RMA team multi-company,rma.team,,crud,"[('company_id', 'in', company_ids + [False])]"
+rma_rule_portal,RMA portal users,rma,base.group_portal,r,"[('message_partner_ids', 'child_of', [user.partner_id.commercial_partner_id.id])]"
+rma_rule_user_own,Personal RMAs,rma,rma.rma_group_user_own,cru,"['|',('user_id','=',user.id),('user_id','=',False)]"
+rma_rule_user_all,All RMAs,rma,rma.rma_group_user_all,cru,
+rma_rule_user_all_1,All RMAs,rma,rma.rma_group_manager,crud,
+rma_rule_multi_company,RMA multi-company,rma,,crud,"[('company_id', 'in', company_ids + [False])]"
+access_rma_operation_user_own,rma.operation.user.own,rma.operation,rma.rma_group_user_own,r,
+access_rma_operation_manager,rma.operation.manager,rma.operation,rma.rma_group_manager,crud,
+access_rma_tag_user_own,rma.tag.user.own,rma.tag,rma.rma_group_user_own,r,
+access_rma_tag_manager,rma.tag.manager,rma.tag,rma.rma_group_manager,crud,
+access_rma_delivery_wizard_user_all,rma.delivery.wizard.user.all,rma.delivery.wizard,rma.rma_group_user_all,crud,
+access_rma_split_wizard_user_all,rma.split.wizard.user.all,rma.split.wizard,rma.rma_group_user_all,crud,
+access_rma_finalization_portal,rma.finalization.portal,rma.finalization,base.group_portal,r,
+access_rma_finalization_user_own,rma.finalization.user.own,rma.finalization,rma.rma_group_user_own,r,
+access_rma_finalization_manager,rma.finalization.manager,rma.finalization,rma.rma_group_manager,crud,
+rma_finalization_comp_rule,RMA Finalization Reason multi-company,rma.finalization,,crud,"[('company_id', 'in', company_ids + [False])]"
+access_rma_finalization_wizard_user_own,rma.finalization.wizard.user.own,rma.finalization.wizard,rma.group_rma_manual_finalization,crud,
+rma_account_move_personal_rule,RMA Personal Invoice,account.move,rma.rma_group_user_own,r,"[('move_type', '=', 'out_refund'), '|', ('invoice_user_id', '=', user.id), ('invoice_user_id', '=', False)]"
+rma_account_move_line_personal_rule,RMA Personal Invoice Lines,account.move.line,rma.rma_group_user_own,r,"[('move_id.move_type', '=', 'out_refund'), '|', ('move_id.invoice_user_id', '=', user.id), ('move_id.invoice_user_id', '=', False)]"
+access_rma_rma_wizard_user,rma.rma.wizard.user,rma.rma.wizard,rma.rma_group_user_own,crud,

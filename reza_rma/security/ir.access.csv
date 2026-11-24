@@ -1,0 +1,16 @@
+id,name,model_id,group_id/id,operation,domain
+access_reza_rma_reason_user,reza.rma.reason user,reza.rma.reason,base.group_user,r,
+access_reza_rma_reason_manager,reza.rma.reason manager,reza.rma.reason,sales_team.group_sale_manager,crud,
+access_reza_rma_inspect_wizard,reza.rma.inspect.wizard,reza.rma.inspect.wizard,base.group_user,crud,
+access_reza_rma_request_user,reza.rma.request user,reza.rma.request,base.group_user,cru,
+access_reza_rma_request_manager,reza.rma.request manager,reza.rma.request,sales_team.group_sale_manager,crud,
+reza_rma_request_company_rule,Return requests by company,reza.rma.request,,crud,"[('company_id', 'in', company_ids)]"
+access_reza_rma_request_line_user,reza.rma.request.line user,reza.rma.request.line,base.group_user,cru,
+access_reza_rma_request_line_manager,reza.rma.request.line manager,reza.rma.request.line,sales_team.group_sale_manager,crud,
+reza_rma_request_line_company_rule,Return request items by company,reza.rma.request.line,,crud,"[('company_id', 'in', company_ids)]"
+access_reza_rma_store_credit_bonus_user,reza.rma.store.credit.bonus user,reza.rma.store.credit.bonus,base.group_user,r,
+access_reza_rma_store_credit_bonus_manager,reza.rma.store.credit.bonus manager,reza.rma.store.credit.bonus,sales_team.group_sale_manager,crud,
+reza_rma_store_credit_bonus_company_rule,Return store-credit bonuses by company,reza.rma.store.credit.bonus,,crud,"[('company_id', 'in', company_ids)]"
+access_reza_rma_pending_submission_public,reza.rma.pending.submission public,reza.rma.pending.submission,base.group_public,cru,
+access_reza_rma_pending_submission_user,reza.rma.pending.submission user,reza.rma.pending.submission,base.group_user,cru,
+access_reza_rma_pending_submission_manager,reza.rma.pending.submission manager,reza.rma.pending.submission,sales_team.group_sale_manager,crud,

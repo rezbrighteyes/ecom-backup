@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="portal_rma_create" name="Start a Return">
+        <t t-call="portal.portal_layout" page_name.f="rma_return">
+            <t t-set="order" t-value="False"/>
+
+            <!-- Error banner -->
+            <t t-if="error">
+                <div class="alert alert-danger" role="alert">
+                    <ul class="mb-0">
+                        <t t-foreach="error.items()" t-as="err">
+                            <li><t t-esc="err[1]"/></li>
+                        </t>
+                    </ul>
+                </div>
+            </t>
+
+            <t t-if="not eligible_orders">
+                <div class="alert alert-warning">
+                    You have no orders eligible for a return right now.
+                </div>
+            </t>
+
+            <t t-if="eligible_orders">
+                <form
+                    action="/my/rmas/create"
+                    method="POST"
+                    enctype="multipart/form-data"
+                    class="o_portal_rma_form">
+
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <input type="hidden" name="submission_token" t-att-value="submission_token"/>
+
+                    <!-- Section 1: Select Order -->
+                    <div class="mb-4">
+                        <label for="sale_order_id" class="form-label fw-bold">
+                            Which order are you returning from?
+                        </label>
+                        <select
+                            name="sale_order_id"
+                            id="sale_order_id"
+                            t-attf-class="form-select #{'is-invalid' if error.get('sale_order_id') else ''}"
+                            required="required">
+                            <option value="">— Select an order —</option>
+                            <t t-foreach="eligible_orders" t-as="order">
+                                <option
+                                    t-att-value="order.id"
+                                    t-att-data-deadline="order_deadlines.get(order.id)"
+                                    t-att-selected="'selected' if order.id == selected_order_id else None">
+                                    <t t-esc="order.name"/> —
+                                    <t t-esc="order.date_order" t-options='{"widget": "date", "format": "dd MMM yyyy"}'/> —
+                                    <t t-esc="order.currency_id.symbol"/><t t-esc="order.amount_total"/>
+                                </option>
+                            </t>
+                        </select>
+                        <div
+                            id="order_deadline_hint"
+                            class="form-text"
+                            t-att-data-default-window="return_window_days">
+                            Standard return window: <t t-esc="return_window_days"/> days from purchase.
+                        </div>
+                        <t t-if="error.get('sale_order_id')">
+                            <div class="invalid-feedback d-block"><t t-esc="error['sale_order_id']"/></div>
+                        </t>
+                    </div>
+
+                    <!-- Section 2: Select Items -->
+                    <div id="section_order_lines" class="mb-4" style="display:none;">
+                        <p class="form-label fw-bold mb-2">Which items are you returning?</p>
+                        <t t-if="error.get('lines')">
+                            <div class="text-danger mb-2" id="lines_error"><t t-esc="error['lines']"/></div>
+                        </t>
+                        <div id="order_lines_container">
+                            <!-- populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Sections 3–7 + submit — hidden when all items already returned -->
+                    <div id="rma_form_continuation">
+
+                    <!-- Section 3: Return Reason -->
+                    <div class="mb-4">
+                        <label for="reza_reason_id" class="form-label fw-bold">
+                            Why are you returning?
+                        </label>
+                        <select
+                            name="reza_reason_id"
+                            id="reza_reason_id"
+                            t-attf-class="form-select #{'is-invalid' if error.get('reza_reason_id') else ''}"
+                            required="required">
+                            <option value="">— Select a reason —</option>
+                            <t t-foreach="reasons" t-as="reason">
+                                <option t-att-value="reason.id">
+                                    <t t-esc="reason.name"/>
+                                </option>
+                            </t>
+                        </select>
+                        <t t-if="error.get('reza_reason_id')">
+                            <div class="invalid-feedback d-block"><t t-esc="error['reza_reason_id']"/></div>
+                        </t>
+                    </div>
+
+                    <!-- Section 4: Preferred Outcome -->
+                    <div class="mb-4">
+                        <p class="form-label fw-bold mb-2">What would you like?</p>
+                        <t t-if="error.get('reza_operation_type')">
+                            <div class="text-danger mb-2"><t t-esc="error['reza_operation_type']"/></div>
+                        </t>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="reza_operation_type"
+                                   id="op_credit_note" value="credit_note"/>
+                            <label class="form-check-label" for="op_credit_note">
+                                Refund to original payment method
+                                <t t-if="return_shipping_fee">
+                                    <span class="text-muted small">(less <t t-esc="'%.2f' % return_shipping_fee"/> return shipping)</span>
+                                </t>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="reza_operation_type"
+                                   id="op_store_credit" value="store_credit"/>
+                            <label class="form-check-label" for="op_store_credit">
+                                Store credit
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="reza_operation_type"
+                                   id="op_exchange" value="exchange"/>
+                            <label class="form-check-label" for="op_exchange">
+                                Exchange for a different item
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Section 5: Exchange Preference (shown when exchange selected) -->
+                    <div id="section_exchange" class="mb-4" style="display:none;">
+                        <label for="reza_exchange_preference" class="form-label fw-bold">
+                            What would you like in exchange?
+                        </label>
+                        <textarea
+                            name="reza_exchange_preference"
+                            id="reza_exchange_preference"
+                            class="form-control"
+                            rows="3"
+                            placeholder="e.g. Same item in size M, or blue colour — our team will confirm availability"/>
+                        <div class="form-text">
+                            If there is a price difference we will contact you before dispatching.
+                        </div>
+                    </div>
+
+                    <!-- Return method: hardcoded auspost -->
+                    <input type="hidden" name="reza_return_method" value="auspost"/>
+
+                    <!-- Section 7: Additional Notes -->
+                    <div class="mb-4">
+                        <label for="reza_customer_notes" class="form-label fw-bold">
+                            Additional notes <span class="text-muted fw-normal">(optional)</span>
+                        </label>
+                        <textarea
+                            name="reza_customer_notes"
+                            id="reza_customer_notes"
+                            class="form-control"
+                            rows="3"
+                            placeholder="Anything else you'd like us to know about this return"/>
+                    </div>
+
+                    <!-- Disclaimer -->
+                    <div class="mb-4">
+                        <t t-if="error.get('disclaimer')">
+                            <div class="text-danger small mb-2"><t t-esc="error['disclaimer']"/></div>
+                        </t>
+                        <div class="form-check">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                name="reza_disclaimer_accepted"
+                                id="reza_disclaimer_accepted"
+                                value="1"
+                                required="required"/>
+                            <label class="form-check-label small" for="reza_disclaimer_accepted">
+                                <t t-esc="disclaimer_text"/>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Submit Return Request</button>
+
+                    </div><!-- /#rma_form_continuation -->
+
+                </form>
+            </t>
+
+            <!-- Pass selected_order_id to JS for error-state re-population -->
+            <t t-if="selected_order_id">
+                <script type="text/javascript">
+                    window._rezaRmaSelectedOrderId = <t t-esc="selected_order_id"/>;
+                </script>
+            </t>
+
+            <script type="text/javascript">
+            //
+            (function () {
+                var orderSelect = document.querySelector('[name="sale_order_id"]');
+                var linesSection = document.getElementById('section_order_lines');
+                var linesContainer = document.getElementById('order_lines_container');
+                var formContinuation = document.getElementById('rma_form_continuation');
+                var reasonSelect = document.querySelector('[name="reza_reason_id"]');
+                var deadlineHint = document.getElementById('order_deadline_hint');
+                var defaultWindow = deadlineHint ? deadlineHint.getAttribute('data-default-window') : '30';
+                var exchangeSection = document.getElementById('section_exchange');
+                var outcomeRadios = document.querySelectorAll('[name="reza_operation_type"]');
+
+                function escHtml(str) {
+                    return String(str)
+                        .replace(/&amp;/g, '&amp;amp;')
+                        .replace(/&lt;/g, '&amp;lt;')
+                        .replace(/&gt;/g, '&amp;gt;')
+                        .replace(/"/g, '&amp;quot;');
+                }
+
+                function toggleExchange() {
+                    var selected = document.querySelector('[name="reza_operation_type"]:checked');
+                    if (exchangeSection) {
+                        exchangeSection.style.display = (selected &amp;&amp; selected.value === 'exchange') ? 'block' : 'none';
+                    }
+                }
+
+                outcomeRadios.forEach(function(r) {
+                    r.addEventListener('change', toggleExchange);
+                });
+                toggleExchange();
+
+                function fetchOrderLines(orderId) {
+                    if (!orderId) {
+                        linesSection.style.display = 'none';
+                        linesContainer.innerHTML = '';
+                        formContinuation.style.display = '';
+                        if (deadlineHint) {
+                            deadlineHint.textContent = 'Standard return window: ' + defaultWindow + ' days from purchase.';
+                        }
+                        return;
+                    }
+                    linesContainer.innerHTML = '&lt;p class="text-muted"&gt;Loading items…&lt;/p&gt;';
+                    linesSection.style.display = 'block';
+                    if (deadlineHint &amp;&amp; orderSelect) {
+                        var selectedOption = orderSelect.options[orderSelect.selectedIndex];
+                        var deadline = selectedOption ? selectedOption.getAttribute('data-deadline') : '';
+                        if (deadline) {
+                            deadlineHint.textContent = 'Return available until ' + deadline + '.';
+                        }
+                    }
+
+                    fetch('/my/rmas/order_lines', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: JSON.stringify({
+                            jsonrpc: '2.0',
+                            method: 'call',
+                            id: 1,
+                            params: { order_id: parseInt(orderId, 10) },
+                        }),
+                    })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        var lines = (data.result &amp;&amp; data.result.lines) ? data.result.lines : [];
+                        if (!lines.length) {
+                            linesContainer.innerHTML = '&lt;p class="text-muted"&gt;No returnable items found on this order.&lt;/p&gt;';
+                            formContinuation.style.display = '';
+                            return;
+                        }
+                        if (lines.every(function(l) { return l.already_returned || !l.returnable; })) {
+                            var hasDeliveredItems = lines.some(function(l) { return l.qty_delivered &gt; 0; });
+                            var unavailableMessage = hasDeliveredItems
+                                ? 'All returnable items in this order have already been returned.'
+                                : 'There are no delivered items available to return on this order yet.';
+                            linesContainer.innerHTML = '&lt;div class="alert alert-warning mb-0"&gt;' + unavailableMessage + '&lt;/div&gt;';
+                            formContinuation.style.display = 'none';
+                            return;
+                        }
+                        formContinuation.style.display = '';
+                        var html = '&lt;div class="table-responsive"&gt;&lt;table class="table table-sm align-middle"&gt;'
+                            + '&lt;thead&gt;&lt;tr&gt;'
+                            + '&lt;th style="width:2rem;"&gt;&lt;/th&gt;'
+                            + '&lt;th&gt;Product&lt;/th&gt;'
+                            + '&lt;th style="width:7rem;"&gt;Qty to Return&lt;/th&gt;'
+                            + '&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;';
+
+                        lines.forEach(function (line) {
+                            var disabled = (line.already_returned || !line.returnable) ? ' disabled' : '';
+                            var badge = line.already_returned
+                                ? ' &lt;span class="badge bg-secondary ms-1"&gt;Already returned&lt;/span&gt;'
+                                : (!line.returnable ? ' &lt;span class="badge bg-danger ms-1"&gt;Not returnable&lt;/span&gt;' : '');
+                            var policyNote = line.returnable || !line.return_policy_note
+                                ? ''
+                                : '&lt;div class="small text-danger mt-1"&gt;' + escHtml(line.return_policy_note) + '&lt;/div&gt;';
+                            var inputName = 'qty_' + line.id;
+                            var maxQty = line.max_qty || 1;
+                            html += '&lt;tr&gt;'
+                                + '&lt;td&gt;&lt;input type="checkbox" class="form-check-input rma-line-check"'
+                                + ' name="line_ids" value="' + line.id + '"'
+                                + disabled + '&gt;&lt;/td&gt;'
+                                + '&lt;td&gt;' + escHtml(line.product_name) + badge + policyNote + '&lt;/td&gt;'
+                                + '&lt;td&gt;&lt;input type="number" class="form-control form-control-sm"'
+                                + ' name="' + inputName + '"'
+                                + ' min="0.01" step="0.01" max="' + maxQty + '"'
+                                + ' value="' + maxQty + '"'
+                                + disabled + '&gt;&lt;/td&gt;'
+                                + '&lt;/tr&gt;';
+                        });
+
+                        html += '&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;';
+                        linesContainer.innerHTML = html;
+                    })
+                    .catch(function () {
+                        linesContainer.innerHTML = '&lt;p class="text-danger"&gt;Could not load items. Please refresh and try again.&lt;/p&gt;';
+                    });
+                }
+
+                if (orderSelect) {
+                    orderSelect.addEventListener('change', function () {
+                        fetchOrderLines(this.value);
+                    });
+                    var preSelected = window._rezaRmaSelectedOrderId || orderSelect.value;
+                    if (preSelected) {
+                        fetchOrderLines(preSelected);
+                    }
+                }
+            })();
+            //
+            </script>
+
+        </t>
+    </template>
+
+</odoo>

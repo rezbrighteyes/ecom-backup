@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Top-level "Returns" entry in the website main menu.
+         noupdate=1 so admins can reposition it via the website editor
+         without the upgrade reverting their changes. -->
+    <record id="website_menu_returns" model="website.menu">
+        <field name="name">Returns</field>
+        <field name="url">/returns</field>
+        <field name="parent_id" ref="website.main_menu"/>
+        <field name="sequence" eval="99"/>
+    </record>
+
+</odoo>

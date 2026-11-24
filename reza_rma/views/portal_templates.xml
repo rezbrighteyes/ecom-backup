@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Deactivate OCA portal home tile and breadcrumb — replaced below -->
+    <record id="rma.portal_my_home_rma" model="ir.ui.view">
+        <field name="active">False</field>
+    </record>
+    <record id="rma.portal_my_home_menu_rma" model="ir.ui.view">
+        <field name="active">False</field>
+    </record>
+
+    <!-- Breadcrumb for our returns pages -->
+    <template id="portal_breadcrumbs_reza_rma" inherit_id="portal.portal_breadcrumbs" priority="36">
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li
+                t-if="page_name == 'rma_return'"
+                t-attf-class="breadcrumb-item #{'active' if not rma else ''}">
+                <a t-if="rma" href="/my/rmas">My Returns</a>
+                <t t-else="">My Returns</t>
+            </li>
+            <li t-if="rma and page_name == 'rma_return'" class="breadcrumb-item active">
+                <t t-esc="rma.name"/>
+            </li>
+        </xpath>
+    </template>
+
+    <!-- Portal Home Tile — add "Returns" entry -->
+    <template
+        id="portal_my_home_reza_rma"
+        name="Portal Home: Returns"
+        inherit_id="portal.portal_my_home"
+        priority="35">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry"
+                title.translate="Returns"
+                text.translate="View and manage your return requests"
+                url.f="/my/rmas"
+                placeholder_count.f="reza_rma_count"
+                icon.f="/sale/static/src/img/bag.svg"/>
+        </xpath>
+    </template>
+
+
+    <!-- /my/rmas — List page -->
+    <template id="portal_my_rmas" name="My Returns">
+        <t t-call="portal.portal_layout"
+            page_name.f="rma_return"
+            order="False"
+            breadcrumbs_searchbar="False">
+
+            <t t-call="portal.portal_searchbar" title.translate="My Returns"/>
+
+            <div class="d-flex justify-content-end mb-3">
+                <a href="/my/rmas/new" class="btn btn-primary">Start a New Return</a>
+            </div>
+
+            <t t-if="not rmas">
+                <div class="alert alert-info">
+                    <p>You have no return requests.</p>
+                    <a href="/my/rmas/new" class="btn btn-primary mt-2">Start a Return</a>
+                </div>
+            </t>
+            <t t-if="rmas">
+                <t t-call="portal.portal_table">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th class="d-none d-md-table-cell">Sale Order</th>
+                            <th class="d-none d-md-table-cell">Date</th>
+                            <th class="d-none d-md-table-cell">Reason</th>
+                            <th class="d-none d-md-table-cell">Outcome</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="rmas" t-as="rma">
+                            <tr>
+                                <td>
+                                    <a t-attf-href="/my/rmas/#{rma.id}">
+                                        <t t-esc="rma.reza_request_line_id.request_id.name or rma.name"/>
+                                    </a>
+                                </td>
+                                <td class="d-none d-md-table-cell">
+                                    <t t-if="rma.order_id">
+                                        <t t-esc="rma.order_id.name"/>
+                                    </t>
+                                </td>
+                                <td class="d-none d-md-table-cell">
+                                    <t t-esc="rma.create_date" t-options='{"widget": "date"}'/>
+                                </td>
+                                <td class="d-none d-md-table-cell">
+                                    <t t-if="rma.reza_reason_id">
+                                        <t t-esc="rma.reza_reason_id.name"/>
+                                    </t>
+                                </td>
+                                <td class="d-none d-md-table-cell">
+                                    <t t-if="rma.reza_operation_type == 'credit_note'">Refund to Original Payment</t>
+                                    <t t-elif="rma.reza_operation_type == 'store_credit'">Store Credit</t>
+                                    <t t-elif="rma.reza_operation_type == 'exchange'">Exchange</t>
+                                </td>
+                                <td>
+                                    <span t-attf-class="badge #{rma.reza_portal_badge_class}">
+                                        <t t-esc="rma.reza_portal_state_label"/>
+                                    </span>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </t>
+                <div t-if="pager" class="o_portal_pager text-center">
+                    <t t-call="portal.pager"/>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- /my/rmas/{id} — Detail page -->
+    <template id="portal_rma_detail" name="RMA Detail">
+        <t t-call="portal.portal_layout"
+            page_name.f="rma_return"
+            order="False"
+            o_portal_fullwidth_alert="submitted">
+
+            <!-- Breadcrumb -->
+            <t t-if="submitted">
+                <div class="alert alert-success alert-dismissible" role="alert">
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"/>
+                    <strong>Return submitted.</strong>
+                    <t t-if="rma.reza_return_label_attachment_id">
+                        Your return label is ready — download it below, print it, and drop the parcel at any Australia Post outlet.
+                    </t>
+                    <t t-else="">
+                        A confirmation email is on its way. Your return label will appear here once generated.
+                    </t>
+                </div>
+            </t>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>
+                    <t t-esc="rma.name"/>
+                    <span t-attf-class="badge #{rma.reza_portal_badge_class} ms-2 fs-6">
+                        <t t-esc="rma.reza_portal_state_label"/>
+                    </span>
+                </h2>
+            </div>
+
+            <!-- Info block -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-5">Sale Order</dt>
+                        <dd class="col-sm-7">
+                            <t t-if="rma.order_id">
+                                <a t-attf-href="/my/orders/#{rma.order_id.id}">
+                                    <t t-esc="rma.order_id.name"/>
+                                </a>
+                            </t>
+                            <t t-else="">—</t>
+                        </dd>
+                        <dt class="col-sm-5">Return Reason</dt>
+                        <dd class="col-sm-7">
+                            <t t-esc="rma.reza_reason_id.name or '—'"/>
+                        </dd>
+                        <dt class="col-sm-5">Requested Outcome</dt>
+                        <dd class="col-sm-7">
+                            <t t-if="rma.reza_operation_type == 'credit_note'">Refund to Original Payment</t>
+                            <t t-elif="rma.reza_operation_type == 'store_credit'">Store Credit</t>
+                            <t t-elif="rma.reza_operation_type == 'exchange'">Exchange / Replacement</t>
+                            <t t-else="">—</t>
+                        </dd>
+                        <dt class="col-sm-5">Return Method</dt>
+                        <dd class="col-sm-7">
+                            <t t-if="rma.reza_return_method == 'auspost'">Australia Post Returns Portal</t>
+                            <t t-elif="rma.reza_return_method == 'manual'">Manual — Warehouse Address</t>
+                            <t t-else="">—</t>
+                        </dd>
+                        <dt class="col-sm-5">Return Tracking</dt>
+                        <dd class="col-sm-7">
+                            <t t-if="rma.reza_return_tracking_ref">
+                                <t t-esc="rma.reza_return_tracking_ref"/>
+                            </t>
+                            <t t-else="">Pending</t>
+                        </dd>
+                        <t t-if="rma.reza_return_shipping_fee">
+                            <dt class="col-sm-5">Return Shipping Fee</dt>
+                            <dd class="col-sm-7">
+                                <t t-esc="rma.company_id.currency_id.symbol"/><t t-esc="'%.2f' % rma.reza_return_shipping_fee"/>
+                                <span class="text-muted small"> (deducted from refund)</span>
+                            </dd>
+                        </t>
+                    </dl>
+                </div>
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-5">Submitted</dt>
+                        <dd class="col-sm-7">
+                            <t t-esc="rma.create_date" t-options='{"widget": "date"}'/>
+                        </dd>
+                        <dt class="col-sm-5">Received at Warehouse</dt>
+                        <dd class="col-sm-7">
+                            <t t-if="rma.reza_warehouse_received_date">
+                                <t t-esc="rma.reza_warehouse_received_date" t-options='{"widget": "date"}'/>
+                            </t>
+                            <t t-else="">Pending</t>
+                        </dd>
+                        <dt class="col-sm-5">Processing Due</dt>
+                        <dd class="col-sm-7">
+                            <t t-if="rma.reza_sla_due_date">
+                                <t t-esc="rma.reza_sla_due_date" t-options='{"widget": "date"}'/>
+                            </t>
+                            <t t-else="">Pending</t>
+                        </dd>
+                        <dt class="col-sm-5">Return Label</dt>
+                        <dd class="col-sm-7">
+                            <t t-if="rma.reza_return_label_attachment_id">
+                                <a t-attf-href="/my/rmas/#{rma.id}/label" class="btn btn-outline-primary btn-sm">
+                                    Download Return Label
+                                </a>
+                            </t>
+                            <t t-else="">Pending</t>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h5>Status Timeline</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    <span t-attf-class="badge #{'bg-info' if rma.state in ('draft', 'confirmed', 'received', 'waiting_return', 'waiting_replacement', 'refunded', 'returned', 'replaced', 'finished', 'locked') else 'bg-light text-dark'}">Return Requested</span>
+                    <span t-attf-class="badge #{'bg-info' if rma.state in ('waiting_return', 'received', 'waiting_replacement', 'refunded', 'returned', 'replaced', 'finished', 'locked') else 'bg-light text-dark'}">In Transit</span>
+                    <span t-attf-class="badge #{'bg-info' if rma.state in ('received', 'waiting_replacement', 'refunded', 'returned', 'replaced', 'finished', 'locked') else 'bg-light text-dark'}">Received</span>
+                    <span t-attf-class="badge #{'bg-success' if rma.state in ('refunded', 'returned', 'replaced', 'finished', 'locked') else 'bg-light text-dark'}">Resolved</span>
+                </div>
+            </div>
+
+            <!-- Customer declarations -->
+            <t t-if="rma.reza_tags_attached or rma.reza_original_packaging or rma.reza_no_signs_of_wear or rma.reza_damage_on_arrival">
+                <div class="mb-4">
+                    <h5>Item Condition Confirmed</h5>
+                    <ul class="list-unstyled">
+                        <li t-if="rma.reza_tags_attached">✓ Tags still attached</li>
+                        <li t-if="rma.reza_original_packaging">✓ Original packaging intact</li>
+                        <li t-if="rma.reza_no_signs_of_wear">✓ No signs of wear</li>
+                        <li t-if="rma.reza_damage_on_arrival">✓ Damage / fault claim</li>
+                    </ul>
+                </div>
+            </t>
+
+            <t t-if="rma.reza_customer_notes">
+                <div class="mb-4">
+                    <h5>Notes</h5>
+                    <p><t t-esc="rma.reza_customer_notes"/></p>
+                </div>
+            </t>
+
+            <!-- Return instructions -->
+            <t t-if="rma.state not in ('finished', 'locked', 'cancelled')">
+                <div class="alert alert-info mb-4">
+                    <h5>Return Instructions</h5>
+                    <t t-if="rma.reza_return_method == 'auspost'">
+                        <t t-if="rma.reza_return_label_attachment_id">
+                            <p>Your return label is ready. Print it and attach it securely to your parcel, then drop it at any Australia Post outlet.</p>
+                            <a t-attf-href="/my/rmas/#{rma.id}/label" class="btn btn-outline-primary btn-sm">
+                                Download Return Label
+                            </a>
+                            <t t-if="rma.reza_return_shipping_fee">
+                                <p class="mt-2 mb-0 small text-muted">
+                                    Return shipping fee of <strong><t t-esc="rma.company_id.currency_id.symbol"/><t t-esc="'%.2f' % rma.reza_return_shipping_fee"/></strong>
+                                    will be deducted from your refund — no upfront payment required.
+                                </p>
+                            </t>
+                        </t>
+                        <t t-elif="rma.reza_request_line_id.request_id.label_attempt_count">
+                            <p>Your return label is being prepared and will appear here shortly. You'll also receive it by email.</p>
+                        </t>
+                        <t t-else="">
+                            <p>Return instructions will be confirmed by our team after review.</p>
+                        </t>
+                    </t>
+                    <t t-elif="rma.reza_return_method == 'manual'">
+                        <p>Please send your item to the return address provided in your confirmation email. Contact us if you need it resent.</p>
+                    </t>
+                </div>
+            </t>
+
+            <t t-if="rma.reza_operation_type == 'store_credit' and rma.reza_store_credit_bonus_amount">
+                <div class="alert alert-success mb-4">
+                    First-return bonus applied: <strong><t t-esc="rma.company_id.currency_id.symbol"/><t t-esc="rma.reza_store_credit_bonus_amount"/></strong>
+                    extra store credit.
+                </div>
+            </t>
+
+            <!-- Attachments -->
+            <t t-set="attachments" t-value="rma.attachment_ids"/>
+            <t t-if="attachments">
+                <div class="mb-4">
+                    <h5>Attachments</h5>
+                    <ul>
+                        <t t-foreach="attachments" t-as="att">
+                            <li>
+                                <a t-attf-href="/web/content/#{att.id}?download=true" target="_blank">
+                                    <t t-esc="att.name"/>
+                                </a>
+                            </li>
+                        </t>
+                    </ul>
+                </div>
+            </t>
+
+            <!-- Message thread -->
+            <div class="mb-4">
+                <h5>Messages</h5>
+                <t t-call="portal.message_thread" object="rma"/>
+            </div>
+
+            <!-- Message post form (hide if terminal state) -->
+            <t t-if="rma.state not in ('finished', 'locked', 'cancelled')">
+                <div class="mb-4">
+                    <h5>Send a Message</h5>
+                    <form t-attf-action="/my/rmas/#{rma.id}/message" method="POST">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <div class="mb-3">
+                            <textarea
+                                name="message"
+                                class="form-control"
+                                rows="3"
+                                placeholder="Type your message here..."/>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Send Message</button>
+                    </form>
+                </div>
+            </t>
+
+        </t>
+    </template>
+
+</odoo>

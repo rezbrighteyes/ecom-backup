@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Extend OCA rma form — add "Return Details" tab -->
+    <record id="view_rma_form_reza_extension" model="ir.ui.view">
+        <field name="name">rma.form.reza.extension</field>
+        <field name="model">rma</field>
+        <field name="inherit_id" ref="rma.rma_view_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Add custom buttons to form header -->
+            <xpath expr="//header" position="inside">
+                <button
+                    name="reza_action_set_inspection"
+                    string="Record Inspection"
+                    type="object"
+                    class="btn-secondary"/>
+                <button
+                    name="reza_action_process_credit_note"
+                    string="Create Credit Note"
+                    type="object"
+                    class="btn-primary"
+                    invisible="reza_inspection_outcome != 'acceptable' or not reza_request_line_id or reza_operation_type == 'store_credit'"/>
+                <button
+                    name="reza_action_process_store_credit"
+                    string="Issue Store Credit"
+                    type="object"
+                    class="btn-primary"
+                    invisible="reza_inspection_outcome != 'acceptable' or not reza_request_line_id or reza_operation_type != 'store_credit' or reza_store_credit_issued"/>
+                <button
+                    name="reza_action_process_exchange"
+                    string="Create Exchange Order"
+                    type="object"
+                    class="btn-primary"
+                    invisible="reza_inspection_outcome != 'acceptable' or reza_operation_type != 'exchange' or not reza_request_line_id"/>
+                <button
+                    name="reza_send_approved_email"
+                    string="Send Approval Email"
+                    type="object"
+                    class="btn-secondary"/>
+                <button
+                    name="reza_action_generate_return_label"
+                    string="Generate Return Label"
+                    type="object"
+                    class="btn-secondary"
+                    invisible="not reza_can_generate_return_label"/>
+            </xpath>
+
+            <!-- Add "Return Details" page to notebook -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Return Details" name="reza_return_details">
+                    <group>
+                        <group string="Customer Details">
+                            <field name="reza_reason_id"/>
+                            <field name="reza_request_line_id" readonly="1"/>
+                            <field name="reza_migration_review_required" readonly="1"/>
+                            <field name="reza_operation_type"/>
+                            <field name="reza_return_method"/>
+                            <field name="reza_disclaimer_accepted" readonly="1"/>
+                            <field name="reza_customer_notes"/>
+                            <field name="reza_damage_on_arrival"/>
+                        </group>
+                        <group string="SLA">
+                            <field name="reza_warehouse_received_date"/>
+                            <field name="reza_sla_due_date" readonly="1"/>
+                            <field name="reza_sla_alerted" readonly="1"/>
+                            <field name="reza_portal_visible"/>
+                        </group>
+                    </group>
+                    <group string="Customer Declarations">
+                        <field name="reza_tags_attached"/>
+                        <field name="reza_original_packaging"/>
+                        <field name="reza_no_signs_of_wear"/>
+                    </group>
+                    <group
+                        string="Inspection"
+                        invisible="not reza_inspection_outcome and not reza_inspection_notes">
+                        <field name="reza_inspection_outcome"/>
+                        <field name="reza_inspection_notes"/>
+                    </group>
+                    <group string="Return Shipping">
+                        <field name="reza_return_shipping_fee"/>
+                        <field name="reza_origin_delivery_picking_id" readonly="1"/>
+                        <field name="reza_return_carrier_id" readonly="1"/>
+                        <field name="reza_return_tracking_ref" readonly="1"/>
+                        <field name="reza_return_label_generated_at" readonly="1"/>
+                        <field name="reza_return_label_attachment_id" readonly="1"/>
+                    </group>
+                    <group
+                        string="Exchange"
+                        invisible="reza_operation_type != 'exchange'">
+                        <field name="reza_exchange_preference"/>
+                    </group>
+                    <group
+                        string="Store Credit"
+                        invisible="reza_operation_type != 'store_credit'">
+                        <field name="reza_store_credit_bonus_percent" readonly="1"/>
+                        <field name="reza_store_credit_bonus_amount" readonly="1"/>
+                    </group>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="view_rma_search_reza_extension" model="ir.ui.view">
+        <field name="name">rma.search.reza.extension</field>
+        <field name="model">rma</field>
+        <field name="inherit_id" ref="rma.rma_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search/field[@name='partner_id']" position="after">
+                <field name="order_id"/>
+                <field name="reza_reason_id"/>
+                <field name="reza_return_tracking_ref"/>
+            </xpath>
+            <xpath expr="//search/filter[@name='received_filter']" position="after">
+                <filter
+                    name="warranty_claims"
+                    string="Warranty Claims"
+                    domain="[('reza_reason_id.code', '=', 'WARRANTY')]"/>
+                <filter
+                    name="replacement_requests"
+                    string="Replacements"
+                    domain="[('reza_operation_type', '=', 'exchange')]"/>
+                <filter
+                    name="store_credit_requests"
+                    string="Store Credit"
+                    domain="[('reza_operation_type', '=', 'store_credit')]"/>
+                <filter
+                    name="refund_requests"
+                    string="Refunds"
+                    domain="[('reza_operation_type', '=', 'credit_note')]"/>
+                <filter
+                    name="with_return_label"
+                    string="Return Label Ready"
+                    domain="[('reza_return_label_attachment_id', '!=', False)]"/>
+                <filter
+                    name="auspost_returns"
+                    string="AusPost Returns"
+                    domain="[('reza_return_method', '=', 'auspost')]"/>
+                <filter
+                    name="manual_returns"
+                    string="Manual Returns"
+                    domain="[('reza_return_method', '=', 'manual')]"/>
+            </xpath>
+            <xpath expr="//search/group[@name='group_by']" position="inside">
+                <filter
+                    string="Return Reason"
+                    name="reza_reason_group_by"
+                    context="{'group_by': 'reza_reason_id'}"/>
+                <filter
+                    string="Outcome"
+                    name="reza_operation_group_by"
+                    context="{'group_by': 'reza_operation_type'}"/>
+                <filter
+                    string="Return Method"
+                    name="reza_return_method_group_by"
+                    context="{'group_by': 'reza_return_method'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_rma_tree_reza_extension" model="ir.ui.view">
+        <field name="name">rma.tree.reza.extension</field>
+        <field name="model">rma</field>
+        <field name="inherit_id" ref="rma.rma_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_id']" position="after">
+                <field name="reza_staff_summary" string="Staff Flag" optional="show"/>
+                <field name="reza_operation_type" string="Outcome" optional="show"/>
+                <field name="reza_reason_id" string="Reason" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

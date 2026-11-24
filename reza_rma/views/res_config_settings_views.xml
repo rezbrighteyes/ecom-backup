@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form_reza_rma" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.reza.rma</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="rma.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='rma']/block[@name='rma_operations_block']" position="inside">
+                <setting
+                    help="Standard number of days customers have to start a return."
+                    company_specific="1">
+                    <field name="reza_rma_return_window_days"/>
+                </setting>
+                <setting
+                    help="Optional peak-season deadline that extends returns beyond the standard window."
+                    company_specific="1">
+                    <field name="reza_rma_holiday_deadline"/>
+                </setting>
+                <setting
+                    help="Bonus percentage offered on the first approved store-credit return."
+                    company_specific="1">
+                    <field name="reza_rma_store_credit_bonus_percent"/>
+                </setting>
+                <setting
+                    help="Default return shipping cost deducted from customer refunds (shown on the portal form)."
+                    company_specific="1">
+                    <field name="reza_rma_return_shipping_fee"/>
+                </setting>
+                <setting help="Service product used for the visible return shipping deduction on credit notes."
+                         company_specific="1">
+                    <field name="reza_rma_return_shipping_product_id"/>
+                </setting>
+                <setting help="OCA RMA operation used for refund and store-credit requests."
+                         company_specific="1">
+                    <field name="reza_rma_refund_operation_id"/>
+                </setting>
+                <setting help="OCA RMA operation used for exchange requests."
+                         company_specific="1">
+                    <field name="reza_rma_exchange_operation_id"/>
+                </setting>
+                <setting help="Ecommerce payment program used to issue customer store credit."
+                         company_specific="1">
+                    <field name="reza_rma_store_credit_program_id"/>
+                </setting>
+                <setting help="Explicit Starshipit carrier used only for return labels."
+                         company_specific="1">
+                    <field name="reza_rma_return_carrier_id"/>
+                </setting>
+                <setting help="Default number of hours an exchange reservation may be held."
+                         company_specific="1">
+                    <field name="reza_rma_exchange_hold_hours"/>
+                </setting>
+                <setting help="Enable only after Starshipit is configured and tested in staging."
+                         company_specific="1">
+                    <field name="reza_rma_enable_labels"/>
+                </setting>
+                <setting help="Enable only after accounting signs off scoped refund totals."
+                         company_specific="1">
+                    <field name="reza_rma_enable_refunds"/>
+                </setting>
+                <setting help="Enable only after stock and payment gates pass staging tests."
+                         company_specific="1">
+                    <field name="reza_rma_enable_exchanges"/>
+                </setting>
+                <setting
+                    help="Disclaimer customers must accept before submitting a return."
+                    company_specific="1">
+                    <field name="reza_rma_disclaimer_text"/>
+                </setting>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,1094 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Step 1 – Order lookup
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template id="portal_guest_returns_lookup" name="Returns Centre — Lookup">
+        <t t-call="website.layout">
+            <div class="rc-page">
+                <div class="rc-card" style="max-width:460px;">
+                    <div class="rc-card-body" style="padding:2.5rem 2rem;">
+                        <h2 class="rc-title">Returns Centre</h2>
+
+                        <t t-if="error">
+                            <div class="rc-alert-danger">
+                                <t t-foreach="error.items()" t-as="err"><div><t t-esc="err[1]"/></div></t>
+                            </div>
+                        </t>
+
+                        <form action="/returns/find" method="POST">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <input type="text" name="order_number" t-att-value="order_number or ''"
+                                   t-attf-class="rc-input mb-3 #{'is-invalid' if error.get('order_number') else ''}"
+                                   placeholder="Order number" required="required" autocomplete="off"/>
+                            <input type="email" name="email" t-att-value="email or ''"
+                                   t-attf-class="rc-input mb-4 #{'is-invalid' if error.get('email') else ''}"
+                                   placeholder="Email used at checkout" required="required"/>
+                            <button type="submit" class="rc-btn-primary">Find your order</button>
+                        </form>
+
+                        <p class="rc-fine-print mt-4">We accept returns of unused and undamaged items with the original packaging in tack according to our returns policy.</p>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Steps 2-8 – Multi-step return form
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template id="portal_guest_returns_form" name="Returns Centre — Form">
+        <t t-call="website.layout">
+
+            <!-- Data passed to JS via data attributes -->
+            <div id="rc-meta"
+                t-att-data-shipping-fee="return_shipping_fee"
+                t-att-data-currency="currency_symbol"
+                t-att-data-disclaimer="disclaimer_text or ''"
+                t-att-data-bonus-percent="bonus_percent or 0"
+                style="display:none;"/>
+
+            <!-- Server-side validation errors (only on re-render after POST fail) -->
+            <t t-if="error">
+                <div style="max-width:560px;margin:1.5rem auto 0;">
+                    <div class="rc-alert-danger">
+                        <t t-foreach="error.items()" t-as="err"><div><t t-esc="err[1]"/></div></t>
+                    </div>
+                </div>
+            </t>
+
+            <div class="rc-page">
+
+              <form action="/returns/submit" method="POST" id="rc-form">
+                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                <input type="hidden" name="order_number" t-att-value="order.name"/>
+                <input type="hidden" name="continuation_token" t-att-value="continuation_token"/>
+                <!-- dynamic inputs injected by JS before submit -->
+
+                <!-- ─────────────────────────────────────────────────────
+                     View A – Items list
+                ───────────────────────────────────────────────────────── -->
+                <div id="view-items" class="rc-card" style="max-width:600px;">
+                    <div class="rc-step-hdr">
+                        <button type="button" class="rc-back-btn" onclick="history.back()">←</button>
+                        <span class="rc-step-title">What would you like to return?</span>
+                    </div>
+                    <div class="rc-card-body">
+
+                        <t t-foreach="lines" t-as="line">
+                            <div
+                                t-attf-class="rc-item-row #{'rc-item-disabled' if line['already_returned'] or not line['returnable'] else ''}"
+                                t-att-data-line-id="line['id']"
+                                t-att-data-name="line['product_name']"
+                                t-att-data-qty="line['max_qty']"
+                                t-att-data-price="line['price_subtotal']"
+                                t-att-data-img="'/web/image/product.product/' + str(line['product_id']) + '/image_128'">
+
+                                <!-- Thumbnail -->
+                                <img
+                                    t-attf-src="/web/image/product.product/#{line['product_id']}/image_128"
+                                    class="rc-item-thumb"
+                                    alt=""
+                                    onerror="this.style.visibility='hidden'"/>
+
+                                <!-- Info -->
+                                <div class="rc-item-info">
+                                    <div class="rc-item-name"><t t-esc="line['product_name']"/></div>
+                                    <div class="rc-item-price">
+                                        <t t-esc="line['currency_symbol']"/><t t-esc="'%.2f' % line['price_subtotal']"/>
+                                        <t t-if="line['qty_delivered'] > 1 or line['qty'] > 1"> × <t t-esc="int(line['qty_delivered']) if line['qty_delivered'] else int(line['qty'])"/></t>
+                                    </div>
+                                    <t t-if="line['already_returned']">
+                                        <span class="rc-badge-grey">Already returned</span>
+                                    </t>
+                                    <t t-elif="not line['returnable']">
+                                        <span class="rc-badge-red">Not returnable</span>
+                                    </t>
+                                    <!-- Configured badge (populated by JS) -->
+                                    <div t-att-id="'badge-' + str(line['id'])" class="rc-configured-badge" style="display:none;">
+                                        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/></svg>
+                                        Return item × <span class="badge-qty">1</span>
+                                    </div>
+                                    <div t-att-id="'badge-actions-' + str(line['id'])" class="rc-badge-actions" style="display:none;">
+                                        <button type="button" class="rc-link-btn" onclick="removeItem(this)" t-att-data-line-id="line['id']">Remove</button>
+                                        <button type="button" class="rc-link-btn" onclick="editItem(this)" t-att-data-line-id="line['id']">Edit</button>
+                                    </div>
+                                </div>
+
+                                <div class="rc-item-chevron" t-att-id="'chevron-' + str(line['id'])">
+                                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+                                </div>
+                            </div>
+                        </t>
+
+                        <button type="button" class="rc-btn-primary mt-3" id="btn-items-next" disabled="disabled" onclick="goToResolution()">Next</button>
+                    </div>
+                </div>
+
+                <!-- ─────────────────────────────────────────────────────
+                     View B – Configure one item (split panel)
+                ───────────────────────────────────────────────────────── -->
+                <div id="view-configure" class="rc-card rc-card-split" style="display:none;max-width:720px;">
+
+                    <!-- Left: product details -->
+                    <div class="rc-split-left" id="configure-left">
+                        <!-- populated by JS -->
+                    </div>
+
+                    <!-- Right: reasons + notes -->
+                    <div class="rc-split-right">
+                        <div class="rc-step-hdr">
+                            <button type="button" class="rc-back-btn" onclick="showView('view-items')">←</button>
+                            <span class="rc-step-title" id="configure-title">Why are you returning this item?</span>
+                            <button type="button" class="rc-close-btn" onclick="showView('view-items')">×</button>
+                        </div>
+                        <div class="rc-card-body">
+
+                            <!-- Sub-view: reasons -->
+                            <div id="configure-reasons">
+                                <t t-foreach="reasons" t-as="reason">
+                                    <div class="rc-option-row"
+                                        t-att-data-reason-id="reason.id"
+                                        t-att-data-reason-name="reason.name"
+                                        t-att-data-exclude-estimate="1 if reason.code == 'WARRANTY' else 0"
+                                        t-att-data-allowed-resolution="reason.allowed_resolution"
+                                        t-att-data-fee-waived="'1' if reason.reza_return_fee_waived else '0'">
+                                        <t t-esc="reason.name"/>
+                                    </div>
+                                </t>
+                            </div>
+
+                            <!-- Sub-view: notes (shown after reason selected) -->
+                            <div id="configure-notes" style="display:none;">
+                                <button type="button" class="rc-back-btn-inline" onclick="showConfigureReasons()">← Back</button>
+                                <p class="rc-configure-subtitle">Let us know more details</p>
+                                <label class="rc-label-sm">Quantity to return</label>
+                                <input type="number" id="configure-qty-input" class="rc-input mb-3" min="1" step="1" value="1"/>
+                                <label class="rc-label-sm">Comments <span class="rc-optional">(optional)</span></label>
+                                <textarea id="configure-notes-text" class="rc-textarea" rows="3" placeholder="Tell us more about your reason for returning..."/>
+                                <button type="button" class="rc-btn-primary mt-3" id="btn-configure-done" onclick="confirmItem()">Done</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─────────────────────────────────────────────────────
+                     View C – Resolution
+                ───────────────────────────────────────────────────────── -->
+                <div id="view-resolution" class="rc-card" style="display:none;max-width:600px;">
+                    <div class="rc-step-hdr">
+                        <button type="button" class="rc-back-btn" onclick="showView('view-items')">←</button>
+                        <span class="rc-step-title">How can we resolve it?</span>
+                    </div>
+                    <div class="rc-card-body">
+                        <!-- Shown when cart has warranty + non-warranty items mixed -->
+                        <div id="resolution-conflict-warning" style="display:none;">
+                            <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:.9rem 1rem;color:#b91c1c;font-size:.86rem;margin-bottom:1rem;">
+                                <strong>Separate returns required.</strong><br/>
+                                Your basket has warranty items and regular return items. These need different outcomes and must be submitted in two separate returns — please go back and select only one type at a time.
+                            </div>
+                            <button type="button" class="rc-btn-primary" onclick="showView('view-items')">← Back to items</button>
+                        </div>
+
+                        <div id="resolution-options">
+                            <div class="rc-option-row" data-outcome="credit_note" data-outcome-name="Refund to original payment method">
+                                Refund to original payment method
+                            </div>
+                            <div class="rc-option-row" data-outcome="exchange" data-outcome-name="Exchange for a different item">
+                                Exchange for a different item
+                            </div>
+                            <div class="rc-option-row" data-outcome="store_credit" data-outcome-name="Store credit">
+                                Store credit<t t-if="(bonus_percent or 0) > 0"> <span style="color:#16a34a;font-size:.8em;">(earn <t t-esc="int(bonus_percent)"/>% extra on your first return!)</span></t>
+                            </div>
+
+                            <div id="exchange-wrap" class="mt-3" style="display:none;">
+                                <label class="rc-label-sm">What would you like in exchange? <span class="rc-optional">(optional)</span></label>
+                                <textarea id="exchange-notes" class="rc-textarea" rows="3" placeholder="e.g. Same item in size M — we'll confirm availability before dispatch"/>
+                            </div>
+
+                            <button type="button" class="rc-btn-primary mt-3" id="btn-resolution-next" disabled="disabled" onclick="goToMethodView()">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─────────────────────────────────────────────────────
+                     View D – Return method
+                ───────────────────────────────────────────────────────── -->
+                <div id="view-method" class="rc-card" style="display:none;max-width:600px;">
+                    <div class="rc-step-hdr">
+                        <button type="button" class="rc-back-btn" onclick="showView('view-resolution')">←</button>
+                        <span class="rc-step-title">Choose a return method</span>
+                    </div>
+                    <div class="rc-card-body">
+                        <div class="rc-method-row rc-selected">
+                            <div class="rc-method-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.708 2.825L15 11.105V5.383zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z"/></svg>
+                            </div>
+                            <div class="rc-method-info">
+                                <div class="rc-method-name">Ship with our return label (<span id="method-fee-display"></span>)</div>
+                                <div class="rc-method-sub" id="method-sub-display"></div>
+                            </div>
+                            <div class="rc-method-check">
+                                <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>
+                            </div>
+                        </div>
+                        <button type="button" class="rc-btn-primary mt-3" onclick="buildReviewAndShow()">Next</button>
+                    </div>
+                </div>
+
+                <!-- ─────────────────────────────────────────────────────
+                     View E – Review your return
+                ───────────────────────────────────────────────────────── -->
+                <div id="view-review" class="rc-card rc-card-review" style="display:none;">
+                    <div class="rc-step-hdr">
+                        <button type="button" class="rc-back-btn" onclick="showView('view-method')">←</button>
+                        <span class="rc-step-title">Review your return</span>
+                    </div>
+                    <div class="rc-card-body">
+                        <div class="rc-review-grid">
+
+                            <!-- Left column -->
+                            <div>
+                                <div class="rc-review-section">
+                                    <div class="rc-review-section-title">What you're returning</div>
+                                    <div id="review-items-html"></div>
+                                </div>
+                                <div class="rc-review-section mt-4">
+                                    <div class="rc-review-section-title">Return method</div>
+                                    <div id="review-method-html" class="rc-review-text mt-1"></div>
+                                </div>
+                            </div>
+
+                            <!-- Right column -->
+                            <div>
+                                <div class="rc-summary-box">
+                                    <div class="rc-summary-title">Summary</div>
+
+                                    <div class="rc-summary-row">
+                                        <span id="rv-items-label">Return item (1)</span>
+                                        <span id="rv-item-val" class="text-muted"></span>
+                                    </div>
+                                    <div class="rc-summary-row" id="rv-shipping-row">
+                                        <span>Cost of return</span>
+                                        <span id="rv-shipping"></span>
+                                    </div>
+                                    <div class="rc-summary-divider"></div>
+                                    <div class="rc-summary-row rc-summary-total">
+                                        <span id="rv-total-label">Total refund</span>
+                                        <span id="rv-total"></span>
+                                    </div>
+                                    <div id="rv-outcome-note" class="rc-fine-print text-end mt-1"></div>
+                                    <p class="rc-fine-print mt-2">*Based on our store policy and any applicable discounts, taxes, and shipping costs.</p>
+
+                                    <!-- Disclaimer -->
+                                    <div class="rc-disclaimer-row mt-3">
+                                        <label class="rc-terms-check" for="rc-disclaimer-check">
+                                            <input type="checkbox" name="reza_disclaimer_accepted" id="rc-disclaimer-check" value="1" required="required"/>
+                                            <span>
+                                                I confirm the return details are accurate and agree to the
+                                                <button type="button" class="rc-terms-link" id="rc-terms-toggle">Return Terms &amp; Conditions</button>.
+                                            </span>
+                                        </label>
+                                        <div id="rc-terms-panel" class="rc-terms-panel" style="display:none;">
+                                            <div class="rc-terms-title">Return Terms &amp; Conditions</div>
+                                            <div id="rc-disclaimer-text" class="rc-terms-text"></div>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="rc-btn-primary mt-3">Submit</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+              </form>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 Styles
+            ══════════════════════════════════════════════════════════════ -->
+            <style>
+            .rc-page { min-height:55vh; background:#f5f5f5; padding:2.5rem 1rem; display:flex; flex-direction:column; align-items:center; gap:1rem; }
+            .rc-card { width:100%; background:#fff; border-radius:14px; box-shadow:0 2px 18px rgba(0,0,0,.09); overflow:hidden; }
+            .rc-card-body { padding:1.25rem 1.5rem; }
+            /* Split card */
+            .rc-card-split { display:flex; }
+            .rc-split-left { width:240px; flex-shrink:0; background:#f9f9f9; border-right:1px solid #efefef; padding:1.5rem; display:flex; flex-direction:column; align-items:center; gap:.75rem; }
+            .rc-split-right { flex:1; overflow:hidden; }
+            .rc-split-left-img { width:120px; height:120px; object-fit:contain; border-radius:8px; }
+            .rc-split-left-name { font-weight:700; font-size:.88rem; text-align:center; }
+            .rc-split-left-price { color:#555; font-size:.82rem; text-align:center; }
+            /* Review card */
+            .rc-card-review { max-width:780px; }
+            .rc-review-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
+            @media(max-width:600px) { .rc-review-grid{grid-template-columns:1fr;} .rc-card-split{flex-direction:column;} .rc-split-left{width:100%;border-right:none;border-bottom:1px solid #efefef;flex-direction:row;} }
+            /* Step header */
+            .rc-step-hdr { display:flex; align-items:center; padding:.9rem 1.25rem; border-bottom:1px solid #f0f0f0; position:relative; min-height:48px; }
+            .rc-step-title { flex:1; text-align:center; font-weight:600; font-size:.95rem; }
+            .rc-back-btn { background:none; border:none; cursor:pointer; font-size:1.1rem; color:#333; padding:0; position:absolute; left:1.25rem; line-height:1; }
+            .rc-close-btn { background:none; border:none; cursor:pointer; font-size:1.2rem; color:#999; padding:0; position:absolute; right:1.25rem; line-height:1; }
+            .rc-back-btn-inline { background:none; border:none; cursor:pointer; color:#666; font-size:.82rem; padding:0; margin-bottom:.75rem; }
+            .rc-configure-subtitle { font-weight:600; font-size:.9rem; margin-bottom:.75rem; }
+            /* Primary button */
+            .rc-btn-primary { display:block; width:100%; padding:.8rem; background:#1a3a5c; color:#fff; border:none; border-radius:50px; font-size:.93rem; font-weight:600; cursor:pointer; text-align:center; transition:background .15s; text-decoration:none; }
+            .rc-btn-primary:hover:not(:disabled) { background:#122c47; }
+            .rc-btn-primary:disabled { background:#ccc; cursor:not-allowed; }
+            /* Input */
+            .rc-input { display:block; width:100%; border:1.5px solid #d0d0d0; border-radius:8px; padding:.65rem .9rem; font-size:.92rem; transition:border-color .15s; }
+            .rc-input:focus { border-color:#1a3a5c; outline:none; }
+            .rc-input.is-invalid { border-color:#dc3545; }
+            /* Item rows */
+            .rc-item-row { display:flex; align-items:center; gap:.9rem; border:1.5px solid #e5e5e5; border-radius:10px; padding:.85rem 1rem; margin-bottom:.6rem; cursor:pointer; transition:border-color .15s,background .15s; }
+            .rc-item-row:hover:not(.rc-item-disabled) { border-color:#bbb; }
+            .rc-item-row.rc-configured { border-color:#1a3a5c; background:#f0f4f8; }
+            .rc-item-row.rc-item-disabled { opacity:.5; cursor:default; }
+            .rc-item-thumb { width:52px; height:52px; object-fit:contain; border-radius:6px; flex-shrink:0; background:#f5f5f5; }
+            .rc-item-info { flex:1; min-width:0; }
+            .rc-item-name { font-weight:600; font-size:.88rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+            .rc-item-price { color:#666; font-size:.8rem; margin-top:.1rem; }
+            .rc-configured-badge { display:inline-flex; align-items:center; gap:.25rem; background:#e8f0f8; color:#1a3a5c; font-size:.76rem; font-weight:600; padding:.15rem .5rem; border-radius:4px; margin-top:.35rem; }
+            .rc-badge-actions { display:inline-flex; gap:.75rem; margin-top:.2rem; }
+            .rc-link-btn { background:none; border:none; cursor:pointer; color:#666; font-size:.76rem; padding:0; text-decoration:underline; }
+            .rc-item-chevron { color:#ccc; flex-shrink:0; }
+            .rc-item-row.rc-configured .rc-item-chevron { display:none; }
+            /* Option rows */
+            .rc-option-row { border:1.5px solid #e5e5e5; border-radius:10px; padding:.9rem 1.1rem; margin-bottom:.6rem; cursor:pointer; font-size:.88rem; transition:border-color .15s,background .15s; }
+            .rc-option-row:hover { border-color:#bbb; }
+            .rc-option-row.rc-selected { border-color:#1a3a5c; background:#f0f4f8; font-weight:600; }
+            /* Return method row */
+            .rc-method-row { display:flex; align-items:center; gap:1rem; border:1.5px solid #e5e5e5; border-radius:10px; padding:1rem 1.1rem; transition:border-color .15s; }
+            .rc-method-row.rc-selected { border-color:#1a3a5c; background:#f0f4f8; }
+            .rc-method-icon { color:#555; flex-shrink:0; }
+            .rc-method-info { flex:1; }
+            .rc-method-name { font-weight:600; font-size:.88rem; }
+            .rc-method-sub { color:#888; font-size:.78rem; margin-top:.1rem; }
+            .rc-method-check { color:#1a3a5c; flex-shrink:0; }
+            /* Review */
+            .rc-review-section { font-size:.86rem; }
+            .rc-review-section-title { font-weight:700; margin-bottom:.5rem; }
+            .rc-review-item { padding:.55rem 0; border-bottom:1px solid #f2f2f2; }
+            .rc-review-item:last-child { border-bottom:none; }
+            .rc-review-text { color:#555; font-size:.84rem; }
+            .rc-summary-box { background:#f9f9f9; border:1.5px solid #e5e5e5; border-radius:10px; padding:1.1rem; }
+            .rc-summary-title { font-weight:700; margin-bottom:.75rem; font-size:.92rem; }
+            .rc-summary-row { display:flex; justify-content:space-between; font-size:.86rem; margin-bottom:.35rem; }
+            .rc-summary-divider { border-top:1.5px solid #ddd; margin:.6rem 0; }
+            .rc-summary-total { font-weight:700; font-size:.95rem; }
+            .rc-disclaimer-row { border-top:1px solid #ebebeb; padding-top:.75rem; }
+            .rc-terms-check { cursor:pointer; display:flex; gap:.55rem; align-items:flex-start; color:#555; font-size:.82rem; line-height:1.35; margin:0; }
+            .rc-terms-check input { margin-top:.15rem; flex-shrink:0; }
+            .rc-terms-link { border:0; background:none; padding:0; color:#1a3a5c; text-decoration:underline; font:inherit; font-weight:600; cursor:pointer; }
+            .rc-terms-panel { margin-top:.75rem; border:1px solid #e5e5e5; border-radius:8px; background:#fff; padding:.85rem; max-height:220px; overflow:auto; }
+            .rc-terms-title { font-weight:700; font-size:.86rem; margin-bottom:.45rem; }
+            .rc-terms-text { color:#555; font-size:.82rem; line-height:1.45; white-space:pre-line; text-align:left; }
+            /* Typography */
+            .rc-title { font-size:1.3rem; font-weight:700; text-align:center; margin-bottom:1.75rem; }
+            .rc-fine-print { color:#999; font-size:.75rem; margin:0; }
+            .rc-label-sm { font-size:.82rem; font-weight:600; color:#444; display:block; margin-bottom:.3rem; }
+            .rc-optional { font-weight:400; color:#999; }
+            .rc-textarea { width:100%; border:1.5px solid #d0d0d0; border-radius:8px; padding:.6rem .85rem; font-size:.86rem; resize:vertical; }
+            .rc-textarea:focus { border-color:#1a3a5c; outline:none; }
+            .rc-badge-grey { background:#e8e8e8; color:#666; font-size:.73rem; padding:.1rem .4rem; border-radius:3px; }
+            .rc-badge-red { background:#fdecea; color:#b91c1c; font-size:.73rem; padding:.1rem .4rem; border-radius:3px; }
+            .rc-alert-danger { background:#fef2f2; border:1px solid #fca5a5; border-radius:8px; padding:.75rem 1rem; color:#b91c1c; font-size:.86rem; margin-bottom:1rem; }
+            </style>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 JavaScript — wizard state machine
+            ══════════════════════════════════════════════════════════════ -->
+            <script type="text/javascript">
+            //
+            (function () {
+
+                /* ── Config from server ─────────────────────────────── */
+                var meta        = document.getElementById('rc-meta');
+                var fee         = parseFloat(meta.dataset.shippingFee) || 0;
+                var cur         = meta.dataset.currency || '$';
+                var disclaimer  = meta.dataset.disclaimer || '';
+                var bonusPercent = parseFloat(meta.dataset.bonusPercent) || 0;
+
+                /* ── State ──────────────────────────────────────────── */
+                var configured  = {};   /* lineId → { name, qty, price, imgSrc, reasonId, reasonName, notes } */
+                var currentLine = null; /* lineId being configured */
+                var outcome     = null;
+                var outcomeName = null;
+
+                function fmt(n) { return cur + parseFloat(n).toFixed(2); }
+                function esc(s) {
+                    return String(s||'').replace(/&amp;/g,'&amp;amp;').replace(/&lt;/g,'&amp;lt;').replace(/&gt;/g,'&amp;gt;').replace(/"/g,'&amp;quot;');
+                }
+
+                /* ── Fee helpers ────────────────────────────────────── */
+                function computeEffectiveFee() {
+                    var items = Object.values(configured);
+                    if (!items.length) return fee;
+                    return items.every(function(c) { return c.feeWaived; }) ? 0 : fee;
+                }
+
+                function updateMethodPanel() {
+                    var ef = computeEffectiveFee();
+                    var feeEl = document.getElementById('method-fee-display');
+                    var subEl = document.getElementById('method-sub-display');
+                    if (feeEl) feeEl.textContent = ef ? fmt(ef) + ' AUD' : 'Free';
+                    if (subEl) {
+                        if (!ef) {
+                            subEl.textContent = '';
+                        } else if (outcome === 'exchange') {
+                            subEl.textContent = 'Return postage cost — billed against your exchange';
+                        } else if (outcome === 'store_credit') {
+                            subEl.textContent = fmt(ef) + ' will be deducted from your store credit';
+                        } else {
+                            subEl.textContent = fmt(ef) + ' will be deducted from your refund';
+                        }
+                    }
+                }
+                updateMethodPanel();
+
+                /* ── Resolution filtering ────────────────────────────── */
+                window.goToResolution = function() {
+                    var items = Object.values(configured);
+                    var conflictDiv = document.getElementById('resolution-conflict-warning');
+                    var optionsDiv = document.getElementById('resolution-options');
+
+                    // Detect mixed cart: warranty (exchange-only) + non-warranty items
+                    var hasExchangeOnly = items.some(function(c) { return (c.allowedResolution || 'any') === 'exchange'; });
+                    var hasNonWarranty  = items.some(function(c) { return (c.allowedResolution || 'any') !== 'exchange'; });
+
+                    if (hasExchangeOnly &amp;&amp; hasNonWarranty) {
+                        conflictDiv.style.display = '';
+                        optionsDiv.style.display = 'none';
+                        document.querySelector('#view-resolution .rc-step-title').textContent = 'Separate returns required';
+                        showView('view-resolution');
+                        return;
+                    }
+
+                    conflictDiv.style.display = 'none';
+                    optionsDiv.style.display = '';
+
+                    var allRows = document.querySelectorAll('#view-resolution .rc-option-row');
+                    var allowed = new Set(['credit_note', 'store_credit', 'exchange']);
+                    items.forEach(function(c) {
+                        var ar = c.allowedResolution || 'any';
+                        if (ar === 'refund') { allowed.delete('store_credit'); allowed.delete('exchange'); }
+                        else if (ar === 'store_credit') { allowed.delete('credit_note'); allowed.delete('exchange'); }
+                        else if (ar === 'exchange') { allowed.delete('credit_note'); allowed.delete('store_credit'); }
+                    });
+                    if (allowed.size === 0) allowed = new Set(['credit_note', 'store_credit', 'exchange']);
+
+                    allRows.forEach(function(row) {
+                        var visible = allowed.has(row.dataset.outcome);
+                        row.style.display = visible ? '' : 'none';
+                        if (!visible &amp;&amp; row.classList.contains('rc-selected')) {
+                            row.classList.remove('rc-selected');
+                            outcome = null; outcomeName = null;
+                            document.getElementById('btn-resolution-next').disabled = true;
+                        }
+                    });
+
+                    var visibleRows = Array.from(allRows).filter(function(r) { return r.style.display !== 'none'; });
+                    if (visibleRows.length === 1 &amp;&amp; !visibleRows[0].classList.contains('rc-selected')) {
+                        visibleRows[0].click();
+                    }
+
+                    var titleEl = document.querySelector('#view-resolution .rc-step-title');
+                    if (titleEl) {
+                        titleEl.textContent = (allowed.size === 1 &amp;&amp; allowed.has('exchange'))
+                            ? 'Warranty replacement' : 'How can we resolve it?';
+                    }
+                    showView('view-resolution');
+                };
+
+                window.goToMethodView = function() {
+                    updateMethodPanel();
+                    showView('view-method');
+                };
+
+                /* ── View switching ─────────────────────────────────── */
+                var views = ['view-items','view-configure','view-resolution','view-method','view-review'];
+                window.showView = function(id) {
+                    views.forEach(function(v){ document.getElementById(v).style.display = 'none'; });
+                    document.getElementById(id).style.display = '';
+                    window.scrollTo({top:0, behavior:'smooth'});
+                };
+
+                /* ── Item row clicks ────────────────────────────────── */
+                document.querySelectorAll('.rc-item-row:not(.rc-item-disabled)').forEach(function(row){
+                    row.addEventListener('click', function(){
+                        var id = row.dataset.lineId;
+                        openConfigure(id, row);
+                    });
+                });
+
+                function openConfigure(lineId, rowEl) {
+                    currentLine = lineId;
+                    var row = rowEl || document.querySelector('[data-line-id="' + lineId + '"]');
+                    if (!row) return;
+
+                    /* Populate left panel */
+                    var left = document.getElementById('configure-left');
+                    var img  = row.dataset.img || '';
+                    var prev = configured[lineId];
+                    var maxQty = parseFloat(row.dataset.qty) || 1;
+                    left.innerHTML =
+                        '&lt;img src="' + esc(img) + '" class="rc-split-left-img" onerror="this.style.visibility=\'hidden\'" alt=""/&gt;' +
+                        '&lt;div class="rc-split-left-name"&gt;' + esc(row.dataset.name) + '&lt;/div&gt;' +
+                        '&lt;div class="rc-split-left-price"&gt;' + fmt(parseFloat(row.dataset.price)||0) +
+                            ' &amp;times; ' + maxQty + '&lt;/div&gt;';
+
+                    /* Set qty input */
+                    var qtyInput = document.getElementById('configure-qty-input');
+                    if (qtyInput) {
+                        qtyInput.max = maxQty;
+                        qtyInput.value = prev ? prev.qty : maxQty;
+                    }
+
+                    /* If already configured, pre-select the reason */
+                    document.querySelectorAll('#configure-reasons .rc-option-row').forEach(function(r){
+                        r.classList.toggle('rc-selected', prev &amp;&amp; r.dataset.reasonId == prev.reasonId);
+                    });
+
+                    /* Show correct sub-panel */
+                    if (prev) {
+                        document.getElementById('configure-notes').style.display = '';
+                        document.getElementById('configure-reasons').style.display = 'none';
+                        var ta = document.getElementById('configure-notes-text');
+                        if (ta) ta.value = prev.notes || '';
+                    } else {
+                        showConfigureReasons();
+                    }
+
+                    showView('view-configure');
+                }
+
+                window.editItem = function(btn) {
+                    openConfigure(btn.dataset.lineId);
+                };
+
+                window.removeItem = function(btn) {
+                    var id = btn.dataset.lineId;
+                    delete configured[id];
+                    refreshItemRow(id);
+                    updateItemsNext();
+                };
+
+                /* ── Reason selection ───────────────────────────────── */
+                document.querySelectorAll('#configure-reasons .rc-option-row').forEach(function(row){
+                    row.addEventListener('click', function(){
+                        document.querySelectorAll('#configure-reasons .rc-option-row').forEach(function(r){ r.classList.remove('rc-selected'); });
+                        row.classList.add('rc-selected');
+                        /* Transition to notes sub-panel */
+                        document.getElementById('configure-reasons').style.display = 'none';
+                        var notesPanel = document.getElementById('configure-notes');
+                        notesPanel.style.display = '';
+                        document.getElementById('configure-notes-text').value = '';
+                    });
+                });
+
+                window.showConfigureReasons = function() {
+                    document.getElementById('configure-notes').style.display = 'none';
+                    document.getElementById('configure-reasons').style.display = '';
+                };
+
+                /* ── Confirm item config ────────────────────────────── */
+                window.confirmItem = function() {
+                    var selReason = document.querySelector('#configure-reasons .rc-option-row.rc-selected');
+                    if (!selReason) return;
+                    var row = document.querySelector('[data-line-id="' + currentLine + '"]');
+                    if (!row) return;
+
+                    var qtyVal = parseFloat((document.getElementById('configure-qty-input') || {}).value);
+                    if (!qtyVal || qtyVal &lt; 1) qtyVal = parseFloat(row.dataset.qty) || 1;
+                    var maxQty = parseFloat(row.dataset.qty) || qtyVal || 1;
+                    var lineTotal = parseFloat(row.dataset.price) || 0;
+                    configured[currentLine] = {
+                        name:       row.dataset.name,
+                        qty:        qtyVal,
+                        price:      parseFloat(row.dataset.price) || 0,
+                        selectedTotal: lineTotal * (qtyVal / maxQty),
+                        imgSrc:     row.dataset.img || '',
+                        reasonId:   selReason.dataset.reasonId,
+                        reasonName: selReason.dataset.reasonName,
+                        excludeEstimate: selReason.dataset.excludeEstimate === '1',
+                        allowedResolution: selReason.dataset.allowedResolution || 'any',
+                        feeWaived:  selReason.dataset.feeWaived === '1',
+                        notes:      (document.getElementById('configure-notes-text') || {}).value || '',
+                    };
+
+                    refreshItemRow(currentLine);
+                    updateItemsNext();
+                    showView('view-items');
+                };
+
+                function refreshItemRow(lineId) {
+                    var row     = document.querySelector('[data-line-id="' + lineId + '"]');
+                    var badge   = document.getElementById('badge-' + lineId);
+                    var actions = document.getElementById('badge-actions-' + lineId);
+                    var chevron = document.getElementById('chevron-' + lineId);
+                    if (!row) return;
+
+                    if (configured[lineId]) {
+                        row.classList.add('rc-configured');
+                        if (badge)   { badge.style.display = 'inline-flex'; badge.querySelector('.badge-qty').textContent = configured[lineId].qty; }
+                        if (actions) actions.style.display = 'inline-flex';
+                        if (chevron) chevron.style.display = 'none';
+                    } else {
+                        row.classList.remove('rc-configured');
+                        if (badge)   badge.style.display = 'none';
+                        if (actions) actions.style.display = 'none';
+                        if (chevron) chevron.style.display = '';
+                    }
+                }
+
+                function updateItemsNext() {
+                    document.getElementById('btn-items-next').disabled = Object.keys(configured).length === 0;
+                }
+
+                /* ── Resolution ─────────────────────────────────────── */
+                document.querySelectorAll('#view-resolution .rc-option-row').forEach(function(row){
+                    row.addEventListener('click', function(){
+                        document.querySelectorAll('#view-resolution .rc-option-row').forEach(function(r){ r.classList.remove('rc-selected'); });
+                        row.classList.add('rc-selected');
+                        outcome     = row.dataset.outcome;
+                        outcomeName = row.dataset.outcomeName;
+                        var wrap = document.getElementById('exchange-wrap');
+                        wrap.style.display = (outcome === 'exchange') ? 'block' : 'none';
+                        document.getElementById('btn-resolution-next').disabled = false;
+                    });
+                });
+
+                /* ── Build review then show ─────────────────────────── */
+                window.buildReviewAndShow = function() {
+                    /* Items HTML */
+                    var html = '';
+                    var total = 0;
+                    var count = 0;
+                    Object.entries(configured).forEach(function(e){
+                        var id = e[0], c = e[1];
+                        if (!c.excludeEstimate) {
+                            total += c.selectedTotal;
+                        }
+                        count++;
+                        var itemValue = c.excludeEstimate ? 'Warranty assessment' : fmt(c.selectedTotal);
+                        html += '&lt;div class="rc-review-item"&gt;' +
+                            '&lt;div class="d-flex justify-content-between align-items-start"&gt;' +
+                            '&lt;div&gt;' +
+                            '&lt;div style="font-weight:600;font-size:.86rem;"&gt;' + esc(c.name) + '&lt;/div&gt;' +
+                            '&lt;div style="color:#888;font-size:.78rem;margin-top:.15rem;"&gt;' + esc(c.reasonName) + ' &amp;rsaquo;&lt;/div&gt;' +
+                            '&lt;/div&gt;' +
+                            '&lt;span style="color:#666;font-size:.82rem;"&gt;&amp;times; ' + c.qty + '&lt;/span&gt;' +
+                            '&lt;/div&gt;' +
+                            '&lt;div style="color:#888;font-size:.78rem;margin-top:.25rem;"&gt;' + itemValue + '&lt;/div&gt;' +
+                            '&lt;/div&gt;';
+                    });
+                    document.getElementById('review-items-html').innerHTML = html;
+
+                    /* Method */
+                    var ef = computeEffectiveFee();
+                    var methodHtml = '&lt;strong&gt;Ship with our return label (' + (ef ? fmt(ef) + ' AUD' : 'Free') + ')&lt;/strong&gt;';
+                    if (ef) {
+                        var feeNote = outcome === 'exchange'
+                            ? 'Return postage cost — billed against your exchange'
+                            : fmt(ef) + ' will be deducted from your ' + (outcome === 'store_credit' ? 'store credit' : 'refund');
+                        methodHtml += '&lt;br&gt;&lt;span style="color:#888;font-size:.78rem;"&gt;' + feeNote + '&lt;/span&gt;';
+                    }
+                    document.getElementById('review-method-html').innerHTML = methodHtml;
+
+                    /* Financial summary */
+                    document.getElementById('rv-items-label').textContent = 'Return item' + (count &gt; 1 ? 's (' + count + ')' : ' (1)');
+                    document.getElementById('rv-item-val').textContent = outcome === 'exchange' ? 'Warranty assessment' : ('-' + fmt(total));
+
+                    var shipRow = document.getElementById('rv-shipping-row');
+                    var netTotal = Math.max(total - ef, 0);
+                    if (ef &gt; 0 &amp;&amp; outcome !== 'exchange') {
+                        shipRow.style.display = '';
+                        document.getElementById('rv-shipping').textContent = fmt(ef);
+                    } else {
+                        shipRow.style.display = 'none';
+                    }
+                    if (outcome === 'credit_note') {
+                        document.getElementById('rv-total-label').textContent = 'Estimated refund';
+                        document.getElementById('rv-total').textContent = fmt(netTotal) + ' AUD';
+                        document.getElementById('rv-outcome-note').textContent = 'Refund to original payment method';
+                    } else if (outcome === 'exchange') {
+                        shipRow.style.display = 'none';
+                        document.getElementById('rv-total-label').textContent = 'Outcome';
+                        document.getElementById('rv-total').textContent = 'Exchange';
+                        document.getElementById('rv-outcome-note').textContent = "We'll confirm the replacement once we receive the item.";
+                    } else {
+                        document.getElementById('rv-total-label').textContent = 'Estimated store credit';
+                        document.getElementById('rv-total').textContent = fmt(netTotal) + ' AUD';
+                        document.getElementById('rv-outcome-note').textContent = 'Issued after receipt and inspection';
+                    }
+
+                    /* Disclaimer */
+                    document.getElementById('rc-disclaimer-text').textContent = disclaimer;
+
+                    showView('view-review');
+                };
+
+                /* ── Inject hidden form inputs on submit ────────────── */
+                document.getElementById('rc-form').addEventListener('submit', function(){
+                    document.querySelectorAll('.rc-dyn').forEach(function(e){ e.remove(); });
+
+                    function h(n, v) {
+                        var i = document.createElement('input');
+                        i.type = 'hidden'; i.name = n; i.value = v || ''; i.className = 'rc-dyn';
+                        document.getElementById('rc-form').appendChild(i);
+                    }
+
+                    Object.entries(configured).forEach(function(e){
+                        var id = e[0], c = e[1];
+                        h('line_ids', id);
+                        h('qty_' + id, c.qty);
+                        h('reason_id_' + id, c.reasonId);
+                        h('notes_' + id, c.notes);
+                    });
+                    h('reza_operation_type', outcome || '');
+                    var xn = document.getElementById('exchange-notes');
+                    if (xn) h('reza_exchange_preference', xn.value);
+                });
+
+                var termsToggle = document.getElementById('rc-terms-toggle');
+                if (termsToggle) {
+                    termsToggle.addEventListener('click', function(ev) {
+                        ev.preventDefault();
+                        var panel = document.getElementById('rc-terms-panel');
+                        panel.style.display = panel.style.display === 'none' ? '' : 'none';
+                    });
+                }
+
+            })();
+            //
+            </script>
+
+        </t>
+    </template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Confirmation
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template id="portal_guest_returns_confirmation" name="Returns Centre — Confirmation">
+        <t t-call="website.layout">
+            <div class="rc-page">
+                <div class="rc-card" style="max-width:520px;">
+                    <div class="rc-card-body" style="padding:2.5rem 2rem;text-align:center;">
+
+                        <div class="mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="#1a3a5c" viewBox="0 0 16 16">
+                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                            </svg>
+                        </div>
+
+                        <h3 style="font-weight:700;margin-bottom:.75rem;">Your return has been submitted</h3>
+
+                        <t t-if="rma_refs">
+                            <!-- Reference box -->
+                            <div style="background:#f0f4f8;border:1.5px solid #c7d9eb;border-radius:10px;padding:.9rem 1rem;margin-bottom:1.25rem;">
+                                <div style="color:#888;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem;">Return Reference</div>
+                                <div style="font-size:1.1rem;font-weight:700;color:#1a3a5c;letter-spacing:.02em;">
+                                    <t t-esc="', '.join(rma_refs)"/>
+                                </div>
+                                <div style="color:#888;font-size:.75rem;margin-top:.3rem;">Save this — you'll need it to track your return.</div>
+                            </div>
+
+                            <t t-set="first_ref" t-value="rma_refs[0]"/>
+                            <a t-attf-href="/returns/request/#{token}"
+                               class="rc-btn-primary d-block mb-3" style="text-decoration:none;">
+                                Track my return
+                            </a>
+                        </t>
+
+                        <a href="/returns" class="rc-btn-outline d-block mb-4">Return something else</a>
+
+                        <div style="text-align:left;background:#f9f9f9;border-radius:10px;padding:1.1rem;">
+                            <div style="font-weight:700;font-size:.86rem;margin-bottom:.5rem;">What happens next</div>
+                            <div style="color:#555;font-size:.82rem;line-height:1.7;">
+                                <t t-if="grouped_request and grouped_request.label_attachment_id">
+                                    1. Download and print your return label.<br/>
+                                    2. Attach it to your parcel and drop it at any Australia Post outlet.<br/>
+                                    3. We'll process your return within 2 business days of receiving it.
+                                </t>
+                                <t t-elif="grouped_request and grouped_request.label_state == 'failed'">
+                                    1. Our team needs to review the carrier label issue.<br/>
+                                    2. We will send return instructions once the label is ready.<br/>
+                                    3. You can track the return status from this page.
+                                </t>
+                                <t t-else="">
+                                    1. Your return request is being reviewed.<br/>
+                                    2. We will send return instructions once they are ready.<br/>
+                                    3. You can track the return status from this page.
+                                </t>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <style>
+            .rc-page { min-height:55vh; background:#f5f5f5; padding:2.5rem 1rem; display:flex; flex-direction:column; align-items:center; }
+            .rc-card { width:100%; background:#fff; border-radius:14px; box-shadow:0 2px 18px rgba(0,0,0,.09); overflow:hidden; }
+            .rc-btn-primary { display:block; width:100%; padding:.8rem; background:#1a3a5c; color:#fff; border:none; border-radius:50px; font-size:.93rem; font-weight:600; cursor:pointer; text-align:center; transition:background .15s; text-decoration:none; }
+            .rc-btn-outline { display:block; width:100%; padding:.75rem; background:transparent; color:#1a3a5c; border:1.5px solid #1a3a5c; border-radius:50px; font-size:.9rem; font-weight:600; text-align:center; text-decoration:none; }
+            </style>
+        </t>
+    </template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Guest tracking — lookup
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template id="portal_guest_track_lookup" name="Returns Centre — Track Lookup">
+        <t t-call="website.layout">
+            <div class="rc-page">
+                <div class="rc-card" style="max-width:460px;">
+                    <div class="rc-card-body" style="padding:2.5rem 2rem;">
+                        <h2 class="rc-title">Track your return</h2>
+
+                        <t t-if="error">
+                            <div class="rc-alert-danger">
+                                <t t-foreach="error.items()" t-as="err"><div><t t-esc="err[1]"/></div></t>
+                            </div>
+                        </t>
+
+                        <form action="/returns/track/find" method="POST">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <input type="text" name="ref" t-att-value="ref or ''"
+                                   t-attf-class="rc-input mb-3 #{'is-invalid' if error.get('ref') else ''}"
+                                   placeholder="Return reference (e.g. RMA/001)" required="required" autocomplete="off"/>
+                            <input type="email" name="email" t-att-value="email or ''"
+                                   t-attf-class="rc-input mb-4 #{'is-invalid' if error.get('email') else ''}"
+                                   placeholder="Email used at checkout" required="required"/>
+                            <button type="submit" class="rc-btn-primary">Find my return</button>
+                        </form>
+
+                        <p class="rc-fine-print mt-4 text-center">
+                            Need to start a new return? <a href="/returns">Click here</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <style>
+            .rc-page{min-height:55vh;background:#f5f5f5;padding:2.5rem 1rem;display:flex;flex-direction:column;align-items:center;}
+            .rc-card{width:100%;background:#fff;border-radius:14px;box-shadow:0 2px 18px rgba(0,0,0,.09);overflow:hidden;}
+            .rc-card-body{padding:1.25rem 1.5rem;}
+            .rc-title{font-size:1.3rem;font-weight:700;text-align:center;margin-bottom:1.75rem;}
+            .rc-input{display:block;width:100%;border:1.5px solid #d0d0d0;border-radius:8px;padding:.65rem .9rem;font-size:.92rem;}
+            .rc-input:focus{border-color:#1a3a5c;outline:none;}
+            .rc-btn-primary{display:block;width:100%;padding:.8rem;background:#1a3a5c;color:#fff;border:none;border-radius:50px;font-size:.93rem;font-weight:600;cursor:pointer;text-align:center;}
+            .rc-fine-print{color:#999;font-size:.75rem;margin:0;}
+            .rc-alert-danger{background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:.75rem 1rem;color:#b91c1c;font-size:.86rem;margin-bottom:1rem;}
+            </style>
+        </t>
+    </template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Guest tracking — detail
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template id="portal_guest_track_detail" name="Returns Centre — Track Detail">
+        <t t-call="website.layout"
+            past_submitted="gs in ('label_pending','label_ready','in_transit','received','inspection_due','resolution_pending','payment_due','resolved')">
+            <div class="rc-page">
+                <div class="rc-card" style="max-width:600px;">
+                    <div class="rc-step-hdr">
+                        <a href="/returns/track" class="rc-back-btn">←</a>
+                        <span class="rc-step-title">Return <t t-esc="rma.name"/></span>
+                    </div>
+                    <div class="rc-card-body">
+
+                        <!-- Status bar — driven by reza.rma.request.state -->
+                        <t t-set="gs" t-value="grouped_request.state"/>
+                        <t t-set="past_review"     t-value="gs in ('in_transit','received','inspection_due','resolution_pending','payment_due','resolved')"/>
+                        <t t-set="past_received"   t-value="gs in ('received','inspection_due','resolution_pending','payment_due','resolved')"/>
+                        <t t-set="past_resolved"   t-value="gs == 'resolved'"/>
+                        <div class="rc-track-steps mb-4">
+                            <div t-attf-class="rc-track-step rc-track-done">
+                                <div class="rc-track-dot"/>
+                                <div class="rc-track-label">Submitted</div>
+                            </div>
+                            <div class="rc-track-line"/>
+                            <div t-attf-class="rc-track-step #{'rc-track-done' if past_review else ''}">
+                                <div class="rc-track-dot"/>
+                                <div class="rc-track-label">Under Review</div>
+                            </div>
+                            <div class="rc-track-line"/>
+                            <div t-attf-class="rc-track-step #{'rc-track-done' if past_received else ''}">
+                                <div class="rc-track-dot"/>
+                                <div class="rc-track-label">Received</div>
+                            </div>
+                            <div class="rc-track-line"/>
+                            <div t-attf-class="rc-track-step #{'rc-track-done' if past_resolved else ''}">
+                                <div class="rc-track-dot"/>
+                                <div class="rc-track-label">Resolved</div>
+                            </div>
+                        </div>
+
+                        <!-- Item summary -->
+                        <div class="rc-info-row">
+                            <span class="rc-info-label">Product</span>
+                            <span class="rc-info-val"><t t-esc="rma.product_id.name or '—'"/></span>
+                        </div>
+                        <div class="rc-info-row">
+                            <span class="rc-info-label">Quantity</span>
+                            <span class="rc-info-val"><t t-esc="rma.product_uom_qty"/></span>
+                        </div>
+                        <div class="rc-info-row">
+                            <span class="rc-info-label">Requested outcome</span>
+                            <span class="rc-info-val">
+                                <t t-if="rma.reza_operation_type == 'credit_note'">Refund to original payment</t>
+                                <t t-elif="rma.reza_operation_type == 'store_credit'">Store credit</t>
+                                <t t-elif="rma.reza_operation_type == 'exchange'">Exchange</t>
+                                <t t-else="">—</t>
+                            </span>
+                        </div>
+                        <t t-if="rma.reza_return_shipping_fee">
+                            <div class="rc-info-row">
+                                <span class="rc-info-label">Return shipping fee</span>
+                                <span class="rc-info-val">
+                                    <t t-esc="rma.company_id.currency_id.symbol"/><t t-esc="'%.2f' % rma.reza_return_shipping_fee"/>
+                                    <span style="color:#999;font-size:.78rem;">
+                                        <t t-if="rma.reza_operation_type == 'store_credit'"> (deducted from store credit)</t>
+                                        <t t-else=""> (deducted from refund)</t>
+                                    </span>
+                                </span>
+                            </div>
+                        </t>
+                        <t t-if="grouped_request and rma.reza_operation_type in ('credit_note', 'store_credit')">
+                            <div class="rc-info-row">
+                                <span class="rc-info-label">
+                                    <t t-if="rma.reza_operation_type == 'store_credit'">Estimated store credit</t>
+                                    <t t-else="">Estimated refund</t>
+                                </span>
+                                <span class="rc-info-val">
+                                    <t t-set="net_amount" t-value="grouped_request.expected_resolution_total - grouped_request.return_shipping_fee"/>
+                                    <t t-esc="grouped_request.currency_id.symbol"/><t t-esc="'%.2f' % (net_amount if net_amount > 0 else 0.0)"/>
+                                </span>
+                            </div>
+                        </t>
+                        <t t-if="rma.reza_return_tracking_ref">
+                            <div class="rc-info-row">
+                                <span class="rc-info-label">Tracking number</span>
+                                <span class="rc-info-val"><t t-esc="rma.reza_return_tracking_ref"/></span>
+                            </div>
+                        </t>
+
+                        <!-- Label download -->
+                        <t t-if="grouped_request and grouped_request.label_attachment_id">
+                            <div class="mt-3 mb-3">
+                                <a t-attf-href="/returns/request/#{token}/label"
+                                   class="rc-btn-primary" style="text-decoration:none;">
+                                    Download return label (PDF)
+                                </a>
+                                <p class="rc-fine-print mt-2 text-center">Print and attach to your parcel, then drop at any Australia Post outlet.</p>
+                            </div>
+                        </t>
+                        <t t-elif="grouped_request and grouped_request.label_state == 'pending' and grouped_request.label_attempt_count">
+                            <div class="rc-info-box mt-3 mb-3">
+                                <strong>Your return label is being prepared.</strong>
+                                It will be emailed to you and will also appear here once ready.
+                            </div>
+                        </t>
+                        <t t-elif="grouped_request and grouped_request.label_state == 'failed'">
+                            <div class="rc-info-box mt-3 mb-3">
+                                <strong>Your return label needs staff review.</strong>
+                                Our team will send return instructions once the carrier label issue is resolved.
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <div class="rc-info-box mt-3 mb-3">
+                                <strong>Return instructions will be confirmed by our team.</strong>
+                                We will review your request and send the next steps.
+                            </div>
+                        </t>
+
+                        <!-- Message sent confirmation -->
+                        <t t-if="request.params.get('msg') == 'sent'">
+                            <div class="rc-alert-success mb-3">Your message has been sent. We'll be in touch shortly.</div>
+                        </t>
+
+                        <!-- Message form -->
+                        <t t-if="rma.state not in ('finished', 'locked', 'cancelled')">
+                            <div class="mt-4">
+                                <div style="font-weight:700;font-size:.88rem;margin-bottom:.5rem;">Send us a message</div>
+                                <form t-attf-action="/returns/request/#{token}/message" method="POST">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <textarea name="message" class="rc-textarea mb-3" rows="3"
+                                              placeholder="Have a question about your return? Ask us here…" required="required"/>
+                                    <button type="submit" class="rc-btn-primary">Send message</button>
+                                </form>
+                            </div>
+                        </t>
+
+                    </div>
+                </div>
+            </div>
+            <style>
+            .rc-page{min-height:55vh;background:#f5f5f5;padding:2.5rem 1rem;display:flex;flex-direction:column;align-items:center;}
+            .rc-card{width:100%;background:#fff;border-radius:14px;box-shadow:0 2px 18px rgba(0,0,0,.09);overflow:hidden;}
+            .rc-card-body{padding:1.25rem 1.5rem;}
+            .rc-step-hdr{display:flex;align-items:center;padding:.9rem 1.25rem;border-bottom:1px solid #f0f0f0;position:relative;min-height:48px;}
+            .rc-step-title{flex:1;text-align:center;font-weight:600;font-size:.95rem;}
+            .rc-back-btn{background:none;border:none;cursor:pointer;font-size:1.1rem;color:#333;padding:0;position:absolute;left:1.25rem;line-height:1;text-decoration:none;}
+            /* Progress steps */
+            .rc-track-steps{display:flex;align-items:center;justify-content:center;gap:0;padding:.5rem 0;}
+            .rc-track-step{display:flex;flex-direction:column;align-items:center;gap:.3rem;min-width:70px;}
+            .rc-track-dot{width:14px;height:14px;border-radius:50%;background:#ddd;border:2px solid #ddd;}
+            .rc-track-done .rc-track-dot{background:#1a3a5c;border-color:#1a3a5c;}
+            .rc-track-label{font-size:.7rem;color:#999;text-align:center;white-space:nowrap;}
+            .rc-track-done .rc-track-label{color:#1a3a5c;font-weight:600;}
+            .rc-track-line{flex:1;height:2px;background:#ddd;min-width:20px;}
+            /* Info rows */
+            .rc-info-row{display:flex;justify-content:space-between;padding:.45rem 0;border-bottom:1px solid #f5f5f5;font-size:.86rem;}
+            .rc-info-label{color:#888;}
+            .rc-info-val{font-weight:500;text-align:right;}
+            .rc-info-box{background:#f0f4f8;border-radius:8px;padding:.85rem 1rem;font-size:.84rem;color:#1a3a5c;}
+            /* Buttons + inputs */
+            .rc-btn-primary{display:block;width:100%;padding:.8rem;background:#1a3a5c;color:#fff;border:none;border-radius:50px;font-size:.93rem;font-weight:600;cursor:pointer;text-align:center;}
+            .rc-textarea{width:100%;border:1.5px solid #d0d0d0;border-radius:8px;padding:.6rem .85rem;font-size:.86rem;resize:vertical;}
+            .rc-textarea:focus{border-color:#1a3a5c;outline:none;}
+            .rc-fine-print{color:#999;font-size:.75rem;margin:0;}
+            .rc-alert-success{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:.75rem 1rem;color:#166534;font-size:.86rem;}
+            </style>
+        </t>
+    </template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Return postage payment page
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template id="portal_guest_returns_pay_page" name="Returns Centre — Pay Postage">
+        <t t-call="website.layout">
+            <div class="rc-page">
+                <div class="rc-card" style="max-width:560px;">
+                    <div class="rc-step-hdr">
+                        <span class="rc-step-title">Return postage payment</span>
+                    </div>
+                    <div class="rc-card-body">
+                        <p style="color:#555;font-size:.88rem;margin-bottom:1.5rem;">
+                            A <strong><t t-esc="currency.symbol"/><t t-esc="'%.2f' % amount"/> AUD</strong>
+                            return postage fee applies for warranty returns. Please complete payment
+                            below — your return label will be generated immediately after.
+                        </p>
+
+                        <t t-if="providers_sudo">
+                            <t t-call="payment.form"/>
+                        </t>
+                        <t t-else="">
+                            <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:.85rem 1rem;color:#b91c1c;font-size:.86rem;">
+                                Online payment is not available right now. Please contact us to arrange payment.
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+            <style>
+            .rc-page{min-height:55vh;background:#f5f5f5;padding:2.5rem 1rem;display:flex;flex-direction:column;align-items:center;}
+            .rc-card{width:100%;background:#fff;border-radius:14px;box-shadow:0 2px 18px rgba(0,0,0,.09);overflow:hidden;}
+            .rc-card-body{padding:1.25rem 1.5rem;}
+            .rc-step-hdr{display:flex;align-items:center;padding:.9rem 1.25rem;border-bottom:1px solid #f0f0f0;position:relative;min-height:48px;}
+            .rc-step-title{flex:1;text-align:center;font-weight:600;font-size:.95rem;}
+            </style>
+        </t>
+    </template>
+
+</odoo>

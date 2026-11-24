@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_reza_rma_reason_form" model="ir.ui.view">
+        <field name="name">reza.rma.reason.form</field>
+        <field name="model">reza.rma.reason</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="active"/>
+                            <field name="requires_attachment"/>
+                            <field name="customer_selectable"/>
+                            <field name="reza_freight_refundable"/>
+                            <field name="reza_return_fee_waived"/>
+                            <field name="allowed_resolution"/>
+                            <field name="default_disposition"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_reza_rma_reason_list" model="ir.ui.view">
+        <field name="name">reza.rma.reason.list</field>
+        <field name="model">reza.rma.reason</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="requires_attachment"/>
+                <field name="customer_selectable"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_reza_rma_reason" model="ir.actions.act_window">
+        <field name="name">Return Reasons</field>
+        <field name="res_model">reza.rma.reason</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem
+        id="menu_reza_rma_reason"
+        name="Return Reasons"
+        parent="rma.rma_configuration_menu"
+        action="action_reza_rma_reason"
+        sequence="20"/>
+
+</odoo>

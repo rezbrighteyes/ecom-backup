@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_reza_rma_request_list" model="ir.ui.view">
+        <field name="name">reza.rma.request.list</field>
+        <field name="model">reza.rma.request</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="label_state == 'failed' or migration_review_required">
+                <field name="name"/>
+                <field name="create_date"/>
+                <field name="partner_id"/>
+                <field name="sale_order_id"/>
+                <field name="website_id"/>
+                <field name="state"/>
+                <field name="label_state"/>
+                <field name="carrier_status"/>
+                <field name="expected_resolution_total"/>
+                <field name="migration_review_required"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_reza_rma_request_form" model="ir.ui.view">
+        <field name="name">reza.rma.request.form</field>
+        <field name="model">reza.rma.request</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_retry_label" string="Generate / Retry Label" type="object"
+                            class="btn-secondary" invisible="label_state == 'ready'"/>
+                    <button name="action_process_refund" string="Create Scoped Credit Note" type="object"
+                            class="btn-primary" invisible="state != 'resolution_pending'"/>
+                    <button name="action_refund_original_payment" string="Refund Original Payment" type="object"
+                            class="btn-primary" invisible="state not in ('resolution_pending', 'payment_due')"/>
+                    <button name="action_process_exchange" string="Create Exchange Order" type="object"
+                            class="btn-primary" invisible="state != 'resolution_pending'"/>
+                    <button name="action_confirm_store_credit_issued" string="Confirm Store Credit Issued" type="object"
+                            class="btn-primary" invisible="state != 'resolution_pending'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="sale_order_id"/>
+                            <field name="company_id"/>
+                            <field name="website_id"/>
+                        </group>
+                        <group>
+                            <field name="label_state"/>
+                            <field name="carrier_status"/>
+                            <field name="carrier_tracking_ref"/>
+                            <field name="migration_review_required"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Items">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="rma_id"/>
+                                    <field name="product_id"/>
+                                    <field name="quantity"/>
+                                    <field name="uom_id"/>
+                                    <field name="reason_id"/>
+                                    <field name="resolution"/>
+                                    <field name="inspection_outcome"/>
+                                    <field name="disposition"/>
+                                    <field name="exchange_product_id"/>
+                                    <field name="exchange_difference"/>
+                                    <field name="payment_transaction_id"/>
+                                    <field name="reservation_expires_at"/>
+                                    <field name="store_credit_reference"/>
+                                    <field name="store_credit_id"/>
+                                    <field name="credit_note_id"/>
+                                    <field name="payment_refund_state"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Financial">
+                            <group>
+                                <field name="currency_id"/>
+                                <field name="expected_item_total"/>
+                                <field name="return_shipping_fee"/>
+                                <field name="return_shipping_actual_cost"/>
+                                <field name="expected_resolution_total"/>
+                            </group>
+                        </page>
+                        <page string="Label and Tracking">
+                            <group>
+                                <field name="label_attachment_id"/>
+                                <field name="label_attempt_count"/>
+                                <field name="label_last_attempt_at"/>
+                                <field name="label_last_error"/>
+                                <field name="starshipit_order_ids"/>
+                                <field name="carrier_tracking_url"/>
+                            </group>
+                        </page>
+                        <page string="Policy Audit">
+                            <group>
+                                <field name="policy_version"/>
+                                <field name="policy_accepted_at"/>
+                                <field name="policy_accepted_ip_hash"/>
+                                <field name="policy_text_snapshot"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_reza_rma_request_search" model="ir.ui.view">
+        <field name="name">reza.rma.request.search</field>
+        <field name="model">reza.rma.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="sale_order_id"/>
+                <filter name="label_failed" string="Label Failed" domain="[('label_state', '=', 'failed')]"/>
+                <filter name="migration_review" string="Migration Review" domain="[('migration_review_required', '=', True)]"/>
+                <filter name="resolution_pending" string="Resolution Pending" domain="[('state', '=', 'resolution_pending')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="group_website" string="Website" context="{'group_by': 'website_id'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
+                    <filter name="group_month" string="Month" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_reza_rma_request" model="ir.actions.act_window">
+        <field name="name">Return Requests</field>
+        <field name="res_model">reza.rma.request</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+        <field name="search_view_id" ref="view_reza_rma_request_search"/>
+    </record>
+
+    <record id="action_reza_rma_request_line_reporting" model="ir.actions.act_window">
+        <field name="name">Return Item Analysis</field>
+        <field name="res_model">reza.rma.request.line</field>
+        <field name="view_mode">list,pivot,graph</field>
+    </record>
+
+    <menuitem id="menu_reza_rma_requests" name="Requests" parent="rma.rma_orders_menu"
+              action="action_reza_rma_request" sequence="1"/>
+    <menuitem id="menu_reza_rma_request_line_reporting" name="Return Item Analysis"
+              parent="rma.rma_reporting_menu" action="action_reza_rma_request_line_reporting"
+              sequence="20"/>
+</odoo>
