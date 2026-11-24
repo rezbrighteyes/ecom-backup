@@ -1,6 +1,6 @@
 {
     'name': 'Reza Ecom Core',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.0.1',
     'category': 'Website/eCommerce',
     'summary': 'Core eCommerce utilities and enhancements',
     'author': 'Reza D Shiraz',
@@ -8,6 +8,8 @@
     'depends': [
         'website_sale',
         'loyalty',
+        # action_generate_coupon overrides d3_sale_cart's and reads its website fields
+        'd3_sale_cart',
     ],
     'data': [
         'views/product_template_views.xml',

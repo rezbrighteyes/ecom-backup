@@ -1,6 +1,6 @@
 # -- coding: utf-8 --
 from odoo import api, fields, models
-from odoo.osv import expression
+from odoo.fields import Domain
 
 
 class ProductTemplate(models.Model):
@@ -31,13 +31,17 @@ class ProductTemplate(models.Model):
             ],
         }
 
+    def _rating_domain(self):
+        """Only approved reviews count, in rating_count / rating_avg and in the
+        portal chatter's rating_stats (rating_get_stats -> _rating_get_repartition).
+        On 18 the portal_message_fetch override recomputed those stats; that
+        route is gone in 20 and every stats path goes through this domain."""
+        return super()._rating_domain() & Domain('is_approved', '=', True)
+
     @api.depends('rating_ids', 'rating_ids.rating', 'rating_ids.consumed', 'rating_ids.is_approved')
     def _compute_rating_stats(self):
         """Override to only count approved reviews."""
-        domain = expression.AND([
-            self._rating_domain(),
-            [('rating', '>=', 1), ('is_approved', '=', True)],
-        ])
+        domain = self._rating_domain() & Domain('rating', '>=', 1)
         read_group_res = self.env['rating.rating']._read_group(
             domain, ['res_id'], aggregates=['__count', 'rating:avg']
         )
@@ -48,3 +52,11 @@ class ProductTemplate(models.Model):
         for record in self:
             record.rating_count = mapping.get(record.id, {}).get('rating_count', 0)
             record.rating_avg = mapping.get(record.id, {}).get('rating_avg', 0)
+
+    def _get_share_message_domain(self):
+        """Hide messages carrying an unapproved review from the portal chatter
+        (/mail/chatter_fetch in 20 filters with this domain). Replaces the 18
+        portal_message_fetch override, which no longer exists."""
+        return super()._get_share_message_domain() & Domain(
+            'rating_ids', 'not any', [('is_approved', '=', False)]
+        )

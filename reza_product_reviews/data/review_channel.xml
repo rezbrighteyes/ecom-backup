@@ -6,16 +6,8 @@
         <field name="description">Notifications for new product reviews requiring approval</field>
     </record>
 
-    <record id="channel_member_luke" model="discuss.channel.member">
-        <field name="channel_id" ref="channel_product_reviews"/>
-        <field name="partner_id" eval="10"/>
-    </record>
-    <record id="channel_member_april" model="discuss.channel.member">
-        <field name="channel_id" ref="channel_product_reviews"/>
-        <field name="partner_id" eval="11"/>
-    </record>
-    <record id="channel_member_reza" model="discuss.channel.member">
-        <field name="channel_id" ref="channel_product_reviews"/>
-        <field name="partner_id" eval="13730"/>
-    </record>
+    <!-- Members are added for the production partners (Luke 10, April 11,
+         Reza 13730) that exist; on production the 18 member records already
+         exist and this noupdate function does not run on upgrade. -->
+    <function model="discuss.channel" name="_reza_review_channel_add_members"/>
 </odoo>

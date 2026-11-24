@@ -7,11 +7,11 @@
                 window.addEventListener('load', function() {
                     if (typeof fbq !== 'undefined') {
                         fbq('track', 'ViewContent', {
-                            content_ids: ['<t t-esc="product.id"/>'],
-                            content_name: '<t t-esc="product.name"/>',
+                            content_ids: ['<t t-out="product.id"/>'],
+                            content_name: '<t t-out="product.name"/>',
                             content_type: 'product',
-                            value: <t t-esc="product.list_price"/>,
-                            currency: '<t t-esc="website.currency_id.name"/>'
+                            value: <t t-out="product.list_price"/>,
+                            currency: '<t t-out="website.currency_id.name"/>'
                         });
                     }
                 });
@@ -24,7 +24,7 @@
         <xpath expr="//head" position="inside">
             <t t-if="request.env.user and not request.env.user._is_public()">
                 <script type="application/json" id="fb_advanced_match_data">
-                    <t t-raw="request.env.user.partner_id.get_fb_advanced_match()"/>
+                    <t t-out="request.env.user.partner_id.get_fb_advanced_match()"/>
                 </script>
             </t>
         </xpath>

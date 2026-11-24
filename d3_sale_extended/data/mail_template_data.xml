@@ -148,9 +148,9 @@
                         <img t-attf-src="/web/image/product.product/{{ line.product_id.id }}/image_128" style="height: 150px;width: 150px;object-fit: contain;" alt="Product image"></img>
                     </td>
                     <td width="50%">
-                        <div style="font-weight: bold;"><t t-esc="line.product_id.name or ''"/></div><br />
-                        <div style="font-size:13px;">Details: <t t-esc="', '.join(line.product_id.product_template_variant_value_ids.mapped('name'))"/></div>
-                        <div style="font-size:13px;">Qty: <t t-esc="line.product_uom_qty or ''"/></div>
+                        <div style="font-weight: bold;"><t t-out="line.product_id.name or ''"/></div><br />
+                        <div style="font-size:13px;">Details: <t t-out="', '.join(line.product_id.product_template_variant_value_ids.mapped('name'))"/></div>
+                        <div style="font-size:13px;">Qty: <t t-out="line.product_uom_qty or ''"/></div>
                         <div style="font-size:13px;">Price: <t t-out="format_amount(line.price_unit, object.currency_id) or ''">$ 10.00</t></div>
                     </td>
                 </tr>

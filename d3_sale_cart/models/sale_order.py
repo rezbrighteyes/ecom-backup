@@ -53,9 +53,23 @@ class SaleOrder(models.Model):
             "card_id": coupon.id,
             "issued": wizard.points_granted,
         }
-        History.create(history_vals)
+        # Odoo 20: card points are computed from loyalty.history, so this line is
+        # what grants the points (18 also wrote `points` on the card). No mail,
+        # as on 18 (action_no_send_mail only covers the creation communication).
+        History.with_context(loyalty_no_mail=True).create(history_vals)
 
         return coupon.code
+
+    def _cart_recovery_email_send(self):
+        """Odoo 20 abandoned-cart cron (website._cron_send_abandoned_cart_email)
+        sends each batch through this method; 18's website._send_abandoned_cart_email
+        is gone. Generate the coupon first so the recovery email can show it."""
+        for order in self.filtered(
+            lambda o: o.website_id.create_coupon_abandoned_cart_email
+            and o.website_id.program_coupon_abandoned_cart_email
+        ):
+            order.sudo().action_generate_coupon()
+        return super()._cart_recovery_email_send()
 
     def action_generate_coupon_cart_recovery_url(self):
         self.ensure_one()

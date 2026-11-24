@@ -1,22 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Activate the pretty review section -->
-    <record id="activate_product_comment" model="ir.ui.view">
-        <field name="name">Activate Discussion and Rating</field>
-        <field name="inherit_id" ref="website_sale.product_comment"/>
-        <field name="active">True</field>
-        <field name="arch" type="xml">
-            <!-- Open by default instead of collapsed -->
-            <xpath expr="//a[contains(@class,'o_product_page_reviews_title')]" position="attributes">
-                <attribute name="class">o_product_page_reviews_title d-flex justify-content-between text-decoration-none</attribute>
-                <attribute name="aria-expanded">true</attribute>
-            </xpath>
-            <xpath expr="//div[@id='o_product_page_reviews_content']" position="attributes">
-                <attribute name="class">collapse show</attribute>
-            </xpath>
-        </field>
-    </record>
+    <!-- Odoo 20: website_sale.product_comment is an always-open section (no
+         collapse toggle), so the 18 "open by default" override is gone. -->
 
     <!-- Inject review data into page for JS -->
     <template id="product_review_data"

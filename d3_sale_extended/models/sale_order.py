@@ -5,7 +5,7 @@ import re
 
 from markupsafe import Markup, escape
 
-from odoo import _, api, models
+from odoo import _, models
 from odoo.tools import html2plaintext
 
 
@@ -19,7 +19,6 @@ PORTAL_MESSAGE_NOTIFY_EMAILS_PARAM = (
 class SaleOrder(models.Model):
     _inherit = "sale.order"
 
-    @api.returns("mail.message", lambda value: value.id)
     def message_post(self, **kwargs):
         message = super().message_post(**kwargs)
         if not self.env.context.get("d3_skip_sale_portal_message_notification"):
@@ -90,7 +89,7 @@ class SaleOrder(models.Model):
         config = self.env["ir.config_parameter"].sudo()
         raw_emails = ""
         for key in parameter_keys:
-            raw_emails = config.get_param(key, default="")
+            raw_emails = config.get_str(key, "")
             if raw_emails:
                 break
 
@@ -105,7 +104,7 @@ class SaleOrder(models.Model):
         base_url = (
             self.env["ir.config_parameter"]
             .sudo()
-            .get_param("web.base.url", default="")
+            .get_str("web.base.url", "")
             .rstrip("/")
         )
         backend_url = "%s/web#id=%s&model=sale.order&view_type=form" % (

@@ -50,6 +50,7 @@ class SaleOrder(models.Model):
             'card_id': coupon.id,
             'issued': wizard.points_granted,
         }
-        History.create(history_vals)
+        # Odoo 20: card points come from loyalty.history; this line grants them.
+        History.with_context(loyalty_no_mail=True).create(history_vals)
 
         return coupon.code

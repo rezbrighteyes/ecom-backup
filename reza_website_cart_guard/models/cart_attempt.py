@@ -10,8 +10,10 @@ class RezaWebsiteCartAttempt(models.Model):
 
     website_id = fields.Many2one("website", required=True, index=True, ondelete="cascade")
     ip_hash = fields.Char(required=True, index=True)
+    # Empty when the cart was created by a path with no single product
+    # (portal reorder, event registration); the per-product limit is then skipped.
     product_id = fields.Many2one(
-        "product.product", required=True, index=True, ondelete="cascade"
+        "product.product", index=True, ondelete="cascade"
     )
 
     @api.model
@@ -28,8 +30,10 @@ class RezaWebsiteCartAttempt(models.Model):
         day_count = self.search_count(
             base_domain + [("create_date", ">=", now - timedelta(days=1))]
         )
-        product_hour_count = self.search_count(
-            hour_domain + [("product_id", "=", product_id)]
+        product_hour_count = (
+            self.search_count(hour_domain + [("product_id", "=", product_id)])
+            if product_id
+            else 0
         )
         if (
             hour_count >= hour_limit
@@ -41,7 +45,7 @@ class RezaWebsiteCartAttempt(models.Model):
             {
                 "website_id": website_id,
                 "ip_hash": ip_hash,
-                "product_id": product_id,
+                "product_id": product_id or False,
             }
         )
         return True

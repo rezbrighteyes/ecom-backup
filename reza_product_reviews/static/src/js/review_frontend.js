@@ -1,22 +1,6 @@
 (function () {
     'use strict';
 
-    function forceOpenReviews() {
-        var toggle = document.querySelector('.o_product_page_reviews_title');
-        if (toggle) {
-            toggle.removeAttribute('data-bs-toggle');
-            toggle.removeAttribute('data-bs-target');
-        }
-        var el = document.getElementById('o_product_page_reviews_content');
-        if (!el) return;
-        el.classList.add('show');
-        el.style.display = 'block';
-        if (toggle) {
-            toggle.setAttribute('aria-expanded', 'true');
-            toggle.classList.remove('collapsed');
-        }
-    }
-
     function hideComposerIfReviewed() {
         var data = window.__rezaReviewData;
         if (!data || !data.alreadyReviewed) return;
@@ -36,14 +20,6 @@
         composer.style.display = 'none';
         composer.parentNode.insertBefore(msg, composer);
     }
-
-    // Open on DOM ready and again after Bootstrap hydration
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', forceOpenReviews);
-    } else {
-        forceOpenReviews();
-    }
-    setTimeout(forceOpenReviews, 1500);
 
     // Poll for shadow DOM
     setTimeout(function () {
