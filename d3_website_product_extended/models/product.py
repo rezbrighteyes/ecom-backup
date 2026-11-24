@@ -1,3 +1,4 @@
+import re
 from odoo import api, fields, models, _
 from odoo.http import request
 from odoo.fields import Domain
@@ -167,11 +168,23 @@ class ProductTemplate(models.Model):
     def _d3_get_selected_website_spec_filters(self):
         selected_filters = {}
         filterable_fields = {field for field, label in self._d3_get_filterable_spec_fields()}
+        # Two shapes: a full page load repeats `d3_spec_filter=field:value`
+        # in the query string; the Odoo 20 /shop/reload JSON call sends ONE
+        # comma-joined value (see static/src/interactions/shop_page_spec_filters.js).
         try:
-            raw_filters = request.httprequest.args.getlist('d3_spec_filter')
+            raw_filters = list(request.httprequest.args.getlist('d3_spec_filter'))
+            param = request.params.get('d3_spec_filter')
         except RuntimeError:
-            raw_filters = []
+            raw_filters, param = [], None
+        for item in (param if isinstance(param, list) else [param] if param else []):
+            if item not in raw_filters:
+                raw_filters.append(item)
+        expanded = []
         for raw_filter in raw_filters:
+            # Split "a:1,b:2" only before a "field:" prefix, so a comma inside
+            # a value ("50,5") survives.
+            expanded.extend(re.split(r',(?=[a-z_][a-z0-9_]*:)', raw_filter or ''))
+        for raw_filter in expanded:
             if not raw_filter or ':' not in raw_filter:
                 continue
             field_name, value = raw_filter.split(':', 1)

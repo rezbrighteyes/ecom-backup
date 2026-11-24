@@ -16,6 +16,11 @@ This module enhances Odoo’s eCommerce product browsing experience. It extends 
         'views/product_views.xml',
         'views/res_config_settings.xml'
     ],
+    'assets': {
+        'web.assets_frontend': [
+            'd3_website_product_extended/static/src/interactions/shop_page_spec_filters.js',
+        ],
+    },
     'installable': True,
     'license': 'OPL-1',
 }

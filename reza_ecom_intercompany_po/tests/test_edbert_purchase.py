@@ -854,6 +854,11 @@ class TestEdbertPurchase(TransactionCase):
             self.skipTest("needs a second allowed company to construct head-of-line "
                           "blocking")
         other.sudo().write({"external_api_url": False, "external_api_db": False})
+        # Production gives every company a warehouse; a bare test company
+        # has none, and confirming its order would raise before the test.
+        if not self.env["stock.warehouse"].sudo().search_count([("company_id", "=", other.id)]):
+            self.env["stock.warehouse"].sudo().create(
+                {"name": "Test WH %s" % other.id, "code": "TW%s" % other.id, "company_id": other.id})
 
         blocked = self._order(company=other)         # lower id, and unraisable
         blocked.action_confirm()
