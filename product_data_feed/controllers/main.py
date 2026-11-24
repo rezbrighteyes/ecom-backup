@@ -8,8 +8,9 @@ import threading
 from werkzeug.exceptions import Forbidden, NotFound
 
 from markupsafe import Markup
-from odoo import _, http, models
-from odoo.http import request, content_disposition, Response
+from odoo import _, http, models, modules
+from odoo.http import request, Response
+from odoo.http.stream import content_disposition
 
 _logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ class ProductFeed(http.Controller):
             raise NotFound()
 
         # Check website
-        if feed.website_ids and request.website not in feed.website_ids:
+        if feed.website_ids and request.env.website not in feed.website_ids:
             raise NotFound()
 
         # Check token
@@ -91,7 +92,8 @@ class ProductFeed(http.Controller):
             except Exception as e:
                 msg = _("Error: %s", str(e))
                 _logger.error(msg)
-                test_mode = getattr(threading.current_thread(), 'testing', False) or request.env.registry.in_test_mode()
+                # Odoo 20 port: Registry.in_test_mode() is gone; modules.module.current_test is the flag core uses.
+                test_mode = getattr(threading.current_thread(), 'testing', False) or bool(modules.module.current_test)
                 if not test_mode:
                     feed.sudo().message_post(body=Markup("<p class='text-danger'>%s</p>") % msg)
                 return Response(response="<b>Feed generation error</b>: %s" % str(e), status=404)

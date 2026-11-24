@@ -4,7 +4,6 @@
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0.html).
 
 from odoo import api, fields, models
-from odoo.tools.misc import str2bool
 
 
 class ProductTemplate(models.Model):
@@ -15,8 +14,8 @@ class ProductTemplate(models.Model):
 
     @api.depends('feed_brand_id')
     def _compute_feed_brand_is_visible(self):
-        is_visible = not str2bool(
-            self.env['ir.config_parameter'].sudo().get_param('product_data_feed_brand.feed_brand_invisible', False)
+        is_visible = not self.env['ir.config_parameter'].sudo().get_bool(
+            'product_data_feed_brand.feed_brand_invisible', False
         )
         for product in self:
             product.feed_brand_is_visible = is_visible

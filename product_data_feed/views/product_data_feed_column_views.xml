@@ -175,7 +175,7 @@
                 <filter name="filter_active" string="Active" domain="[('active', '=', True)]"/>
                 <filter name="filter_archived" string="Archived" domain="[('active', '=', False)]"/>
                 <separator/>
-                <group expand="0">
+                <group>
                     <filter name="group_type" string="Type" context="{'group_by': 'type'}"/>
                     <filter name="group_special_type" string="Special Type" context="{'group_by': 'special_type'}"/>
                 </group>

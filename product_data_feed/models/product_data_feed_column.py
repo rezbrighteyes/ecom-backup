@@ -43,7 +43,9 @@ class ProductDataFeedColumn(models.Model):
         return "[('id', 'in', %s)]" % langs.ids
 
     sequence = fields.Integer(default=100)
-    name = fields.Char(required=True)
+    # Odoo 20 port: copy=True stops the new automatic " (copy)" suffix; the
+    # column name is the output header / XML tag and must survive a feed copy.
+    name = fields.Char(required=True, copy=True)
     feed_id = fields.Many2one(
         comodel_name='product.data.feed',
         string='Feed',

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) Softhealer Technologies
 from odoo import models
+from odoo.fields import Domain
 
 from odoo.addons.website.models import ir_http
 from odoo.tools.safe_eval import safe_eval
@@ -21,10 +22,11 @@ class ShModelConverter(ir_http.ModelConverter):
         # Softhealer Custom code
             
         # Allow to current_website_id directly in route domain
-        args['current_website_id'] = env['website'].get_current_website().id
-        domain = safe_eval(self.domain, args)
+        args['current_website_id'] = env.website.id or env.context.get('host_id')
+        # Odoo 20 port: the sitemap passes `dom` as a Domain object; combine as core does.
+        domain = Domain(safe_eval(self.domain, args))
         if dom:
-            domain += dom
+            domain &= Domain(dom)
         for record in Model.search(domain):
             # return record so URL will be the real endpoint URL as the record will go through `slug()`
             # the same way as endpoint URL is retrieved during dispatch (301 redirect), see `to_url()` from ModelConverter

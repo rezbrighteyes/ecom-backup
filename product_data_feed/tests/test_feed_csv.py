@@ -146,14 +146,15 @@ class TestProductDataFeedCSV(TestProductDataFeedCommon):
             'name': '15% tax',
             'amount_type': 'percent',
             'amount': 15,
-            'price_include': False,
+            # Odoo 20 port: price_include is computed; set the override instead.
+            'price_include_override': 'tax_excluded',
             'sequence': 1,
         })
         tax_2_incl = self.env['account.tax'].create({
             'name': '15% tax incl',
             'amount_type': 'percent',
             'amount': 15,
-            'price_include': True,
+            'price_include_override': 'tax_included',
             'include_base_amount': True,
             'sequence': 2,
         })
@@ -254,3 +255,15 @@ class TestProductDataFeedCSV(TestProductDataFeedCommon):
         #     user.has_group('account.group_show_line_subtotals_tax_excluded')
         # )
         # check_product_price_and_taxes()
+
+    def test_copy_keeps_column_names(self):
+        # Odoo 20 suffixes every copied `name` Char with " (copy)" by default.
+        # A column name is the CSV header / XML tag, so a copied feed must keep it.
+        feed_copy = self.feed_template.copy()
+        self.assertEqual(
+            sorted(feed_copy.with_context(active_test=False).column_ids.mapped('name')),
+            sorted(self.feed_template.with_context(active_test=False).column_ids.mapped('name')),
+        )
+        feed_copy.action_generate_token()
+        header = feed_copy.sudo().generate_data_file().splitlines()[0]
+        self.assertNotIn('(copy)', header)

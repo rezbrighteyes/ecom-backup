@@ -14,18 +14,8 @@
         </field>
     </record>
     
-    <record id="product_variant_easy_edit_view" model="ir.ui.view">
-        <field name="name">product.product.view.form.easy.inherit.product_data_feed_number</field>
-        <field name="model">product.product</field>
-        <field name="inherit_id" ref="product.product_variant_easy_edit_view"/>
-        <field name="arch" type="xml">
-            <xpath expr="//field[@name='barcode']" position="after">
-                <field name="feed_gtin"/>
-                <field name="feed_mpn"/>
-                <field name="feed_isbn"/>
-            </xpath>
-        </field>
-    </record>
+    <!-- Odoo 20: product.product_variant_easy_edit_view is gone; variants open in
+         product_normal_form_view, which already gets the fields above. -->
 
     <record id="product_product_tree_view" model="ir.ui.view">
         <field name="name">product.product.list.inherit.product_data_feed_number</field>

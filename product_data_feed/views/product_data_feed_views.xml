@@ -186,7 +186,7 @@
                 <filter name="filter_is_template" string="Templates" domain="[('is_template', '=', True)]"/>
                 <separator/>
                 <filter string="Archived" name="filter_archived" domain="[('active', '=', False)]"/>
-                <group expand="0" string="Group By">
+                <group>
                     <filter name="group_recipient" string="Recipient" domain="[]" context="{'group_by': 'recipient_id'}"/>
                     <filter name="group_template" string="Is Template" domain="[]" context="{'group_by': 'is_template'}"/>
                 </group>

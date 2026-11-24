@@ -186,7 +186,9 @@ class ProductDataFeed(models.Model):
     lang = fields.Selection(
         selection=_lang_get,
         string='Language',
-        default=lambda self: self.env.ref('base.default_user').lang,
+        # Odoo 20 port: base.default_user is gone; the default partner language
+        # (ir.default res.partner.lang) is its replacement, as website._default_language uses.
+        default=lambda self: self.env['ir.default'].sudo()._get('res.partner', 'lang') or self.env.lang or 'en_US',
         help="The language that will be used to translate all feed text values.",
     )
     tz = fields.Selection(
@@ -255,7 +257,7 @@ class ProductDataFeed(models.Model):
         return self.website_ids[0] if self.website_ids else self.env['website'].browse()
 
     def _get_base_url(self) -> str:
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url', default='')
+        base_url = self.env['ir.config_parameter'].sudo().get_str('web.base.url', default='')
         for feed in self.filtered('website_ids'):
             # Operate with the first website only
             website = feed._get_website()

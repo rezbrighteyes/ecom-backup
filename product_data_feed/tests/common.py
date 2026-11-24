@@ -13,6 +13,14 @@ class TestProductDataFeedCommon(HttpCase):
     def setUp(self):
         super(TestProductDataFeedCommon, self).setUp()
         self.location = self.env.ref('stock.stock_location_stock')
+        # Odoo 20 port: pin the two settings these tests silently assumed.
+        # The price assertions expect list_price to be tax-EXCLUSIVE (Odoo's
+        # default); the local base db (like production) is tax_included, which
+        # makes the company default 15% tax strip GST out of every price.
+        self.env.company.account_price_include = 'tax_excluded'
+        # The availability assertions expect "Continue selling" OFF (production
+        # carries ir.default allow_out_of_stock_order=false; core default is True).
+        self.env['ir.default'].set('product.template', 'allow_out_of_stock_order', False)
         attribute_material = self.env['product.attribute'].create({'name': 'Material'})
         attribute_brand = self.env['product.attribute'].create({
             'name': 'Brand',
