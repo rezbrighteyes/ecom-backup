@@ -35,7 +35,7 @@ import requests
 from markupsafe import Markup
 
 from odoo import _, api, fields, models
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
 from odoo.tools import format_amount
 
 _logger = logging.getLogger(__name__)
@@ -107,13 +107,13 @@ class RezaCustomerRefund(models.Model):
     # --------------------------------------------------------------- settings
     @api.model
     def _auto_refund_enabled(self):
-        raw = self.env["ir.config_parameter"].sudo().get_param(PARAM_AUTO)
-        # get_param returns False for a missing key, and a string otherwise.
+        raw = self.env["ir.config_parameter"].sudo().get_str(PARAM_AUTO)
+        # get_str returns "" for a missing key, and a string otherwise.
         return raw not in (None, False, "", "False", "false", "0")
 
     @api.model
     def _refund_user(self):
-        raw = self.env["ir.config_parameter"].sudo().get_param(PARAM_USER)
+        raw = self.env["ir.config_parameter"].sudo().get_str(PARAM_USER)
         # Test the raw value BEFORE int(): int(False) is 0, not "unset".
         if raw not in (None, False, ""):
             try:
@@ -193,8 +193,14 @@ class RezaCustomerRefund(models.Model):
             try:
                 with self.env.cr.savepoint():
                     tx = row.transaction_id.sudo()
-                    refund_tx = tx.with_context(payment_backend_action=True)._send_refund_request(
+                    # Odoo 20: `_refund` creates the refund child transaction
+                    # and calls the provider. A provider refusal does NOT
+                    # raise: it comes back as a transaction in state "error",
+                    # and that must not be recorded as sent.
+                    refund_tx = tx.with_context(payment_backend_action=True)._refund(
                         amount_to_refund=row.amount)
+                    if refund_tx.state == "error":
+                        raise UserError(refund_tx.state_message or _("Stripe refused the refund."))
                 row.write({"state": "sent", "odoo_refund_tx_id": refund_tx.id,
                            "note": _("Refund sent to Stripe by Odoo.")})
                 row.sale_order_id.message_post(body=_(
@@ -401,8 +407,8 @@ class RezaCustomerRefund(models.Model):
 
     # ----------------------------------------------------------------- emails
     def _alert_emails(self):
-        raw = self.env["ir.config_parameter"].sudo().get_param(PARAM_ALERT)
-        extra = DEFAULT_ALERT_EMAILS if raw in (None, False) else raw
+        raw = self.env["ir.config_parameter"].sudo().get_str(PARAM_ALERT)
+        extra = DEFAULT_ALERT_EMAILS if raw in (None, False, "") else raw
         return [self._refund_user().email] + [e.strip() for e in extra.split(",")]
 
     @api.model
@@ -421,7 +427,7 @@ class RezaCustomerRefund(models.Model):
         emails = sorted({e.strip().lower() for e in emails if e and "@" in e})
         if not emails:
             return self.env["mail.mail"]
-        base = self.env["ir.config_parameter"].sudo().get_param("web.base.url", "")
+        base = self.env["ir.config_parameter"].sudo().get_str("web.base.url", "")
         rows = []
         for row in self:
             rows.append(Markup(

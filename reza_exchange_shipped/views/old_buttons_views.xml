@@ -8,12 +8,12 @@
         <field name="model">stock.picking</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//button[@name='%(stock.act_stock_return_picking)d']" position="attributes">
+            <xpath expr="//button[@name='action_return']" position="attributes">
                 <attribute name="groups">reza_exchange_shipped.group_old_return_buttons</attribute>
             </xpath>
-            <xpath expr="//button[@name='%(stock.act_stock_return_picking)d']" position="after">
-                <button name="%(stock.act_stock_return_picking)d" string="Return" type="action"
-                        invisible="picking_type_code == 'outgoing'"
+            <xpath expr="//button[@name='action_return']" position="after">
+                <button name="action_return" string="Return" type="object"
+                        invisible="picking_type_code == 'outgoing' or not show_return or state != 'done'"
                         groups="base.group_user,!reza_exchange_shipped.group_old_return_buttons"
                         data-hotkey="k"/>
             </xpath>

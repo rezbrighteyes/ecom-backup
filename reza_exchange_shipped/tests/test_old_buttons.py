@@ -7,6 +7,7 @@ user), so a button removed by `groups` is really absent, not just hidden."""
 from lxml import etree
 
 from odoo.tests import TransactionCase, new_test_user, tagged
+from odoo.tools.convert import convert_file
 
 GROUP = "reza_exchange_shipped.group_old_return_buttons"
 STAFF_GROUPS = ("base.group_user,stock.group_stock_user,account.group_account_manager,"
@@ -28,8 +29,8 @@ class TestOldButtons(TransactionCase):
         return etree.fromstring(arch).xpath("//button[@name='%s']" % name)
 
     def _return_buttons(self, user):
-        action = self.env.ref("stock.act_stock_return_picking")
-        return self._buttons(user, "stock.picking", "form", str(action.id))
+        # Odoo 20: Return is the object button `action_return`.
+        return self._buttons(user, "stock.picking", "form", "action_return")
 
     def _wizard_buttons(self, user, name):
         view = self.env.ref("account.view_account_move_reversal")
@@ -70,12 +71,19 @@ class TestOldButtons(TransactionCase):
 
     def test_first_members_by_login(self):
         group = self.env.ref(GROUP)
-        self.assertIn(self.env.ref("base.user_admin"), group.users)
+        self.assertIn(self.env.ref("base.user_admin"), group.user_ids)
         logins = ["reza@brighteyes.com.au", "luke@brighteyes.com.au", "accounts@brighteyes.com.au"]
         users = self.env["res.users"].search([("login", "in", logins)])
+        if not users:
+            # A fresh database has none of the logins: create them, then
+            # reload the data file so its login search really runs.
+            for login in logins:
+                users |= new_test_user(self.env, login=login, groups="base.group_user")
+            convert_file(self.env, "reza_exchange_shipped", "security/old_buttons_group.xml",
+                         None, mode="update")
         self.assertTrue(users, "the database copy has none of the logins: the test proves nothing")
-        self.assertEqual(users - group.users, self.env["res.users"])
+        self.assertEqual(users - group.user_ids, self.env["res.users"])
         # Ordinary staff are not members.
         others = self.env["res.users"].search([("share", "=", False), ("id", "not in", (users | self.env.ref("base.user_admin")).ids),
                                                ("login", "not like", "reza_uts_%")])
-        self.assertFalse(others & group.users)
+        self.assertFalse(others & group.user_ids)

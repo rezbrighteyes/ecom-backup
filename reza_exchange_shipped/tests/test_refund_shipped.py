@@ -8,6 +8,8 @@ what the provider would say, and the Odoo-sent Stripe refund is patched at
 from datetime import timedelta
 from unittest.mock import patch
 
+from odoo.exceptions import ValidationError
+
 from odoo import Command, fields
 from odoo.exceptions import AccessError, UserError
 from odoo.tests import new_test_user, tagged
@@ -27,25 +29,35 @@ class TestRefundShipped(TestExchangeShipped):
         cls.accounts = new_test_user(
             cls.env, login="reza_uts_accounts", groups="account.group_account_invoice",
             company_id=cls.company.id, company_ids=[cls.company.id])
-        cls.env["ir.config_parameter"].sudo().set_param(PARAM_USER, cls.accounts.id)
-        cls.env["ir.config_parameter"].sudo().set_param(PARAM_AUTO, False)
+        cls.env["ir.config_parameter"].sudo().set_str(PARAM_USER, cls.accounts.id)
+        cls.env["ir.config_parameter"].sudo().set_str(PARAM_AUTO, False)
         Provider = cls.env["payment.provider"].sudo()
         cls.stripe = Provider.search([("code", "=", "stripe"), ("company_id", "=", cls.company.id)],
                                      limit=1)
         cls.paypal = Provider.search([("code", "=", "paypal"), ("company_id", "=", cls.company.id)],
                                      limit=1)
-        cls.card = cls.env.ref("payment.payment_method_card")
+        # Odoo 20 keeps payment methods per provider; any "card" method will do.
+        Method = cls.env["payment.method"].sudo().with_context(active_test=False)
+        cls.card = Method.search([("code", "=", "card")], limit=1) or Method.create(
+            {"name": "Card", "code": "card"})
         # The April copy's bank journals carry no outstanding account, so no
         # payment can be registered. Production's do (set 2026-11-06).
         outstanding = cls.env["account.account"].search([
             ("company_ids", "in", cls.company.id), ("account_type", "=", "asset_current"),
-            ("deprecated", "=", False)], limit=1)
+            ("active", "=", True)], limit=1)
         banks = cls.env["account.journal"].search(
             [("type", "in", ("bank", "cash")), ("company_id", "=", cls.company.id)])
         (banks.inbound_payment_method_line_ids | banks.outbound_payment_method_line_ids).filtered(
             lambda l: not l.payment_account_id).payment_account_id = outstanding
         if not cls.stripe.journal_id:
             cls.stripe.journal_id = banks.filtered(lambda j: j.type == "bank")[:1]
+        # A fresh Odoo 20 database (not a production copy) has no company
+        # email and no transfer account. Production has both; without them the
+        # emails have no sender and a payment has no outstanding account.
+        if not cls.company.email:
+            cls.company.email = "cs-test@example.com"
+        if not cls.company.transfer_account_id:
+            cls.company.transfer_account_id = outstanding
 
     # ----------------------------------------------------------------- helpers
     def _stripe_tx(self, order, amount=None, reference="pi_TEST123", provider=None):
@@ -59,7 +71,7 @@ class TestRefundShipped(TestExchangeShipped):
             "provider_reference": reference,
             "sale_order_ids": [Command.set(order.ids)],
         })
-        tx._set_done()
+        tx.with_context(payment_safe_write=True)._set_done()
         return tx
 
     def _refund_it(self, order, qtys, user=None, shipping=False, reason="Change of mind"):
@@ -118,8 +130,8 @@ class TestRefundShipped(TestExchangeShipped):
         # stops Odoo sending money (same fixture as the "on" test).
         order, invoice, __ = self._shipped(paid=False)
         tx = self._stripe_tx(order)
-        tx.invoice_ids = [Command.set(invoice.ids)]
-        tx._create_payment()
+        tx.with_context(payment_safe_write=True).invoice_ids = [Command.set(invoice.ids)]
+        tx.with_context(payment_safe_write=True)._create_payment()
         self.assertGreaterEqual(tx.payment_id.amount_available_for_refund, 24.99)
         self._fake()
         with patch.object(type(self.env["payment.transaction"]), "_send_refund_request",
@@ -196,7 +208,9 @@ class TestRefundShipped(TestExchangeShipped):
         self.assertEqual(row.provider_refund_ids, "re_1")
         self.assertTrue(refund.currency_id.is_zero(refund.amount_residual),
                         "the refund was not recorded on the credit note")
-        self.assertFalse(row.activity_id.exists(), "the Accounts task is still open")
+        # Odoo 20 archives a done activity (date_done set) instead of deleting it.
+        self.assertTrue(not row.activity_id.exists() or row.activity_id.date_done,
+                        "the Accounts task is still open")
 
     def test_check_flags_a_different_amount(self):
         """MJ00225: the tax-excluded figure was refunded."""
@@ -256,7 +270,9 @@ class TestRefundShipped(TestExchangeShipped):
         self.assertEqual(row.state, "done")
         self.assertEqual(cn.matched_payment_ids, payments_before, "a second payment was registered")
         self.assertFalse(row.note, "the check tried to record a second payment: %s" % row.note)
-        self.assertFalse(row.activity_id.exists(), "the Accounts task is still open")
+        # Odoo 20 archives a done activity (date_done set) instead of deleting it.
+        self.assertTrue(not row.activity_id.exists() or row.activity_id.date_done,
+                        "the Accounts task is still open")
 
     def test_registered_in_odoo_but_not_in_stripe_stays_open(self):
         """The RKS00086 trap: Odoo says Paid, the provider says otherwise."""
@@ -286,7 +302,8 @@ class TestRefundShipped(TestExchangeShipped):
         self.env["reza.customer.refund"]._cron_check()
         self.assertEqual(row.state, "done", "the customer WAS refunded")
         self.assertIn("Register Payment", row.note)
-        self.assertTrue(row.activity_id.exists(), "task closed although nothing was recorded")
+        self.assertTrue(row.activity_id.exists() and not row.activity_id.date_done,
+                        "task closed although nothing was recorded")
 
     def test_provider_read_error_is_noted_not_raised(self):
         from odoo.addons.reza_exchange_shipped.models.customer_refund import ProviderReadError
@@ -327,20 +344,22 @@ class TestRefundShipped(TestExchangeShipped):
 
     # ------------------------------------------------------------- money on
     def _auto_on_order(self):
-        self.env["ir.config_parameter"].sudo().set_param(PARAM_AUTO, True)
+        self.env["ir.config_parameter"].sudo().set_str(PARAM_AUTO, True)
         order, invoice, __ = self._shipped(paid=False)
         tx = self._stripe_tx(order)
-        tx.invoice_ids = [Command.set(invoice.ids)]
-        tx._create_payment()
+        tx.with_context(payment_safe_write=True).invoice_ids = [Command.set(invoice.ids)]
+        tx.with_context(payment_safe_write=True)._create_payment()
         self._fake()
         return order
 
     def _fake_send(self, sent, fail=False):
-        def fake_send(tx, amount_to_refund=None):
+        # Odoo 20: `_refund` creates the refund child (negative amount) and
+        # calls `_send_refund_request` on IT; Stripe errors arrive as
+        # ValidationError, which core turns into an "error" transaction.
+        def fake_send(refund_tx):
             if fail:
-                raise RuntimeError("Stripe said card_declined")
-            sent.append(amount_to_refund)
-            return tx._create_child_transaction(amount_to_refund, is_refund=True)
+                raise ValidationError("Stripe said card_declined")
+            sent.append(-refund_tx.amount)
         return patch.object(type(self.env["payment.transaction"]), "_send_refund_request", fake_send)
 
     def test_auto_refund_on_queues_then_cron_sends(self):
@@ -381,7 +400,7 @@ class TestRefundShipped(TestExchangeShipped):
         self.assertEqual(row.activity_id.user_id, self.accounts)
 
     def test_auto_refund_on_paypal_still_tasks_accounts(self):
-        self.env["ir.config_parameter"].sudo().set_param(PARAM_AUTO, True)
+        self.env["ir.config_parameter"].sudo().set_str(PARAM_AUTO, True)
         order, __, __ = self._shipped()
         self._stripe_tx(order, reference="8PAYPALCAPTURE", provider=self.paypal)
         self._fake()
@@ -456,7 +475,7 @@ class TestRefundShipped(TestExchangeShipped):
             self.assertFalse(m.recipient_ids)
 
     def test_alert_list_is_a_setting(self):
-        self.env["ir.config_parameter"].sudo().set_param(
+        self.env["ir.config_parameter"].sudo().set_str(
             "reza_exchange_shipped.refund_alert_emails", "boss@example.com")
         self.accounts.email = "accounts-test@example.com"
         emails = self.env["reza.customer.refund"]._alert_emails()
@@ -495,18 +514,21 @@ class TestRefundShipped(TestExchangeShipped):
         self.assertEqual(self._onhand(self.nobbies), before, "a lost item went into stock")
         self.assertNotEqual(order.invoice_status, "to invoice")
         self.assertFalse(order.reza_edbert_return_ids, "a lost item was sent back to Edbert")
-        scrap = self.env["stock.scrap"].search([("origin", "like", order.name)])
+        # Odoo 20: a scrap is a stock.move flagged is_scrap.
+        scrap = self.env["stock.move"].search([("is_scrap", "=", True), ("origin", "like", order.name)])
         self.assertEqual(len(scrap), 1, "the lost item was not scrapped")
-        self.assertEqual((scrap.state, scrap.product_id, scrap.scrap_qty), ("done", self.nobbies, 1))
-        self.assertTrue(scrap.move_ids.location_dest_id.scrap_location)
-        # Valuation: the return brings the cost back (+1) and the scrap takes
-        # it out as a loss (-1). A return written straight to a loss location
-        # makes no layer at all, which left Stock Interim (Delivered) open on
-        # real-time companies (company 1, Mangrove Jacks).
+        self.assertEqual((scrap.state, scrap.product_id, scrap.quantity), ("done", self.nobbies, 1))
+        self.assertEqual(scrap.location_dest_id, order.company_id.scrap_location_id)
+        # Valuation: the return brings the cost back (valued IN) and the scrap
+        # takes it out as a loss (valued OUT). A return written straight to a
+        # loss location is not valued at all, which left Stock Interim
+        # (Delivered) open on real-time companies (company 1, Mangrove Jacks).
+        # Odoo 20 has no valuation layers; the move's is_in / is_out say it.
         back = line.move_ids.filtered(
             lambda m: m.state == "done" and m.location_id.usage == "customer")
-        self.assertEqual(sum(back.stock_valuation_layer_ids.mapped("quantity")), 1)
-        self.assertEqual(sum(scrap.move_ids.stock_valuation_layer_ids.mapped("quantity")), -1)
+        self.assertEqual(len(back), 1)
+        self.assertTrue(back.is_in, "the return was not valued in")
+        self.assertTrue(scrap.is_out, "the scrap was not valued out")
         refund = self._refund(order)
         self.assertEqual(refund.state, "posted")
         self.assertAlmostEqual(refund.amount_total, 24.99)

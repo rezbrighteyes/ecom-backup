@@ -46,7 +46,7 @@ class TestExchange(UtsCommon):
             [("type", "=", "general"), ("company_id", "=", self.company.id)], limit=1)
         other = self.env["account.account"].search([
             ("company_ids", "in", self.company.id), ("account_type", "=", "asset_current"),
-            ("deprecated", "=", False)], limit=1)
+            ("active", "=", True)], limit=1)
         pay = self.env["account.move"].create({"journal_id": misc.id, "line_ids": [
             Command.create({"account_id": rec.account_id.id, "partner_id": self.partner.id,
                             "credit": invoice.amount_total}),

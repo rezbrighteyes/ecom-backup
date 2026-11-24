@@ -62,7 +62,7 @@ class RezExchangeWizard(models.TransientModel):
         the Cannot Supply step it runs."""
         self.ensure_one()
         order = self.order_id
-        prec = self.env["decimal.precision"].precision_get("Product Unit of Measure")
+        prec = self.env["decimal.precision"].precision_get("Product Unit")
         todo = self.line_ids.filtered(
             lambda wl: float_compare(wl.qty_to_exchange, 0.0, precision_digits=prec) > 0)
         remover = self.env["reza.unable.supply.wizard"].create({
@@ -93,7 +93,7 @@ class RezExchangeWizard(models.TransientModel):
             kept[wl] = abs(diff) < KEEP_PRICE_BELOW
             if kept[wl]:
                 new.write({"price_unit": old.price_unit, "discount": old.discount,
-                           "tax_id": [Command.set(old.tax_id.ids)]})
+                           "tax_ids": [Command.set(old.tax_ids.ids)]})
             new_lines |= new
 
         invoice = self.env["account.move"]
@@ -114,7 +114,7 @@ class RezExchangeWizard(models.TransientModel):
             if wl.new_product_id == wl.product_id:
                 raise UserError(_("%s is the same product. Choose a different one.",
                                   wl.product_id.display_name))
-        prec = self.env["decimal.precision"].precision_get("Product Unit of Measure")
+        prec = self.env["decimal.precision"].precision_get("Product Unit")
         invoiced = todo.filtered(
             lambda wl: float_compare(wl.sale_line_id.qty_invoiced, 0.0, precision_digits=prec) > 0)
         if not invoiced:
@@ -199,10 +199,10 @@ class RezExchangeWizardLine(models.TransientModel):
     sale_line_id = fields.Many2one("sale.order.line", required=True, readonly=True)
     product_id = fields.Many2one(related="sale_line_id.product_id")
     product_tmpl_id = fields.Many2one(related="sale_line_id.product_id.product_tmpl_id")
-    ordered_qty = fields.Float(related="sale_line_id.product_uom_qty", digits="Product Unit of Measure")
-    delivered_qty = fields.Float(related="sale_line_id.qty_delivered", digits="Product Unit of Measure")
+    ordered_qty = fields.Float(related="sale_line_id.product_uom_qty", digits="Product Unit")
+    delivered_qty = fields.Float(related="sale_line_id.qty_delivered", digits="Product Unit")
     price_unit = fields.Float(related="sale_line_id.price_unit")
-    qty_to_exchange = fields.Float("Exchange", digits="Product Unit of Measure", default=0.0)
+    qty_to_exchange = fields.Float("Exchange", digits="Product Unit", default=0.0)
     new_product_id = fields.Many2one(
         "product.product", string="New product",
         domain="[('sale_ok', '=', True), ('type', '=', 'consu')]")

@@ -32,6 +32,8 @@ from odoo.exceptions import AccessError, UserError
 from odoo.fields import Command
 from odoo.tools import float_compare, float_is_zero, format_amount
 
+from ..models.stock_compat import confirm_return, draft_return, validate_return
+
 KEEP_PRICE_BELOW = 1.00  # dollars, on the line total
 
 
@@ -53,7 +55,7 @@ class RezExchangeShippedWizard(models.TransientModel):
         order = self.env["sale.order"].browse(
             res.get("order_id") or self.env.context.get("default_order_id"))
         if order and "line_ids" in fields_list:
-            prec = self.env["decimal.precision"].precision_get("Product Unit of Measure")
+            prec = self.env["decimal.precision"].precision_get("Product Unit")
             res["line_ids"] = [
                 Command.create({"sale_line_id": line.id})
                 for line in order.order_line
@@ -71,7 +73,7 @@ class RezExchangeShippedWizard(models.TransientModel):
         self.ensure_one()
         self._check_rights()
         order = self.order_id
-        prec = self.env["decimal.precision"].precision_get("Product Unit of Measure")
+        prec = self.env["decimal.precision"].precision_get("Product Unit")
         todo = self.line_ids.filtered(
             lambda wl: float_compare(wl.qty_to_exchange, 0.0, precision_digits=prec) > 0)
         self._check_can_apply(order, todo, prec)
@@ -188,7 +190,7 @@ class RezExchangeShippedWizard(models.TransientModel):
             moves = sol.move_ids.filtered(
                 lambda m: m.state == "done" and m.location_dest_id.usage == "customer"
                 and not m.origin_returned_move_id)
-            remaining = sol.product_uom._compute_quantity(qty, sol.product_id.uom_id)
+            remaining = sol.product_uom_id._compute_quantity(qty, sol.product_id.uom_id)
             for move in moves.sorted("id", reverse=True):
                 if float_is_zero(remaining, precision_digits=prec):
                     break
@@ -205,21 +207,15 @@ class RezExchangeShippedWizard(models.TransientModel):
                                   sol.product_id.display_name))
 
         for picking, qtys in per_picking.items():
-            wizard = self.env["stock.return.picking"].with_context(
-                active_id=picking.id, active_model="stock.picking",
-            ).create({"picking_id": picking.id})
-            for line in wizard.product_return_moves:
-                # `qtys` is in the product's own unit (move.product_qty).
-                line.quantity = line.product_id.uom_id._compute_quantity(
-                    qtys[line.move_id], line.uom_id) if line.move_id in qtys else 0.0
-            ret = wizard._create_return()
+            # Odoo 20: no return wizard. `qtys` is in the product's own unit
+            # (move.product_qty); a return move carries the original's unit.
+            ret = draft_return(picking)
             for move in ret.move_ids:
-                move.quantity = move.product_uom_qty
-                move.picked = True
-            ret.with_context(skip_backorder=True).button_validate()
-            if ret.state != "done":
-                raise UserError(_("The customer return %(ret)s came back %(state)s.",
-                                  ret=ret.name, state=ret.state))
+                orig = move.origin_returned_move_id
+                move.product_uom_qty = move.product_id.uom_id._compute_quantity(
+                    qtys[orig], move.uom_id) if orig in qtys else 0.0
+            ret = confirm_return(ret)
+            validate_return(ret, _("The customer return"))
 
     # -------------------------------------------------------------- new order
     def _make_replacement(self, order, todo, paid):
@@ -254,7 +250,7 @@ class RezExchangeShippedWizard(models.TransientModel):
             kept[wl] = abs(line.price_total - paid[wl]) < KEEP_PRICE_BELOW
             if kept[wl]:
                 line.write({"price_unit": old.price_unit, "discount": old.discount,
-                            "tax_id": [Command.set(old.tax_id.ids)]})
+                            "tax_ids": [Command.set(old.tax_ids.ids)]})
         if self.charge_shipping:
             self._add_shipping(order, new_order)
         # No send_email in the context: the customer is told by staff, not by
@@ -276,7 +272,7 @@ class RezExchangeShippedWizard(models.TransientModel):
         new_order.set_delivery_line(order.carrier_id, old.price_unit)
         line = new_order.order_line.filtered("is_delivery")
         line.write({"price_unit": old.price_unit, "discount": old.discount,
-                    "tax_id": [Command.set(old.tax_id.ids)]})
+                    "tax_ids": [Command.set(old.tax_ids.ids)]})
 
     # ----------------------------------------------------------------- Edbert
     @api.model
@@ -352,9 +348,9 @@ class RezExchangeShippedWizardLine(models.TransientModel):
     product_id = fields.Many2one(related="sale_line_id.product_id")
     product_tmpl_id = fields.Many2one(related="sale_line_id.product_id.product_tmpl_id")
     delivered_qty = fields.Float(related="sale_line_id.qty_delivered",
-                                 digits="Product Unit of Measure")
+                                 digits="Product Unit")
     price_unit = fields.Float(related="sale_line_id.price_unit")
-    qty_to_exchange = fields.Float("Returned", digits="Product Unit of Measure", default=0.0)
+    qty_to_exchange = fields.Float("Returned", digits="Product Unit", default=0.0)
     new_product_id = fields.Many2one(
         "product.product", string="Replacement",
         domain="[('sale_ok', '=', True), ('type', '=', 'consu')]")

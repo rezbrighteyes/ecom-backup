@@ -26,6 +26,8 @@ from odoo.exceptions import AccessError, UserError
 from odoo.fields import Command
 from odoo.tools import float_compare, format_amount
 
+from ..models.stock_compat import scrap
+
 
 class RezRefundShippedWizard(models.TransientModel):
     _name = "reza.refund.shipped.wizard"
@@ -57,7 +59,7 @@ class RezRefundShippedWizard(models.TransientModel):
         order = self.env["sale.order"].browse(
             res.get("order_id") or self.env.context.get("default_order_id"))
         if order and "line_ids" in fields_list:
-            prec = self.env["decimal.precision"].precision_get("Product Unit of Measure")
+            prec = self.env["decimal.precision"].precision_get("Product Unit")
             res["line_ids"] = [
                 Command.create({"sale_line_id": line.id})
                 for line in order.order_line
@@ -74,7 +76,7 @@ class RezRefundShippedWizard(models.TransientModel):
         self.ensure_one()
         self._check_rights()
         order = self.order_id
-        prec = self.env["decimal.precision"].precision_get("Product Unit of Measure")
+        prec = self.env["decimal.precision"].precision_get("Product Unit")
         todo = self.line_ids.filtered(
             lambda wl: float_compare(wl.qty_to_return, 0.0, precision_digits=prec) > 0)
         self._check_can_apply(order, todo, prec)
@@ -156,8 +158,9 @@ class RezRefundShippedWizard(models.TransientModel):
         there, manual or not, lands on Stock Interim (Delivered). Writing the
         return straight to a loss location instead makes no valuation at all
         (preflight 2026-11-18)."""
-        Scrap = self.env["stock.scrap"]
-        scraps = Scrap
+        # Odoo 20: a scrap is a stock.move with is_scrap, to the company's
+        # scrap location (the one carrying the stock write-off accounts).
+        scraps = self.env["stock.move"]
         for sol, qty in pairs:
             back = sol.move_ids.filtered(
                 lambda m: m.state == "done" and m.location_id.usage == "customer"
@@ -165,25 +168,18 @@ class RezRefundShippedWizard(models.TransientModel):
             if not back:
                 raise UserError(_("Could not find the return of %s to scrap.",
                                   sol.product_id.display_name))
-            scraps |= Scrap.create({
-                "product_id": sol.product_id.id,
-                "scrap_qty": sol.product_uom._compute_quantity(qty, sol.product_id.uom_id),
-                "product_uom_id": sol.product_id.uom_id.id,
-                "location_id": back.location_dest_id.id,
-                "company_id": order.company_id.id,
-                "origin": "%s: %s" % (order.name, self.reason),
-            })
-        for scrap in scraps:
-            scrap.do_scrap()
-            if scrap.state != "done":
-                raise UserError(_("Scrap %s did not complete. Nothing was changed.", scrap.name))
+            scraps |= scrap(
+                self.env, sol.product_id,
+                sol.product_uom_id._compute_quantity(qty, sol.product_id.uom_id),
+                back.location_dest_id, order.company_id,
+                "%s: %s" % (order.name, self.reason))
         return scraps
 
     @api.model
     def _shipping_line(self, order):
         """The paid shipping line still on the order: invoiced and not
         already credited (ordered quantity above zero)."""
-        prec = self.env["decimal.precision"].precision_get("Product Unit of Measure")
+        prec = self.env["decimal.precision"].precision_get("Product Unit")
         return order.order_line.filtered(
             lambda l: l.is_delivery and not l.display_type
             and float_compare(l.product_uom_qty, 0.0, precision_digits=prec) > 0
@@ -238,6 +234,6 @@ class RezRefundShippedWizardLine(models.TransientModel):
     sale_line_id = fields.Many2one("sale.order.line", required=True, readonly=True)
     product_id = fields.Many2one(related="sale_line_id.product_id")
     delivered_qty = fields.Float(related="sale_line_id.qty_delivered",
-                                 digits="Product Unit of Measure")
+                                 digits="Product Unit")
     price_unit = fields.Float(related="sale_line_id.price_unit")
-    qty_to_return = fields.Float("Returned", digits="Product Unit of Measure", default=0.0)
+    qty_to_return = fields.Float("Returned", digits="Product Unit", default=0.0)

@@ -39,8 +39,11 @@ import logging
 
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError
+
 from odoo.fields import Command
 from odoo.tools import float_compare, float_is_zero
+
+from .stock_compat import confirm_return, draft_return, validate_return
 
 _logger = logging.getLogger(__name__)
 
@@ -67,7 +70,7 @@ class RezaEdbertReturn(models.Model):
     company_id = fields.Many2one(related="purchase_id.company_id", store=True)
     product_id = fields.Many2one("product.product", required=True, readonly=True)
     qty = fields.Float("Quantity", required=True, readonly=True,
-                       digits="Product Unit of Measure")
+                       digits="Product Unit")
     state = fields.Selection([
         ("pending", "Waiting"),
         ("mismatch", "Credits disagree"),
@@ -162,7 +165,7 @@ class RezaEdbertReturn(models.Model):
         the branch warehouse again, so the warehouse ends where it started."""
         if self.local_return_id:
             return
-        prec = self.env["decimal.precision"].precision_get("Product Unit of Measure")
+        prec = self.env["decimal.precision"].precision_get("Product Unit")
         moves = self.purchase_id.picking_ids.move_ids.filtered(
             lambda m: m.state == "done" and m.product_id == self.product_id
             and m.picking_id.picking_type_id.code == "incoming"
@@ -171,30 +174,25 @@ class RezaEdbertReturn(models.Model):
             raise UserError(_("%(po)s has no received %(product)s to return.",
                               po=self.purchase_id.name, product=self.product_id.display_name))
         picking = moves.sorted("id", reverse=True)[0].picking_id
-        wizard = self.env["stock.return.picking"].with_context(
-            active_id=picking.id, active_model="stock.picking",
-        ).create({"picking_id": picking.id})
+        # Odoo 20: no return wizard. The draft return starts with every move at
+        # what is still returnable; keep only `qty` of this product.
+        ret = draft_return(picking)
         remaining = self.qty
-        for line in wizard.product_return_moves:
-            if line.product_id != self.product_id or float_is_zero(remaining, precision_digits=prec):
-                line.quantity = 0.0
+        for move in ret.move_ids:
+            if move.product_id != self.product_id or float_is_zero(remaining, precision_digits=prec):
+                move.product_uom_qty = 0.0
                 continue
-            take = min(line.move_quantity, remaining)
-            line.quantity = take
+            take = min(move.product_uom_qty, remaining)
+            move.product_uom_qty = take
             remaining -= take
         if float_compare(remaining, 0.0, precision_digits=prec) > 0:
+            ret.unlink()
             raise UserError(_("%(pick)s holds less than %(qty)s of %(product)s to return.",
                               pick=picking.name, qty=self.qty,
                               product=self.product_id.display_name))
-        ret = wizard._create_return()
+        ret = confirm_return(ret)
         ret.origin = self._get_marker()
-        for move in ret.move_ids:
-            move.quantity = move.product_uom_qty
-            move.picked = True
-        ret.with_context(skip_backorder=True).button_validate()
-        if ret.state != "done":
-            raise UserError(_("Ecom return %(ret)s came back %(state)s.",
-                              ret=ret.name, state=ret.state))
+        validate_return(ret, _("Ecom return"))
         self.local_return_id = ret
 
     def _remote(self):
@@ -314,7 +312,7 @@ class RezaEdbertReturn(models.Model):
                 # purchase line's: the bridge buys in the sale unit.
                 pol = self.purchase_id.order_line.filtered(
                     lambda l: l.product_id == self.product_id)[:1]
-                qty = pol.product_uom._compute_quantity(self.qty, line.product_uom_id)
+                qty = pol.uom_id._compute_quantity(self.qty, line.product_uom_id)
                 commands.append(Command.update(line.id, {"quantity": qty}))
                 kept = True
             else:

@@ -122,7 +122,7 @@ class TestExchangeShipped(UtsCommon):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user.groups_id |= cls.env.ref("purchase.group_purchase_user")
+        cls.user.group_ids |= cls.env.ref("purchase.group_purchase_user")
         cls.vendor = cls.env["res.partner"].create({"name": "TEST Edbert Holdings"})
         cls.company.sudo().write({
             "external_api": True, "external_api_purchase": True,
@@ -175,7 +175,7 @@ class TestExchangeShipped(UtsCommon):
             [("type", "=", "general"), ("company_id", "=", self.company.id)], limit=1)
         other = self.env["account.account"].search([
             ("company_ids", "in", self.company.id), ("account_type", "=", "asset_current"),
-            ("deprecated", "=", False)], limit=1)
+            ("active", "=", True)], limit=1)
         pay = self.env["account.move"].create({"journal_id": misc.id, "line_ids": [
             Command.create({"account_id": rec.account_id.id, "partner_id": self.partner.id,
                             "credit": invoice.amount_total}),
@@ -192,9 +192,9 @@ class TestExchangeShipped(UtsCommon):
             "origin": order.name, "external_api": True,
             "order_line": [Command.create({
                 "product_id": l.product_id.id, "name": l.product_id.display_name,
-                "product_qty": l.qty_delivered, "product_uom": l.product_uom.id,
+                "product_qty": l.qty_delivered, "uom_id": l.product_uom_id.id,
                 "price_unit": EDBERT_COST, "date_planned": order.date_order,
-                "discount": 0.0, "taxes_id": [Command.clear()],
+                "discount": 0.0, "tax_ids": [Command.clear()],
             }) for l in lines],
         })
 

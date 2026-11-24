@@ -99,7 +99,7 @@ class RezaUnableSupplyWizard(models.TransientModel):
         that sends the goods back to Edbert itself (reza_exchange_shipped)
         passes it."""
         order = self.order_id
-        prec = self.env["decimal.precision"].precision_get("Product Unit of Measure")
+        prec = self.env["decimal.precision"].precision_get("Product Unit")
         todo = self.line_ids.filtered(
             lambda wl: float_compare(wl.qty_to_remove, 0.0, precision_digits=prec) > 0)
         self._check_can_apply(order, todo, prec, edbert_handled=edbert_handled)
@@ -184,7 +184,7 @@ class RezaUnableSupplyWizard(models.TransientModel):
 
         A move the warehouse has already marked picked is not touched: the
         goods may be in a box. That raises, and the whole run rolls back."""
-        remaining = sol.product_uom._compute_quantity(qty, sol.product_id.uom_id)
+        remaining = sol.product_uom_id._compute_quantity(qty, sol.product_id.uom_id)
         for move in self._open_deliveries(sol).sorted("id", reverse=True):
             if float_is_zero(remaining, precision_digits=prec):
                 break
@@ -192,14 +192,14 @@ class RezaUnableSupplyWizard(models.TransientModel):
                 raise UserError(_(
                     "%(picking)s is already picked for %(product)s. Unpick it first, then try again.",
                     picking=move.picking_id.name, product=sol.product_id.display_name))
-            move_qty = move.product_uom._compute_quantity(move.product_uom_qty, sol.product_id.uom_id)
+            move_qty = move.uom_id._compute_quantity(move.product_uom_qty, sol.product_id.uom_id)
             if float_compare(move_qty, remaining, precision_digits=prec) <= 0:
                 move._action_cancel()
                 remaining -= move_qty
             else:
                 move._do_unreserve()
                 move.product_uom_qty = sol.product_id.uom_id._compute_quantity(
-                    move_qty - remaining, move.product_uom)
+                    move_qty - remaining, move.uom_id)
                 move._action_assign()
                 remaining = 0.0
 
@@ -222,15 +222,15 @@ class RezaUnableSupplyWizard(models.TransientModel):
                         inv=invoice.name, product=sol.product_id.display_name))
                 inv_line = inv_lines
                 already = sum(
-                    r.product_uom_id._compute_quantity(r.quantity, sol.product_uom)
+                    r.product_uom_id._compute_quantity(r.quantity, sol.product_uom_id)
                     for r in posted
                     if r.move_id.move_type == "out_refund" and r.move_id.reversed_entry_id == invoice
                 )
-                available = inv_line.product_uom_id._compute_quantity(inv_line.quantity, sol.product_uom) - already
+                available = inv_line.product_uom_id._compute_quantity(inv_line.quantity, sol.product_uom_id) - already
                 take = min(available, remaining)
                 if float_compare(take, 0.0, precision_digits=prec) <= 0:
                     continue
-                allocation[invoice][inv_line] = sol.product_uom._compute_quantity(take, inv_line.product_uom_id)
+                allocation[invoice][inv_line] = sol.product_uom_id._compute_quantity(take, inv_line.product_uom_id)
                 remaining -= take
                 if float_is_zero(remaining, precision_digits=prec):
                     break
@@ -332,13 +332,13 @@ class RezaUnableSupplyWizardLine(models.TransientModel):
     wizard_id = fields.Many2one("reza.unable.supply.wizard", required=True, ondelete="cascade")
     sale_line_id = fields.Many2one("sale.order.line", required=True, readonly=True)
     product_id = fields.Many2one(related="sale_line_id.product_id")
-    product_uom = fields.Many2one(related="sale_line_id.product_uom")
-    ordered_qty = fields.Float(related="sale_line_id.product_uom_qty", digits="Product Unit of Measure")
-    delivered_qty = fields.Float(related="sale_line_id.qty_delivered", digits="Product Unit of Measure")
-    invoiced_qty = fields.Float(related="sale_line_id.qty_invoiced", digits="Product Unit of Measure")
+    product_uom = fields.Many2one(related="sale_line_id.product_uom_id")
+    ordered_qty = fields.Float(related="sale_line_id.product_uom_qty", digits="Product Unit")
+    delivered_qty = fields.Float(related="sale_line_id.qty_delivered", digits="Product Unit")
+    invoiced_qty = fields.Float(related="sale_line_id.qty_invoiced", digits="Product Unit")
     price_unit = fields.Float(related="sale_line_id.price_unit")
-    max_qty = fields.Float(compute="_compute_max_qty", digits="Product Unit of Measure")
-    qty_to_remove = fields.Float("Cannot supply", digits="Product Unit of Measure", default=0.0)
+    max_qty = fields.Float(compute="_compute_max_qty", digits="Product Unit")
+    qty_to_remove = fields.Float("Cannot supply", digits="Product Unit", default=0.0)
 
     @api.depends("sale_line_id.product_uom_qty", "sale_line_id.qty_delivered")
     def _compute_max_qty(self):
