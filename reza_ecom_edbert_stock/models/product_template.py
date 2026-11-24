@@ -16,7 +16,7 @@ class ProductTemplate(models.Model):
     # do not.
     reza_edbert_total_free_qty = fields.Float(
         string="Edbert Free Qty (all variants)",
-        digits="Product Unit of Measure",
+        digits="Product Unit",
         compute="_compute_reza_edbert_stock",
         store=True,
         groups=INTERNAL_ONLY,

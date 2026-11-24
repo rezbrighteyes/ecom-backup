@@ -156,12 +156,8 @@ class Website(models.Model):
         return product._reza_edbert_sellable_qty(own)
 
 
-class SaleOrder(models.Model):
-    _inherit = "sale.order"
-
-    def _get_cart_and_free_qty(self, product, line=None):
-        cart_qty, free_qty = super()._get_cart_and_free_qty(product, line=line)
-        product = product or (line and line.product_id)
-        if product:
-            free_qty = product._reza_edbert_sellable_qty(free_qty)
-        return cart_qty, free_qty
+# No sale.order override on Odoo 20: the cart's free quantity is
+# `sale.order._get_free_qty` -> `website._get_product_available_qty`, which the
+# Website override above already adjusts. Odoo 18 read the cart quantity
+# without the website method, so it needed its own `_get_cart_and_free_qty`
+# override; keeping it here would apply the Edbert figure twice.

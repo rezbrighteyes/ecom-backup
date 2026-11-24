@@ -13,8 +13,7 @@ class ProductDataFeedType(models.Model):
         required=True,
     )
 
-    _sql_constraints = [(
-        'product_data_feed_type_recipient_uniq',
+    _product_data_feed_type_recipient_uniq = models.Constraint(
         'UNIQUE (name, recipient_id)',
-        'Data feed type must be unique per recipient.',
-    )]
+        "Data feed type must be unique per recipient.",
+    )

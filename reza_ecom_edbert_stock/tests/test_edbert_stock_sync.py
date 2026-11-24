@@ -119,7 +119,7 @@ class TestEdbertStockSync(TransactionCase):
 
         # Keep every run to this module's own products. Without it a run reads
         # the whole catalogue, which is right in production and useless here.
-        cls.env["ir.config_parameter"].sudo().set_param(
+        cls.env["ir.config_parameter"].sudo().set_str(
             cls.sync.PARAM_LAST_RESOLVED, 0
         )
 
@@ -158,7 +158,7 @@ class TestEdbertStockSync(TransactionCase):
             },
         )
         # The quant floor would otherwise refuse every fixture in this file.
-        self.env["ir.config_parameter"].sudo().set_param(self.sync.PARAM_MIN_ROWS, 1)
+        self.env["ir.config_parameter"].sudo().set_str(self.sync.PARAM_MIN_ROWS, 1)
         return FakeWholesale(**kwargs)
 
     # ------------------------------------------------------------------
@@ -319,7 +319,7 @@ class TestEdbertStockSync(TransactionCase):
         self._run(self._fake())
         self.assertEqual(self.matched.reza_edbert_free_qty, 100.0)
 
-        self.env["ir.config_parameter"].sudo().set_param(self.sync.PARAM_MIN_ROWS, 50)
+        self.env["ir.config_parameter"].sudo().set_str(self.sync.PARAM_MIN_ROWS, 50)
         fake = FakeWholesale(
             quants=[quant(9001, 1.0)], products={9001: "REZA-MATCH"}
         )
@@ -391,7 +391,7 @@ class TestEdbertStockSync(TransactionCase):
 
     def test_a_halved_product_read_is_refused(self):
         """A partial collapse is refused as well as a total one."""
-        self.env["ir.config_parameter"].sudo().set_param(
+        self.env["ir.config_parameter"].sudo().set_str(
             self.sync.PARAM_LAST_RESOLVED, 100
         )
         with self.assertRaises(UserError) as caught:
@@ -453,7 +453,7 @@ class TestEdbertStockSync(TransactionCase):
             {
                 "name": "Edbert stock test bystander",
                 "login": "reza_edbert_stock_bystander",
-                "groups_id": [(6, 0, [self.env.ref("base.group_user").id])],
+                "group_ids": [(6, 0, [self.env.ref("base.group_user").id])],
             }
         )
         with self.assertRaises(AccessError) as caught:
@@ -485,7 +485,7 @@ class TestEdbertStockSync(TransactionCase):
             {
                 "name": "Edbert stock test non-manager",
                 "login": "reza_edbert_stock_non_manager",
-                "groups_id": [(6, 0, [self.env.ref("base.group_user").id])],
+                "group_ids": [(6, 0, [self.env.ref("base.group_user").id])],
             }
         )
         self.assertFalse(plain.has_group("stock.group_stock_manager"))
@@ -531,7 +531,7 @@ class TestEdbertStockSync(TransactionCase):
                 {
                     "name": "Edbert stock test %s" % group,
                     "login": "reza_edbert_stock_%s" % group.replace(".", "_"),
-                    "groups_id": [(6, 0, [self.env.ref(group).id])],
+                    "group_ids": [(6, 0, [self.env.ref(group).id])],
                 }
             )
             variants = self.env["product.product"].with_user(reader).sudo(False)
@@ -539,7 +539,7 @@ class TestEdbertStockSync(TransactionCase):
             self.assertFalse(variants.env.su, "the check is meaningless under su")
 
             # Control: an ordinary field IS accessible to this user.
-            variants.check_field_access_rights("read", ["default_code"])
+            variants.check_field_access(variants._fields["default_code"], "read")
 
             for field in (
                 "reza_edbert_free_qty",
@@ -549,14 +549,14 @@ class TestEdbertStockSync(TransactionCase):
                 "reza_edbert_last_sync",
             ):
                 with self.assertRaises(AccessError, msg=field):
-                    variants.check_field_access_rights("read", [field])
+                    variants.check_field_access(variants._fields[field], "read")
             for field in (
                 "reza_edbert_total_free_qty",
                 "reza_edbert_unmatched_count",
                 "reza_edbert_last_sync",
             ):
                 with self.assertRaises(AccessError, msg=field):
-                    templates.check_field_access_rights("read", [field])
+                    templates.check_field_access(templates._fields[field], "read")
 
     def test_a_location_owned_by_another_company_is_refused(self):
         """Liaise and Global both hold internal locations with a company.

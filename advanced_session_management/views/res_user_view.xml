@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="base.view_users_form"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@name='button_box']" position="inside">
-                <button name="action_kill_all_session" groups="advanced_session_management.group_login_log_admin_ah" type="object" class="oe_stat_button" icon="fa-times-circle" style="color:red;">
+                <button name="action_kill_all_session" groups="advanced_session_management.group_login_log_admin_ah" type="object" class="oe_stat_button" icon="cancel" icon_class="oi-filled" style="color:red;">
                     Kill All Session
                 </button>
             </xpath>

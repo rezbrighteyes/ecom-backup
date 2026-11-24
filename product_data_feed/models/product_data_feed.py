@@ -393,7 +393,7 @@ class ProductDataFeed(models.Model):
             "".join(["<li>%s</li>" % warn for warn in messages]),
         ) if messages else ''
         html_message = Markup(_("<p>The feed is generated.</p>%s", warning_list))
-        if not self._context.get('without_headers', False):
+        if not self.env.context.get('without_headers', False):
             self.message_post(body=html_message)
         # Clean warnings
         self.warning_messages = ''
@@ -412,7 +412,7 @@ class ProductDataFeed(models.Model):
 
         rows = []
         separator = feed.text_separator or feed.file_type == 'tsv' and '\t' or ','
-        without_headers = self._context.get('without_headers', False)
+        without_headers = self.env.context.get('without_headers', False)
 
         # Add file header
         if not without_headers:

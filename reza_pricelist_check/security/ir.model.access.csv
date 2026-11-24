@@ -1,3 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_reza_pricelist_check_user,reza.pricelist.check user,model_reza_pricelist_check,sales_team.group_sale_salesman,1,1,1,1
-access_reza_pricelist_check_line_user,reza.pricelist.check.line user,model_reza_pricelist_check_line,sales_team.group_sale_salesman,1,1,1,1

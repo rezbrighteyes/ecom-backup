@@ -16,214 +16,118 @@
         </div>
     </template>
 
-    <template id="product_spec_filters" inherit_id="website_sale.products_attributes" name="Specifications filters">
-        <xpath expr="//div[@id='wsale_products_attributes_collapse']" position="attributes">
-            <attribute name="t-if">attributes or all_tags or d3_spec_filters</attribute>
-        </xpath>
-        <xpath expr="//div[@t-if='attrib_values or tags']" position="attributes">
-            <attribute name="t-if">attrib_values or tags or d3_selected_spec_filters</attribute>
-        </xpath>
-        <xpath expr="//div[@id='wsale_products_attributes_collapse']/form/div/a" position="attributes">
-            <attribute name="t-att-href">keep('/shop' + ('/category/' + slug(category)) if category else None, attribute_value=0, tags=0, d3_spec_filter=0)</attribute>
-        </xpath>
-        <xpath expr="//t[@t-if='opt_wsale_filter_tags and opt_wsale_attributes']" position="before">
-            <t t-foreach="d3_spec_filters" t-as="spec_filter">
-                <div class="accordion-item nav-item mb-1 rounded-0" t-if="spec_filter['values']">
-                    <h6 class="mb-3">
-                        <b class="d-none d-lg-block" t-out="spec_filter['label']"/>
-                    </h6>
-                    <div class="flex-column mb-3">
-                        <t t-foreach="spec_filter['values']" t-as="spec_value">
-                            <div class="form-check mb-1">
-                                <input type="checkbox"
-                                       name="d3_spec_filter"
-                                       class="form-check-input"
-                                       t-att-id="'d3_spec_%s_%s' % (spec_filter['field'], spec_value_index)"
-                                       t-att-value="spec_value['key']"
-                                       t-att-checked="'checked' if spec_value['selected'] else None"/>
-                                <label class="form-check-label fw-normal"
-                                       t-att-for="'d3_spec_%s_%s' % (spec_filter['field'], spec_value_index)">
-                                    <t t-out="spec_value['label']"/>
-                                    <small class="text-muted" t-if="spec_value['count']">(<t t-out="spec_value['count']"/>)</small>
-                                </label>
-                            </div>
-                        </t>
-                    </div>
-                </div>
-            </t>
-        </xpath>
-    </template>
-
-    <template id="product_spec_filters_offcanvas" inherit_id="website_sale.o_wsale_offcanvas" name="Specifications filters offcanvas">
-        <xpath expr="//form[contains(@t-attf-class, 'js_attributes')]" position="attributes">
-            <attribute name="t-if">opt_wsale_attributes or opt_wsale_attributes_top or d3_spec_filters</attribute>
-            <attribute name="t-attf-class">js_attributes accordion accordion-flush d-flex flex-column {{(len(attributes) &gt; 0 or d3_spec_filters) and 'border-bottom'}}</attribute>
-        </xpath>
-        <xpath expr="//form[contains(@t-attf-class, 'js_attributes')]/t[@t-if='opt_wsale_filter_tags and (opt_wsale_attributes or opt_wsale_attributes_top)']" position="before">
-            <t t-foreach="d3_spec_filters" t-as="spec_filter">
+    <!-- Specification filters: one form on Odoo 20 serves desktop and mobile (isMobile). -->
+    <template id="product_spec_filters" inherit_id="website_sale.product_attribute_filters_form" name="Specifications filters">
+        <xpath expr="//form/t[@t-foreach='attributes']" position="after">
+            <t t-foreach="d3_spec_filters or []" t-as="spec_filter">
+                <t t-set="_d3_expand" t-value="spec_filter['selected'] or default_expand_filter_sections"/>
                 <div t-if="spec_filter['values']"
-                     t-attf-class="accordion-item border-top-0 {{spec_filter['selected'] and 'order-1' or 'order-2'}}">
-                    <h2 class="accordion-header mb-0" t-attf-id="o_wsale_offcanvas_d3_spec_{{spec_filter['field']}}_header">
-                        <button t-attf-class="o_wsale_offcanvas_title accordion-button rounded-0 {{not spec_filter['selected'] and 'collapsed'}}"
+                     t-attf-class="accordion-item {{'border-top-0' if isMobile else 'nav-item mb-1 rounded-0'}}">
+                    <h2 t-if="isMobile" class="accordion-header mb-0"
+                        t-attf-id="o_wsale_offcanvas_d3_spec_{{spec_filter['field']}}_header">
+                        <button t-attf-class="o_wsale_offcanvas_title accordion-button px-4 bg-transparent shadow-none {{'' if _d3_expand else 'collapsed'}}"
                                 type="button"
-                                t-att-data-status="spec_filter['selected'] and 'active' or 'inactive'"
                                 data-bs-toggle="collapse"
                                 t-attf-data-bs-target="#o_wsale_offcanvas_d3_spec_{{spec_filter['field']}}"
-                                t-att-aria-expanded="spec_filter['selected'] and 'True' or 'False'"
+                                t-att-aria-expanded="_d3_expand"
                                 t-attf-aria-controls="o_wsale_offcanvas_d3_spec_{{spec_filter['field']}}">
                             <b t-out="spec_filter['label']"/>
                         </button>
                     </h2>
-                    <div t-attf-id="o_wsale_offcanvas_d3_spec_{{spec_filter['field']}}"
-                         t-attf-class="accordion-collapse collapse {{spec_filter['selected'] and 'show'}}"
-                         t-att-aria-expanded="spec_filter['selected'] and 'True' or 'False'"
-                         t-attf-aria-labelledby="o_wsale_offcanvas_d3_spec_{{spec_filter['field']}}_header">
-                        <div class="accordion-body pt-0">
-                            <div class="list-group list-group-flush">
-                                <div t-foreach="spec_filter['values']" t-as="spec_value" class="list-group-item border-0 ps-0 pb-0">
-                                    <div class="form-check mb-1">
-                                        <input type="checkbox"
-                                               name="d3_spec_filter"
-                                               class="form-check-input"
-                                               t-att-id="'d3_spec_offcanvas_%s_%s' % (spec_filter['field'], spec_value_index)"
-                                               t-att-value="spec_value['key']"
-                                               t-att-checked="'checked' if spec_value['selected'] else None"/>
-                                        <label class="form-check-label fw-normal"
-                                               t-att-for="'d3_spec_offcanvas_%s_%s' % (spec_filter['field'], spec_value_index)">
-                                            <t t-out="spec_value['label']"/>
-                                            <small class="text-muted" t-if="spec_value['count']">(<t t-out="spec_value['count']"/>)</small>
-                                        </label>
-                                    </div>
+                    <div t-else="" class="mb-3">
+                        <b class="d-none d-lg-block" t-out="spec_filter['label']"/>
+                    </div>
+                    <div t-attf-id="{{'o_wsale_offcanvas_d3_spec_' + spec_filter['field'] if isMobile else 'o_d3_spec_' + spec_filter['field']}}"
+                         t-attf-class="{{'accordion-collapse collapse ' + ('show' if _d3_expand else '') if isMobile else ''}}">
+                        <div t-attf-class="{{'accordion-body pt-0 list-group list-group-flush' if isMobile else 'flex-column mb-3'}}">
+                            <t t-foreach="spec_filter['values']" t-as="spec_value">
+                                <t t-set="_d3_input_id" t-value="'d3_spec_%s%s_%s' % ('offcanvas_' if isMobile else '', spec_filter['field'], spec_value_index)"/>
+                                <div t-attf-class="form-check mb-1 {{'list-group-item border-0 ps-0 pb-0' if isMobile else ''}}">
+                                    <input type="checkbox"
+                                           name="d3_spec_filter"
+                                           class="form-check-input"
+                                           t-att-id="_d3_input_id"
+                                           t-att-value="spec_value['key']"
+                                           t-att-checked="'checked' if spec_value['selected'] else None"/>
+                                    <label class="form-check-label fw-normal" t-att-for="_d3_input_id">
+                                        <t t-out="spec_value['label']"/>
+                                        <small class="text-muted" t-if="spec_value['count']">(<t t-out="spec_value['count']"/>)</small>
+                                    </label>
                                 </div>
-                            </div>
+                            </t>
                         </div>
                     </div>
                 </div>
             </t>
         </xpath>
+        <!-- Clearing attribute filters also clears the specification filters. -->
+        <xpath expr="//form" position="attributes">
+            <attribute name="t-att-action">keep(**reset_attribute_value_params, tags=0, d3_spec_filter=0)</attribute>
+        </xpath>
     </template>
 
+    <!-- Show the desktop filter column when only specification filters exist. -->
+    <template id="product_spec_filters_column" inherit_id="website_sale.products_attributes" name="Specifications filters column">
+        <xpath expr="//div[@id='wsale_products_attributes_collapse']" position="attributes">
+            <attribute name="t-if">attributes or all_tags or d3_spec_filters</attribute>
+        </xpath>
+    </template>
+
+    <!-- One card per variant: each grid cell renders the variants chosen by
+         product.template.get_selected_variants(), set by the controller. -->
     <template id="products_extended" inherit_id="website_sale.products">
         <xpath expr="//t[@t-if='td_product']" position="replace">
             <t t-if="td_product">
-                <t t-foreach="td_product['product_variants']" t-as="td_product_variant">
+                <t t-set="product" t-value="td_product['product']"/>
+                <t t-set="d3_one_card" t-value="website.shop_one_card_per_product and not product.attribute_line_ids.filtered(lambda line: line.show_in_website)"/>
+                <t t-foreach="td_product.get('product_variants') or [product_variants[product]]" t-as="d3_variant">
                     <t t-set="col_height" t-value="td_product['y']"/>
-                    <t t-set="col_width"
-                       t-value="12 // ppr * td_product['x']"/>
-                    <t t-set="col_class_lg"
-                       t-value="'g-col-lg-' + str(col_width)"/>
+                    <t t-set="col_width" t-value="12 // ppr * td_product['x']"/>
+                    <t t-set="col_class" t-valuef="g-col-6"/>
+                    <t t-set="col_class_lg" t-value="'g-col-lg-' + str(col_width)"/>
                     <t t-set="col_class_md"
                        t-value="grid_md_allow_custom_cols and ('g-col-md-' + str(col_width)) or grid_md_use_3col and 'g-col-md-4' or 'g-col-md-6'"/>
-                    <t t-set="col_is_stretched"
-                       t-value="(td_product['x'] &gt;= td_product['y'] * 2)"/>
-                    <t t-set="col_is_custom_portrait"
-                       t-value="not col_is_stretched and (col_height &gt; td_product['x'])"/>
+                    <t t-set="col_is_stretched" t-value="(td_product['x'] &gt;= td_product['y'] * 2)"/>
+                    <t t-set="col_is_custom_portrait" t-value="not col_is_stretched and (col_height &gt; td_product['x'])"/>
+                    <t t-set="product_variant" t-value="d3_variant"/>
+                    <t t-set="d3_variant_price_vals" t-value="get_product_variants_prices(d3_variant) if get_product_variants_prices else None"/>
+                    <t t-set="template_price_vals" t-value="d3_variant_price_vals or get_product_prices(product)"/>
+                    <t t-set="ribbon"
+                       t-value="product._get_ribbon(price_vals=template_price_vals, auto_assign_ribbons=auto_assign_ribbons)"/>
                     <div
-                            t-attf-class="oe_product {{col_is_custom_portrait and 'oe_product_custom_portrait'}} g-col-6 {{col_class_md}} {{col_class_lg}} {{col_is_stretched and 'oe_product_size_stretch'}}"
-                            t-attf-style="--o-wsale-products-grid-product-col-height: {{col_height}};"
-                            t-att-data-ribbon-id="td_product['ribbon'].id"
-                            t-att-data-colspan="td_product['x'] != 1 and td_product['x']"
-                            t-att-data-rowspan="td_product['y'] != 1 and td_product['y']"
-                            t-att-data-name="product_block_name"
+                        t-attf-class="oe_product {{col_is_custom_portrait and 'oe_product_custom_portrait'}} {{col_class}} {{col_class_md}} {{col_class_lg}} {{col_is_stretched and 'oe_product_size_stretch'}}"
+                        t-attf-style="--o-wsale-products-grid-product-col-height: {{col_height}};"
+                        t-att-data-colspan="td_product['x'] != 1 and td_product['x']"
+                        t-att-data-rowspan="td_product['y'] != 1 and td_product['y']"
+                        t-att-data-name="product_block_name"
                     >
                         <div t-attf-class="o_wsale_product_grid_wrapper position-relative h-100 o_wsale_product_grid_wrapper_#{td_product['x']}_#{td_product['y']}">
-                            <t t-call="website_sale.products_item">
-                                <t t-set="product"
-                                   t-value="td_product['product']"/>
-                                <t t-set="product_variant"
-                                   t-value="td_product_variant"/>
-                            </t>
+                            <t
+                                t-call="website_sale.products_item"
+                                design_field="website.shop_opt_products_design_classes"
+                                product_href="product._get_product_url(product_query_params, grouped_attributes_values) if d3_one_card else d3_variant.website_url"
+                                show_variant_images="not d3_one_card"
+                                show_combination_name="not d3_one_card"
+                                d3_variant_card="not d3_one_card"
+                            />
                         </div>
                     </div>
                 </t>
             </t>
         </xpath>
     </template>
+
+    <!-- Variant cards show the variant's own price ... -->
     <template id="products_item_extended" inherit_id="website_sale.products_item">
-        <xpath expr="." position="replace">
-            <form action="/shop/cart/update" method="post" class="oe_product_cart h-100 d-flex"
-            t-att-data-publish="product_variant.website_published and 'on' or 'off'"
-            itemscope="itemscope" itemtype="http://schema.org/Product">
-            <t t-set="d3_one_card" t-value="website.shop_one_card_per_product and not product.attribute_line_ids.filtered(lambda line: line.show_in_website)"/>
-            <t t-set="product_href" t-value="keep((product if d3_one_card else product_variant).website_url, page=(pager['page']['num'] if pager['page']['num']&gt;1 else None)) + selected_attributes_hash" />
-            <t t-set="image_type" t-value="product._get_suitable_image_size(ppr, td_product['x'], td_product['y'])"/>
-
-            <div class="oe_product_image position-relative flex-grow-0 overflow-hidden">
-                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()" t-nocache="The csrf token must always be up to date."/>
-                <a
-                    t-att-href="product_href"
-                    class="oe_product_image_link d-block position-relative"
-                    itemprop="url"
-                    contenteditable="false"
-                >
-                    <t t-set="image_holder" t-value="product_variant"/>
-                    <span t-field="image_holder.image_1920"
-                        t-options="{'widget': 'image', 'preview_image': image_type, 'itemprop': 'image', 'class': 'h-100 w-100 position-absolute'}"
-                        class="oe_product_image_img_wrapper d-flex h-100 justify-content-center align-items-center position-absolute"/>
-
-                    <t t-set="bg_color" t-value="td_product['ribbon'].bg_color"/>
-                    <t t-set="text_color" t-value="td_product['ribbon'].text_color"/>
-                    <t t-set="bg_class" t-value="td_product['ribbon']._get_position_class()"/>
-                    <span
-                        t-attf-class="o_ribbon o_not_editable #{bg_class}"
-                        t-attf-style="#{text_color and ('color: %s;' % text_color)} #{bg_color and 'background-color:' + bg_color}"
-                        t-out="td_product['ribbon'].name or ''"
-                    />
-                </a>
-            </div>
-            <div class="o_wsale_product_information position-relative d-flex flex-column flex-grow-1 flex-shrink-1">
-                <div class="o_wsale_product_information_text">
-                    <h6 class="o_wsale_products_item_title mb-2 text-break">
-                        <a t-if="d3_one_card" class="text-primary text-decoration-none text-primary-emphasis" itemprop="name" t-att-href="product_href" t-att-content="product.name" t-field="product.name" />
-                        <a t-else="" class="text-primary text-decoration-none text-primary-emphasis" itemprop="name" t-att-href="product_href" t-att-content="product_variant.with_context(display_default_code=False).display_name" t-field="product_variant.with_context(display_default_code=False).display_name" />
-                        <a t-if="not product_variant.website_published" role="button" t-att-href="product_href" class="btn btn-sm btn-danger" title="This product is unpublished.">
-                            Unpublished
-                        </a>
-                    </h6>
-                </div>
-                <div class="o_wsale_product_sub d-flex justify-content-between align-items-end gap-2 flex-wrap">
-                    <t t-set="template_price_vals" t-value="get_product_variants_prices(product_variant)"/>
-                    <div class="o_wsale_product_btn d-flex gap-2"/>
-                    <div class="product_price" itemprop="offers" itemscope="itemscope" itemtype="http://schema.org/Offer">
-                        <span class="h6 mb-0"
-                              t-if="template_price_vals['price_reduce'] or not website.prevent_zero_price_sale"
-                              t-out="template_price_vals['price_reduce']"
-                              t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
-                        <span class="h6 mb-0" t-elif="any(ptav.price_extra for ptav in product_variant.attribute_line_ids.product_template_value_ids)">&amp;nbsp;</span>
-                        <span class="h6 mb-0" t-else="" t-field="website.prevent_zero_price_sale_text"/>
-                        <t t-if="'base_price' in template_price_vals and (template_price_vals['base_price'] &gt; template_price_vals['price_reduce']) and (template_price_vals['price_reduce'] or not website.prevent_zero_price_sale)">
-                            <del t-attf-class="text-muted me-1 h6 mb-0" style="white-space: nowrap;">
-                                <em class="small" t-esc="template_price_vals['base_price']" t-options="{'widget': 'monetary', 'display_currency': website.currency_id}" />
-                            </del>
-                        </t>
-                        <span itemprop="price" style="display:none;" t-esc="template_price_vals['price_reduce']" />
-                        <span itemprop="priceCurrency" style="display:none;" t-esc="website.currency_id.name" />
-                    </div>
-                </div>
-            </div>
-        </form>
+        <xpath expr="//t[@t-set='template_price_vals'][@t-value='get_product_prices(product)']" position="attributes">
+            <attribute name="t-value">d3_variant_price_vals or get_product_prices(product)</attribute>
         </xpath>
     </template>
-    <template id="product_variants_extended" inherit_id="website_sale.product_variants">
-        <xpath expr="//t[@t-if='len(filtered_sorted_variants) &gt; 1']//div[@class='mb-4']" position="attributes">
-            <attribute name="class" add="d-flex variant-div flex-wrap" separator=" "/>
-        </xpath>
-        <xpath expr="//t[@t-if='len(filtered_sorted_variants) &gt; 1']//div[hasclass('variant-div')]//div[@t-foreach='filtered_sorted_variants']" position="attributes">
-            <attribute name="class" add="variant-radio" separator=" " />
-        </xpath>
-        <xpath expr="//t[@t-if='len(filtered_sorted_variants) &gt; 1']//div[hasclass('variant-div')]//input" position="attributes">
-            <attribute name="t-att-data-variant-attributes">combination_info['variant_attributes']</attribute>
-        </xpath>
-        <xpath expr="//t[@t-if='len(filtered_sorted_variants) &gt; 1']//div[hasclass('variant-div')]//label" position="replace">
-             <label t-attf-for="radio_variant_#{variant_id.id}" label-default="label-default" class="form-check-label fw-normal variant-label">
-                <div>
-                    <img
-                        t-attf-src="/web/image/product.product/{{ variant_id.id }}/image_128"
-                        class="o_image_64_max img o_image_64_cover"
-                        t-att-alt="variant_id.name"
-                    />
-                </div>
-            </label>
+
+    <!-- ... and only the attributes marked "Show in Website" in their name. -->
+    <template id="product_title_extended" inherit_id="website_sale.product_title_and_details">
+        <xpath expr="//t[@t-set='combination_name']" position="attributes">
+            <attribute name="t-value">(product_variant.product_template_attribute_value_ids.filtered(lambda v: v.attribute_line_id.show_in_website) if d3_variant_card else product_variant.product_template_attribute_value_ids)._get_combination_name()</attribute>
         </xpath>
     </template>
 </odoo>

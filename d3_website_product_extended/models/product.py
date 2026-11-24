@@ -1,6 +1,6 @@
 from odoo import api, fields, models, _
 from odoo.http import request
-from odoo.osv import expression
+from odoo.fields import Domain
 from itertools import product
 
 
@@ -231,15 +231,15 @@ class ProductTemplate(models.Model):
         domains = []
         for field_name, values in selected_filters.items():
             field_domains = [
-                expression.AND([
+                Domain.AND([
                     [(field_name, '=', self._d3_parse_spec_filter_value(field_name, value))],
                     self._d3_get_website_visible_spec_domain(field_name),
                 ])
                 for value in values
             ]
             if field_domains:
-                domains.append(expression.OR(field_domains))
-        return expression.AND(domains) if domains else []
+                domains.append(Domain.OR(field_domains))
+        return Domain.AND(domains) if domains else []
 
     @api.model
     def _d3_get_present_value_domain(self, field_name):
@@ -252,7 +252,7 @@ class ProductTemplate(models.Model):
 
     @api.model
     def _d3_get_website_visible_spec_domain(self, field_name):
-        return expression.OR([
+        return Domain.OR([
             [('d3_hidden_website_spec_field_names', '=', False)],
             [('d3_hidden_website_spec_field_names', 'not ilike', f'|{field_name}|')],
         ])
@@ -286,25 +286,24 @@ class ProductTemplate(models.Model):
             return filters
 
         for field_name, label in self._d3_get_filterable_spec_fields():
+            # Odoo 20: read_group returns (value, count) tuples; a many2one
+            # value is a record, which the key/format helpers accept.
             groups = ProductTemplate.read_group(
-                [
-                    ('id', 'in', product_ids),
-                ] + self._d3_get_present_value_domain(field_name)
-                + self._d3_get_website_visible_spec_domain(field_name),
+                Domain('id', 'in', product_ids)
+                & Domain(self._d3_get_present_value_domain(field_name))
+                & self._d3_get_website_visible_spec_domain(field_name),
                 [field_name],
-                [field_name],
-                lazy=False,
+                ['__count'],
             )
             values = []
-            for group in groups:
-                value = group.get(field_name)
+            for value, count in groups:
                 if not value:
                     continue
                 key = self._d3_get_spec_filter_key(field_name, value)
                 values.append({
                     'key': key,
                     'label': self._d3_format_spec_value(field_name, value),
-                    'count': group.get('__count', 0),
+                    'count': count,
                     'selected': key in selected_filter_keys,
                 })
             values = sorted(values, key=lambda item: str(item['label']).lower())
@@ -323,10 +322,8 @@ class ProductTemplate(models.Model):
         selected_filters = self._d3_get_selected_website_spec_filters()
         spec_filter_domain = self._d3_get_spec_filter_domain(selected_filters)
         if spec_filter_domain:
-            result['base_domain'] = expression.AND([
-                result['base_domain'],
-                spec_filter_domain,
-            ])
+            # `base_domain` is a LIST of domains that the search ANDs together.
+            result['base_domain'] = list(result['base_domain']) + [spec_filter_domain]
         return result
 
     def _d3_get_visible_product_specs(self, group=False):
@@ -385,7 +382,7 @@ class ProductTemplate(models.Model):
                         variant |= pv
                 if variant:
                     variants |= variant[0]
-        elif self.env['website'].get_current_website().shop_one_card_per_product:
+        elif self.env.website.shop_one_card_per_product:
             variants |= product_variants[:1]
         else:
             variants |= product_variants
@@ -397,56 +394,56 @@ class Product(models.Model):
 
 
     def _get_sales_prices(self, website):
+        """Shop-card prices per VARIANT, keyed by variant id.
+
+        Mirrors ``product.template._get_sales_prices`` (Odoo 20) for variants,
+        so each variant card shows its own price, including price extras.
+        Kept on ``website`` only, because the Rockos homepage calls it that way.
+        """
         if not self:
             return {}
 
-        pricelist = website.pricelist_id
+        pricelist_sudo = website.sudo()._get_and_cache_current_pricelist()
+        fiscal_position_sudo = website.sudo()._get_and_cache_current_fiscal_position()
         currency = website.currency_id
-        fiscal_position = website.fiscal_position_id.sudo()
-        date = fields.Date.context_today(self)
+        ProductTemplate = self.env['product.template']
 
-        pricelist_prices = pricelist._compute_price_rule(self, 1.0)
-        comparison_prices_enabled = self.env.user.has_group('website_sale.group_product_price_comparison')
+        pricelist_prices = pricelist_sudo._compute_price_rule(self, 1.0)
+        comparison_prices_enabled = self.env['res.groups']._is_feature_enabled(
+            'website_sale.group_product_price_comparison'
+        )
 
         res = {}
-        for template in self:
-            pricelist_price, pricelist_rule_id = pricelist_prices[template.id]
-
-            product_taxes = template.sudo().taxes_id._filter_taxes_by_company(self.env.company)
-            taxes = fiscal_position.map_tax(product_taxes)
+        for variant in self:
+            pricelist_price, pricelist_rule_id = pricelist_prices[variant.id]
+            product_taxes = variant.sudo().taxes_id._filter_taxes_by_company()
+            taxes = fiscal_position_sudo.map_tax(product_taxes)
 
             base_price = None
-            template_price_vals = {
-                'price_reduce': self.env['product.template']._apply_taxes_to_price(
-                    pricelist_price, currency, product_taxes, taxes, template, website=website,
+            price_vals = {
+                'price_reduce': ProductTemplate._apply_taxes_to_price(
+                    pricelist_price, currency, product=variant,
+                    product_taxes=product_taxes, taxes=taxes, website=website,
                 ),
             }
-            pricelist_item = template.env['product.pricelist.item'].browse(pricelist_rule_id)
-            if pricelist_item._show_discount_on_shop():
-                pricelist_base_price = pricelist_item._compute_price_before_discount(
-                    product=template,
-                    quantity=1.0,
-                    date=date,
-                    uom=template.uom_id,
-                    currency=currency,
+            pricelist_item_sudo = self.env['product.pricelist.item'].sudo().browse(pricelist_rule_id)
+            if pricelist_item_sudo._show_discount_on_shop():
+                pricelist_base_price = pricelist_item_sudo._compute_price_before_discount(
+                    product=variant, quantity=1.0, uom=variant._get_main_uom(), currency=currency,
                 )
                 if currency.compare_amounts(pricelist_base_price, pricelist_price) == 1:
                     base_price = pricelist_base_price
-                    template_price_vals['base_price'] = self.env['product.template']._apply_taxes_to_price(
-                        base_price, currency, product_taxes, taxes, template, website=website,
+                    price_vals['base_price'] = ProductTemplate._apply_taxes_to_price(
+                        base_price, currency, product=variant,
+                        product_taxes=product_taxes, taxes=taxes, website=website,
                     )
 
-            if not base_price and comparison_prices_enabled and template.compare_list_price:
-                template_price_vals['base_price'] = template.currency_id._convert(
-                    template.compare_list_price,
-                    currency,
-                    self.env.company,
-                    date,
-                    round=False,
+            if not base_price and comparison_prices_enabled and variant.compare_list_price:
+                price_vals['base_price'] = variant.currency_id._convert(
+                    variant.compare_list_price, currency, self.env.company, round=False,
                 )
 
-            res[template.id] = template_price_vals
-
+            res[variant.id] = price_vals
         return res
 
     def _get_combination_info_variant(self, **kwargs):

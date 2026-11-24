@@ -5,7 +5,7 @@
 
 {
     'name': 'Product Data Feed',
-    'version': '18.0.1.1.6',
+    'version': '20.0.1.1.6',
     'category': 'Hidden',
     'author': 'Garazd Creation',
     'website': 'https://garazd.biz/shop',
@@ -17,7 +17,6 @@
         'website_sale_stock',
     ],
     'data': [
-        'security/ir.model.access.csv',
         'data/product_data_feed_recipient_data.xml',
         'data/ir_filters_data.xml',
         'views/product_data_feed_views.xml',
@@ -26,6 +25,7 @@
         'views/product_data_feed_recipient_views.xml',
         'views/product_template_views.xml',
         'views/product_product_views.xml',
+        'security/ir.access.csv',
     ],
     'demo': [
         'demo/product_pricelist_demo.xml',

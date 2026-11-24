@@ -2,10 +2,7 @@
 <odoo>
     <template id="d3_wesbite_rebranding.brand_promotion" inherit_id="website.brand_promotion">
         <xpath expr="//t[@t-call='web.brand_promotion_message']" position="replace">
-            <t t-call="web.brand_promotion_message">
-                <t t-set="_message"></t>
-                <t t-set="_utm_medium"></t>
-            </t>
+            <t t-call="web.brand_promotion_message" _message.translate="" _utm_medium.translate=""/>
         </xpath>
     </template>
 

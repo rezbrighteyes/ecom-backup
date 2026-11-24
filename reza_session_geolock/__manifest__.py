@@ -10,7 +10,7 @@ Installs itself when both modules are installed.
     """,
     "author": "Reza",
     "category": "Administration",
-    "version": "18.0.1.0.0",
+    "version": "20.0.1.0.0",
     "depends": ["advanced_session_management", "reza_login_geolock"],
     "data": [
         "views/menus.xml",

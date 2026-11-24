@@ -20,7 +20,7 @@ _logger = logging.getLogger(__name__)
 #         login_log = request.env['login.log'].search([('session_id','=',self.sid)])
 #         if login_log:
 #             login_log.sudo().write({'state':'close','logout_date':datetime.now()})
-#             login_log._cr.commit()
+#             login_log.env.cr.commit()
 #     # for k in list(self):
 #     #     if not (keep_db and k == 'db') and k != 'debug':
 #     #         del self[k]

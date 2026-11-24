@@ -62,7 +62,7 @@ read cannot blank the catalogue.
     """,
     "author": "Reza",
     "category": "Inventory/Inventory",
-    "version": "18.0.1.1.0",
+    "version": "20.0.1.1.0",
     "license": "LGPL-3",
     "depends": [
         "product",

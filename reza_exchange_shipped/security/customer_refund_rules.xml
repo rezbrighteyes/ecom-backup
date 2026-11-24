@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <record id="rule_reza_customer_refund_company" model="ir.rule">
-        <field name="name">Customer refunds: own companies</field>
-        <field name="model_id" ref="model_reza_customer_refund"/>
-        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
-    </record>
-</odoo>

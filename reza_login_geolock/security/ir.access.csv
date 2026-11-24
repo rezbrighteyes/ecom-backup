@@ -1,0 +1,3 @@
+id,name,model_id,group_id/id,operation,domain
+access_reza_login_geolock_event_system,reza.login.geolock.event system,reza.login.geolock.event,reza_login_geolock.group_geolock_manager,rd,
+access_reza_login_geolock_ip_manager,reza.login.geolock.ip manager,reza.login.geolock.ip,reza_login_geolock.group_geolock_manager,crud,

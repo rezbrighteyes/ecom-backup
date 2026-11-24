@@ -4,7 +4,7 @@
 
 {
     'name': 'Importing from URL',
-    'version': '18.0.1.2.0',
+    'version': '20.0.1.2.0',
     'category': 'Hidden',
     'author': 'Garazd Creation',
     'website': 'https://garazd.biz/shop',
@@ -14,8 +14,8 @@
         'base',
     ],
     'data': [
-        'security/ir.model.access.csv',
         'wizard/base_import_helper_views.xml',
+        'security/ir.access.csv',
     ],
     'support': 'support@garazd.biz',
     'application': False,

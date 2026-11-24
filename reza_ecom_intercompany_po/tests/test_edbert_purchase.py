@@ -82,7 +82,7 @@ class TestEdbertPurchase(TransactionCase):
             "order_line": [(0, 0, {
                 "product_id": self.product.id,
                 "product_uom_qty": qty,
-                **({"product_uom": uom.id} if uom else {}),
+                **({"product_uom_id": uom.id} if uom else {}),
             })],
         }
         if company:
@@ -171,7 +171,7 @@ class TestEdbertPurchase(TransactionCase):
                 "product_id": self.product.id,
                 "name": self.product.display_name,
                 "product_qty": qty,
-                "product_uom": self.product.uom_id.id,
+                "uom_id": self.product.uom_id.id,
                 "price_unit": 3.3610,
                 "date_planned": order.date_order,
                 "discount": 0.0,
@@ -383,7 +383,7 @@ class TestEdbertPurchase(TransactionCase):
         self._raise(order)
         self.assertTrue(order.reza_edbert_purchase_id)
         for line in order.reza_edbert_purchase_id.order_line:
-            self.assertEqual(line.taxes_id, tax)
+            self.assertEqual(line.tax_ids, tax)
         # The note carries the settle failure -- the remote is stubbed, so the
         # transfer cannot complete in a test. What matters is that the TAX
         # warning is absent, because a usable tax was found.
@@ -442,8 +442,8 @@ class TestEdbertPurchase(TransactionCase):
         order.action_confirm()
         purchase = self._raise(order, costs={105811: 1.0})
         self.assertAlmostEqual(purchase.order_line.product_qty, 7.0)
-        self.assertEqual(purchase.order_line.product_uom,
-                         order.order_line.product_uom,
+        self.assertEqual(purchase.order_line.uom_id,
+                         order.order_line.product_uom_id,
                          "the purchase line must use the same unit as the sale line")
 
     # ------------------------------------------------------------- never block
@@ -915,7 +915,7 @@ class TestEdbertPrices(TransactionCase):
         super().setUpClass()
         cls.company = cls.env.company
         cls.company.sudo().write({"external_api_purchase_partner": 21712})
-        cls.env["ir.config_parameter"].sudo().set_param(
+        cls.env["ir.config_parameter"].sudo().set_str(
             "reza_ecom_intercompany_po.edbert_pricelist_id", "39")
 
     def _prices(self, fake, lines):
@@ -947,7 +947,7 @@ class TestEdbertPrices(TransactionCase):
             self._prices(fake, self._lines((105811, 1.0)))
 
     def test_an_unset_parameter_refuses_rather_than_reading_zero(self):
-        self.env["ir.config_parameter"].sudo().set_param(
+        self.env["ir.config_parameter"].sudo().set_str(
             "reza_ecom_intercompany_po.edbert_pricelist_id", False)
         fake = _FakeWholesale(prices={"105811": 9.0})
         with self.assertRaisesRegex(ValueError, "not set"):

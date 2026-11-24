@@ -19,7 +19,7 @@ The module also provides a configuration panel per company, a connection checker
     # Check https://github.com/odoo/odoo/blob/15.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Inventory/Inventory',
-    'version': '18.0.3.1.1',
+    'version': '20.0.3.1.1',
 
     # any module necessary for this one to work correctly
     'depends': [
@@ -31,11 +31,11 @@ The module also provides a configuration panel per company, a connection checker
         'data/stock_warehouse_data.xml',
         'data/ir_cron_data.xml',
         'data/product_tag_data.xml',
-        'security/ir.model.access.csv',
         'views/product_product_views.xml',
         'views/purchase_order_view.xml',
         'views/res_config_view.xml',
         # 'wizard/external_api_view.xml',
+        'security/ir.access.csv',
     ],
 
     # Hook

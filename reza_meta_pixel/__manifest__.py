@@ -1,6 +1,6 @@
 {
     'name': 'Reza Meta Pixel',
-    'version': '18.0.1.0.0',
+    'version': '20.0.1.0.0',
     'category': 'Website',
     'depends': ['website_sale'],
     'data': ['views/templates.xml'],

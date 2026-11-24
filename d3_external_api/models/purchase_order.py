@@ -103,7 +103,7 @@ class PurchaseOrder(models.Model):
                 "product_id": line.product_id.external_api_id,
                 "name": line.product_id.display_name,
                 "product_uom_qty": line.product_qty,
-                "product_uom_id": line.product_uom.id,
+                "product_uom_id": line.uom_id.id,  # local PO line (Odoo 20: uom_id); remote key stays product_uom_id
                 "price_unit": line.price_unit,
                 "discount": line.discount,
                 "order_id": self.external_api_sale,

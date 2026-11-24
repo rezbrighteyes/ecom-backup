@@ -1,0 +1,5 @@
+id,name,model_id,group_id/id,operation,domain
+access_reza_pricelist_check_user,reza.pricelist.check user,reza.pricelist.check,sales_team.group_sale_salesman,crud,
+rule_reza_pricelist_check_own,Price list check: own runs only,reza.pricelist.check,,crud,"[('create_uid', '=', user.id)]"
+access_reza_pricelist_check_line_user,reza.pricelist.check.line user,reza.pricelist.check.line,sales_team.group_sale_salesman,crud,
+rule_reza_pricelist_check_line_own,Price list check rows: own runs only,reza.pricelist.check.line,,crud,"[('create_uid', '=', user.id)]"

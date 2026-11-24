@@ -1,0 +1,10 @@
+id,name,model_id,group_id/id,operation,domain
+access_reza_exchange_shipped_wizard,reza.exchange.shipped.wizard,reza.exchange.shipped.wizard,sales_team.group_sale_salesman,crud,
+access_reza_exchange_shipped_wizard_line,reza.exchange.shipped.wizard.line,reza.exchange.shipped.wizard.line,sales_team.group_sale_salesman,crud,
+access_reza_edbert_return_sales,reza.edbert.return sales,reza.edbert.return,sales_team.group_sale_salesman,r,
+access_reza_edbert_return_purchase,reza.edbert.return purchase,reza.edbert.return,purchase.group_purchase_user,r,
+access_reza_refund_shipped_wizard,reza.refund.shipped.wizard,reza.refund.shipped.wizard,sales_team.group_sale_salesman,crud,
+access_reza_refund_shipped_wizard_line,reza.refund.shipped.wizard.line,reza.refund.shipped.wizard.line,sales_team.group_sale_salesman,crud,
+access_reza_customer_refund_sales,reza.customer.refund sales,reza.customer.refund,sales_team.group_sale_salesman,r,
+access_reza_customer_refund_invoice,reza.customer.refund invoicing,reza.customer.refund,account.group_account_invoice,r,
+rule_reza_customer_refund_company,Customer refunds: own companies,reza.customer.refund,,crud,"[('company_id', 'in', company_ids)]"

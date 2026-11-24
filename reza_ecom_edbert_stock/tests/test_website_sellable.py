@@ -37,9 +37,9 @@ class TestWebsiteSellable(TransactionCase):
         cls.params = cls.env["ir.config_parameter"].sudo()
         # Fixed settings, so a value already on the database copy cannot
         # change what the tests measure.
-        cls.params.set_param(PARAM_BUFFER, "1")
-        cls.params.set_param(PARAM_STALE_HOURS, "3")
-        cls.params.set_param(PARAM_LAST_SYNC, fields.Datetime.now())
+        cls.params.set_str(PARAM_BUFFER, "1")
+        cls.params.set_str(PARAM_STALE_HOURS, "3")
+        cls.params.set_str(PARAM_LAST_SYNC, fields.Datetime.now())
 
     def _edbert(self, qty, state="ok"):
         self.product.sudo().write({
@@ -55,10 +55,9 @@ class TestWebsiteSellable(TransactionCase):
 
     def _demand(self, qty, reserve=False):
         move = self.env["stock.move"].create({
-            "name": "edbert gate demand",
             "product_id": self.product.id,
             "product_uom_qty": qty,
-            "product_uom": self.product.uom_id.id,
+            "uom_id": self.product.uom_id.id,
             "location_id": self.stock.id,
             "location_dest_id": self.customers.id,
         })
@@ -76,12 +75,12 @@ class TestWebsiteSellable(TransactionCase):
         self.assertEqual(self._site_qty(), 0)
 
     def test_buffer_is_a_setting(self):
-        self.params.set_param(PARAM_BUFFER, "0")
+        self.params.set_str(PARAM_BUFFER, "0")
         self._edbert(5)
         self.assertEqual(self._site_qty(), 5)
 
     def test_stale_sync_ignores_edbert(self):
-        self.params.set_param(
+        self.params.set_str(
             PARAM_LAST_SYNC, fields.Datetime.now() - timedelta(hours=4))
         self._edbert(50)
         self.assertEqual(self._site_qty(), 0)
@@ -112,7 +111,7 @@ class TestWebsiteSellable(TransactionCase):
             "website_id": self.website.id,
         })
         allowed, _warning = order._verify_updated_quantity(
-            self.env["sale.order.line"], self.product.id, 30)
+            self.env["sale.order.line"], self.product.id, 30, self.product.uom_id.id)
         self.assertEqual(allowed, 20)
 
     def test_negative_own_stock_is_not_subtracted(self):
@@ -148,10 +147,9 @@ class TestWebsiteSellable(TransactionCase):
             vals["reza_edbert_purchase_id"] = purchase.id
         order.sudo().write(vals)
         move = self.env["stock.move"].create({
-            "name": "edbert gate shipped",
             "product_id": self.product.id,
             "product_uom_qty": qty,
-            "product_uom": self.product.uom_id.id,
+            "uom_id": self.product.uom_id.id,
             "location_id": self.stock.id,
             "location_dest_id": self.customers.id,
             "sale_line_id": order.order_line.id,
@@ -201,7 +199,7 @@ class TestWebsiteSellable(TransactionCase):
             "website_id": self.website.id,
         })
         allowed, warning = order._verify_updated_quantity(
-            self.env["sale.order.line"], self.product.id, 10)
+            self.env["sale.order.line"], self.product.id, 10, self.product.uom_id.id)
         self.assertEqual(allowed, 4)
         self.assertTrue(warning)
 
@@ -212,9 +210,9 @@ class TestWebsiteSellable(TransactionCase):
             "website_id": self.website.id,
             "order_line": [(0, 0, {"product_id": self.product.id, "product_uom_qty": 6})],
         })
-        with self.assertRaises(ValidationError) as cm:
-            order._check_cart_is_ready_to_be_paid()
-        self.assertIn("only 4", str(cm.exception))
+        # Odoo 20 blocks the checkout step with an alert instead of raising.
+        self.assertFalse(order._is_cart_ready_for_checkout())
+        self.assertIn("only 4", order.order_line._join_alert_messages())
 
     def test_continue_selling_products_are_untouched(self):
         self.product.allow_out_of_stock_order = True
@@ -224,5 +222,5 @@ class TestWebsiteSellable(TransactionCase):
             "website_id": self.website.id,
         })
         allowed, _warning = order._verify_updated_quantity(
-            self.env["sale.order.line"], self.product.id, 10)
+            self.env["sale.order.line"], self.product.id, 10, self.product.uom_id.id)
         self.assertEqual(allowed, 10)

@@ -32,8 +32,8 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='user_id']" position="before">
                 <field name="is_active" column_invisible="1"/>
-                <button class="fa fa-fw o_button_icon fa-circle text-danger" name="dummy_btn" type='object' title='Offline' invisible="is_active == True"/>
-                <button class="fa fa-fw o_button_icon fa-circle text-success" name="dummy_btn" type='object' title='Online' invisible="is_active == False"/>
+                <button class="oi oi-fw oi-filled o_button_icon text-danger" data-icon="circle" name="dummy_btn" type='object' title='Offline' invisible="is_active == True"/>
+                <button class="oi oi-fw oi-filled o_button_icon text-success" data-icon="circle" name="dummy_btn" type='object' title='Online' invisible="is_active == False"/>
             </xpath>
         </field>
     </record>

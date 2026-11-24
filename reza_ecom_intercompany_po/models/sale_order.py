@@ -110,7 +110,7 @@ import psycopg2
 
 from odoo import _, fields, models
 from odoo.exceptions import AccessError
-from odoo.osv import expression
+from odoo.fields import Domain
 
 _logger = logging.getLogger(__name__)
 
@@ -280,7 +280,7 @@ class SaleOrder(models.Model):
         # Built with AND/OR rather than written in prefix form: a mis-nested
         # domain here does not fail, it silently selects the wrong orders.
         orders = self.search(
-            expression.AND([base, expression.OR([waiting, retry, unsettled])]),
+            Domain.AND([base, Domain.OR([waiting, retry, unsettled])]),
             order="id asc", limit=limit,
         )
         # Kept as a safety net so the domain leaf above and _reza_api_company
@@ -442,9 +442,9 @@ class SaleOrder(models.Model):
                 "product_id": l["product"].id,
                 "name": l["product"].display_name,
                 "product_qty": l["qty"],
-                # Odoo 18 calls this `product_uom`; `product_uom_id` is 19.
+                # Odoo 20 calls this `uom_id` on the purchase line.
                 # Use the SALE line's unit, because `qty` is expressed in it.
-                "product_uom": l["uom"].id,
+                "uom_id": l["uom"].id,
                 "price_unit": price,
                 "date_planned": fields.Datetime.now(),
                 "discount": 0.0,               # completes the compute group
@@ -452,7 +452,7 @@ class SaleOrder(models.Model):
                 # the compute it resolves to the ROOT company's tax, which
                 # reads the price as GST-inclusive while Edbert reads it as
                 # GST-exclusive.
-                **({"taxes_id": [(6, 0, tax.ids)]} if tax else {}),
+                **({"tax_ids": [(6, 0, tax.ids)]} if tax else {}),
             }))
         if not vals_lines:
             self._reza_mark("failed", _("Every line was skipped: %s") % "; ".join(skipped[:4]),
@@ -480,13 +480,13 @@ class SaleOrder(models.Model):
             raise ValueError(_("The Edbert price was overwritten on create: %s")
                              % "; ".join(wrong[:3]))
 
-        # Same check for the tax. `taxes_id` is a stored compute like the
+        # Same check for the tax. `tax_ids` is a stored compute like the
         # price, so a change in how Odoo schedules it would silently put the
         # root's tax-inclusive GST back and reintroduce the 1/11 gap.
         if tax:
             mistaxed = [
                 pl.product_id.display_name for pl in purchase.order_line
-                if pl.taxes_id != tax
+                if pl.tax_ids != tax
             ]
             if mistaxed:
                 raise ValueError(
@@ -942,7 +942,7 @@ class SaleOrder(models.Model):
                 continue
             out.append({"product": product,
                         "qty": line.qty_delivered,
-                        "uom": line.product_uom,
+                        "uom": line.product_uom_id,
                         "wholesale_id": product.external_api_id})
         return out, skipped
 
@@ -1003,10 +1003,10 @@ class SaleOrder(models.Model):
         Read from a system parameter rather than trusted from wholesale: if a
         brand's customer record in Edbert is ever left on Default, wholesale
         would answer with full list price and nothing would look wrong.
-        `get_param` returns False for a missing key and `int(False)` is 0, so
+        `get_str` returns '' for a missing key, so
         the raw value is tested BEFORE the cast (recorded in CLAUDE.md).
         """
-        raw = self.env["ir.config_parameter"].sudo().get_param(PRICELIST_PARAM)
+        raw = self.env["ir.config_parameter"].sudo().get_str(PRICELIST_PARAM)
         if raw in (None, False, "") or not str(raw).strip().isdigit() or int(raw) <= 0:
             raise ValueError(_("The Edbert pricelist for intercompany orders is not set "
                                "(system parameter %s).") % PRICELIST_PARAM)

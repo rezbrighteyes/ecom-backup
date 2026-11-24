@@ -12,7 +12,7 @@
     'name': 'Advanced User Audit | User Activity Audit | Login Notification',
     'summary': """Monitor and manage user sessions in Odoo with login tracking, active session control, session history, login notifications, IP tracking, device information, and user activity monitoring. Improve account security and gain better visibility into user activity.
 session management, user session tracking, login history, user activity monitoring, login notifications, IP tracking, session audit""",
-    'version': '18.0.1.2.1',
+    'version': '20.0.1.2.1',
     'sequence': 6,
     'author': 'Terabits Technolab',
     'license': 'OPL-1',
@@ -26,7 +26,6 @@ session management, user session tracking, login history, user activity monitori
         # Groups first: the access file names them, and a fresh install
         # (no groups yet) hangs on the forward reference otherwise.
         'security/res_groups.xml',
-        'security/ir.model.access.csv',
         'data/cron.xml',
         'data/upgrade_cron_settings.xml',
         'data/email_template.xml',
@@ -35,6 +34,7 @@ session management, user session tracking, login history, user activity monitori
         'views/res_device_views.xml',
         'views/activity_log_view.xml',
         'views/res_user_view.xml',
+        'security/ir.access.csv',
     ],
     'assets': {
         'web.assets_backend': [

@@ -1,2 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_reza_website_cart_attempt_system,reza.website.cart.attempt system,model_reza_website_cart_attempt,base.group_system,1,0,0,0

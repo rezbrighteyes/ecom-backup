@@ -20,17 +20,17 @@
                         </style>
                         <div class="oe_button_box" name="button_box">
                             <button class="oe_stat_button o_stat_button_info" name="dummy_btn" type='object' invisible="is_active == False">
-                                <i class="fa fa-fw o_button_icon fa-circle text-success"/>
+                                <i class="oi oi-fw oi-filled o_button_icon text-success" data-icon="circle"/>
                                 <span>Connected</span>
                             </button>
                             <button class="oe_stat_button o_stat_button_info" invisible = "is_active == True">
-                                <i class="fa fa-fw o_button_icon fa-circle text-danger"/>
+                                <i class="oi oi-fw oi-filled o_button_icon text-danger" data-icon="circle"/>
                                 <span>Offline</span>
                             </button>
-                            <button name="logout_button" type="object" class="oe_stat_button" icon="fa-times-circle" style="color:red;" invisible="state == 'close'">
+                            <button name="logout_button" type="object" class="oe_stat_button" icon="cancel" icon_class="oi-filled" style="color:red;" invisible="state == 'close'">
                                 Close Session
                             </button>
-                            <button name="location_lookup_ao" type="object" class="oe_stat_button" icon="fa-map-marker" invisible="ip == ''">
+                            <button name="location_lookup_ao" type="object" class="oe_stat_button" icon="location_on" invisible="ip == ''">
                                 IP Lookup
                             </button>
                         </div>
@@ -65,7 +65,7 @@
                                         <field name="name" string='Record Name'/>
                                         <field name="action" string='Action Performed'/>
                                         <field name="view" />
-                                        <button name="action_open_record" type="object" class="oe_stat_button link-btn-ah" title="Open Record" icon="fa-external-link" invisible="action == 'delete'"/>
+                                        <button name="action_open_record" type="object" class="oe_stat_button link-btn-ah" title="Open Record" icon="open_in_new" invisible="action == 'delete'"/>
                                     </list>
                                 </field>
                             </page>
@@ -104,8 +104,8 @@
             <field name="arch" type="xml">
                 <list create='0'>
                     <field name="is_active" invisible='1' />
-                    <button class="fa fa-fw o_button_icon fa-circle text-danger" name="dummy_btn" type='object' title='Offline' invisible="is_active == True"/>
-                    <button class="fa fa-fw o_button_icon fa-circle text-success" name="dummy_btn" type='object' title='Online' invisible="is_active == False"/>
+                    <button class="oi oi-fw oi-filled o_button_icon text-danger" data-icon="circle" name="dummy_btn" type='object' title='Offline' invisible="is_active == True"/>
+                    <button class="oi oi-fw oi-filled o_button_icon text-success" data-icon="circle" name="dummy_btn" type='object' title='Online' invisible="is_active == False"/>
                     <field name="name"/>
                     <field name="user_id"/>
                     <field name="login_date" />  
@@ -113,7 +113,7 @@
                     <field name="os" />
                     <field name="browser" />
                     <field name="state" />
-                    <button name="logout_button" type="object" class="oe_stat_button session_cls_btn"  icon="fa-times-circle" title="Close Session" invisible="state == 'close'"/>                  
+                    <button name="logout_button" type="object" class="oe_stat_button session_cls_btn"  icon="cancel" icon_class="oi-filled" title="Close Session" invisible="state == 'close'"/>                  
                 </list>
             </field>
         </record>

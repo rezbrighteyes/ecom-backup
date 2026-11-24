@@ -1,6 +1,6 @@
 {
     "name": "Rockos Website Theme",
-    "version": "18.0.1.9.3",
+    "version": "20.0.1.9.3",
     "summary": "Isolated Rockos storefront for Odoo multi-website",
     "author": "Reza",
     "category": "Website/Website",

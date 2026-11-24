@@ -26,9 +26,9 @@ so you can update the multi-product for multi-website quickly.
     ],
     "application": True,
     "data": [
-        "security/ir.model.access.csv",
         "views/product_views.xml",
         "wizard/sh_product_multi_website_wizard_views.xml",
+        'security/ir.access.csv',
     ],
     "images": ["static/description/background.png", ],
     "auto_install": False,

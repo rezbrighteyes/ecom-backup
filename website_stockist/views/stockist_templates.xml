@@ -6,8 +6,7 @@
          Every stockist link is a plain server-rendered <a href>.
          ============================================================ -->
     <template id="stockist_index" name="Stockists">
-        <t t-call="website.layout">
-            <t t-set="additional_title">Stockists</t>
+        <t t-call="website.layout" additional_title.translate="Stockists">
 
             <!-- website.layout emits its own <link rel="canonical"> in <head>
                  unconditionally. We must not add a second one — two canonicals
@@ -111,8 +110,7 @@
          DETAIL  /stockists/<slug>
          ============================================================ -->
     <template id="stockist_detail" name="Stockist">
-        <t t-call="website.layout">
-            <t t-set="additional_title" t-value="stockist.name"/>
+        <t t-call="website.layout" additional_title="stockist.name">
 
             <!-- Cross-domain canonical, set only when another website owns this
                  page. Emitted into `head`; the layout's own unconditional
@@ -237,7 +235,7 @@
                     </t>
 
                     <p class="mt-4 d-flex flex-wrap align-items-center gap-3">
-                        <a href="/stockists">&#8592; All stockists</a>
+                        <a href="/stockists">← All stockists</a>
                         <t t-call="website_stockist.stockist_cta_button"/>
                     </p>
                 </div>

@@ -5,7 +5,7 @@
 
 {
     'name': 'Google Product Category',
-    'version': '18.0.1.0.0',
+    'version': '20.0.1.0.0',
     'category': 'eCommerce',
     'author': 'Garazd Creation',
     'website': 'https://garazd.biz/shop',
@@ -18,11 +18,11 @@
         'base_import_helper',
     ],
     'data': [
-        'security/ir.model.access.csv',
         'views/product_google_category_views.xml',
         'views/product_template_views.xml',
         'wizard/base_import_helper_views.xml',
         'data/ir_action_todo_data.xml',
+        'security/ir.access.csv',
     ],
     'support': 'support@garazd.biz',
     'application': False,

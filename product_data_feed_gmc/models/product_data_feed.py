@@ -74,7 +74,7 @@ class ProductDataFeed(models.Model):
             raise UserError(_("Specify the XML specification."))
 
         # Add or skip XML root for partial caching
-        if self._context.get('without_headers', False):
+        if self.env.context.get('without_headers', False):
             xml_feed = ET.Element('data_feed_items')
             items_element = xml_feed
 

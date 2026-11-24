@@ -1,0 +1,4 @@
+id,name,model_id,group_id/id,operation,domain
+access_product_data_feed_brand_public_read,access_product_data_feed_brand_public_read,product.data.feed.brand,base.group_public,r,
+access_product_data_feed_brand_user,access_product_data_feed_brand_user,product.data.feed.brand,base.group_user,cru,
+access_product_data_feed_brand_admin,access_product_data_feed_brand_admin,product.data.feed.brand,base.group_system,crud,

@@ -189,21 +189,15 @@ class PurchaseOrder(models.Model):
     def _reza_return_local(self, picking):
         """Return an ecom receipt: the goods leave the branch warehouse again."""
         self.ensure_one()
-        wizard = self.env["stock.return.picking"].with_context(
-            active_id=picking.id, active_model="stock.picking",
-        ).create({"picking_id": picking.id})
-        if not wizard.product_return_moves:
+        # Odoo 20 has no return wizard: `_create_return` on the picking makes
+        # a DRAFT return whose lines start at ZERO; `action_return_all` sets
+        # each to what the picking moved, less anything already returned.
+        returns = picking._create_return()
+        returns.action_return_all()
+        if not returns.move_ids.filtered("product_uom_qty"):
             raise UserError(_("Nothing to return on %s.") % picking.name)
-        # The wizard's lines arrive at quantity ZERO unless a user types into
-        # them, and `_create_return` then raises "Please specify at least one
-        # non-zero quantity". `move_quantity` is what the picking actually
-        # moved, which is exactly what we are sending back.
-        for line in wizard.product_return_moves:
-            line.quantity = line.move_quantity
-        # `_create_return` returns the picking itself and already runs
-        # action_confirm + action_assign. In-process, so the private name is
-        # reachable here -- it is NOT over RPC, see _reza_return_remote.
-        returns = wizard._create_return()
+        returns.action_confirm()
+        returns.action_assign()
         for ret in returns:
             for move in ret.move_ids:
                 move.quantity = move.product_uom_qty

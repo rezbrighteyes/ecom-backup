@@ -18,7 +18,7 @@ sale order for somebody to pick up.
     "author": "Reza",
     "website": "https://d-3.com.au",
     "category": "Inventory/Purchase",
-    "version": "18.0.1.5.0",
+    "version": "20.0.1.5.0",
     "license": "OPL-1",
     "depends": ["sale", "sale_stock", "purchase", "purchase_stock", "d3_external_api"],
     "data": [

@@ -5,7 +5,7 @@
 
 {
     'name': 'Product Brands for Data Feeds',
-    'version': '18.0.1.0.1',
+    'version': '20.0.1.0.1',
     'category': 'eCommerce',
     'author': 'Garazd Creation',
     'website': 'https://garazd.biz/shop',
@@ -17,10 +17,10 @@
         'product',
     ],
     'data': [
-        'security/ir.model.access.csv',
         'data/ir.config_parameter_data.xml',
         'views/product_data_feed_brand_views.xml',
         'views/product_template_views.xml',
+        'security/ir.access.csv',
     ],
     'demo': [
         'demo/brand_demo.xml',

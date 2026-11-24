@@ -18,7 +18,7 @@ This module extends Odoo’s eCommerce and Loyalty programs by enabling automate
     # Check https://github.com/odoo/odoo/blob/15.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Website/Website',
-    'version': '18.0.2.1.2',
+    'version': '20.0.2.1.2',
 
     # any module necessary for this one to work correctly
     'depends': [

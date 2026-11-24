@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="drift_kart_landing_page" name="Drift Kart Pro Landing Page">
-        <t t-call="website.layout">
-            <t t-set="head">
-                <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-            </t>
-            <t t-set="pageName" t-value="'drift-kart'"/>
+        <t t-set="head">
+            <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+        </t>
+        <t t-call="website.layout" head="head" pageName.f="drift-kart">
             <div id="wrap" class="dk-page">
 
                 <!-- HERO -->
@@ -43,7 +42,7 @@
 
                         <div class="dk-hero-model">
                             <div class="dk-model-hint">
-                                <span class="dk-model-hint-icon">&#8635;</span>
+                                <span class="dk-model-hint-icon">↻</span>
                                 Drag to rotate · Pinch to zoom
                             </div>
 
@@ -69,32 +68,32 @@
                         <h2 class="dk-section-title">Built for Performance</h2>
                         <div class="dk-features-grid">
                             <div class="dk-feature">
-                                <div class="dk-feature-icon">&#9889;</div>
+                                <div class="dk-feature-icon">⚡</div>
                                 <h3>3-Speed Control</h3>
                                 <p>Adjustable speed modes for beginners to pros. Full precision drifting at every level.</p>
                             </div>
                             <div class="dk-feature">
-                                <div class="dk-feature-icon">&#127925;</div>
+                                <div class="dk-feature-icon">🎵</div>
                                 <h3>Bluetooth Speaker</h3>
                                 <p>Built-in Bluetooth speaker and ambient atmosphere lighting for next-level rides.</p>
                             </div>
                             <div class="dk-feature">
-                                <div class="dk-feature-icon">&#128260;</div>
+                                <div class="dk-feature-icon">🔄</div>
                                 <h3>360° Drifting</h3>
                                 <p>PU flashing rear wheels designed for spins, slides and tricks on any smooth surface.</p>
                             </div>
                             <div class="dk-feature">
-                                <div class="dk-feature-icon">&#128274;</div>
+                                <div class="dk-feature-icon">🔒</div>
                                 <h3>Key-Start Ignition</h3>
                                 <p>Secure key-start with battery indicator. Safe and practical for everyday use.</p>
                             </div>
                             <div class="dk-feature">
-                                <div class="dk-feature-icon">&#9881;</div>
+                                <div class="dk-feature-icon">⚙</div>
                                 <h3>Adjustable Frame</h3>
                                 <p>Reinforced steel chassis with adjustable frame to fit different rider sizes comfortably.</p>
                             </div>
                             <div class="dk-feature">
-                                <div class="dk-feature-icon">&#9889;</div>
+                                <div class="dk-feature-icon">⚡</div>
                                 <h3>Fast Charging</h3>
                                 <p>2–4 hour fast charge gets you back on the track quickly. AU plug included.</p>
                             </div>
@@ -147,22 +146,22 @@
                     <div class="dk-container">
                         <div class="dk-trust-grid">
                             <div class="dk-trust-item">
-                                <span class="dk-trust-icon">&#128666;</span>
+                                <span class="dk-trust-icon">🚚</span>
                                 <strong>Free Shipping</strong>
                                 <span>On orders over $150</span>
                             </div>
                             <div class="dk-trust-item">
-                                <span class="dk-trust-icon">&#128260;</span>
+                                <span class="dk-trust-icon">🔄</span>
                                 <strong>30-Day Returns</strong>
                                 <span>Hassle-free returns</span>
                             </div>
                             <div class="dk-trust-item">
-                                <span class="dk-trust-icon">&#128274;</span>
+                                <span class="dk-trust-icon">🔒</span>
                                 <strong>Secure Checkout</strong>
                                 <span>SSL encrypted payments</span>
                             </div>
                             <div class="dk-trust-item">
-                                <span class="dk-trust-icon">&#9889;</span>
+                                <span class="dk-trust-icon">⚡</span>
                                 <strong>Fast Dispatch</strong>
                                 <span>Ships within 24 hours</span>
                             </div>

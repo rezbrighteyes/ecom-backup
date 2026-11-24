@@ -35,10 +35,10 @@
                         <t t-out="0"/>
                         <div class="rockos-share">
                             <strong>Share</strong>
-                            <a t-att-href="'https://www.facebook.com/sharer/sharer.php?u=' + request.httprequest.url" target="_blank" aria-label="Facebook"><i class="fa fa-facebook"/></a>
-                            <a t-att-href="'https://twitter.com/intent/tweet?url=' + request.httprequest.url" target="_blank" aria-label="Twitter"><i class="fa fa-twitter"/></a>
-                            <a t-att-href="'https://www.linkedin.com/shareArticle?mini=true&amp;url=' + request.httprequest.url" target="_blank" aria-label="LinkedIn"><i class="fa fa-linkedin"/></a>
-                            <a t-att-href="'mailto:accounts@rockos.com.au?body=' + request.httprequest.url" aria-label="Email"><i class="fa fa-envelope"/></a>
+                            <a t-att-href="'https://www.facebook.com/sharer/sharer.php?u=' + request.httprequest.url" target="_blank" aria-label="Facebook"><i class="oi" data-icon="oi_facebook"/></a>
+                            <a t-att-href="'https://twitter.com/intent/tweet?url=' + request.httprequest.url" target="_blank" aria-label="Twitter"><i class="oi" data-icon="oi_x"/></a>
+                            <a t-att-href="'https://www.linkedin.com/shareArticle?mini=true&amp;url=' + request.httprequest.url" target="_blank" aria-label="LinkedIn"><i class="oi" data-icon="oi_linkedin"/></a>
+                            <a t-att-href="'mailto:accounts@rockos.com.au?body=' + request.httprequest.url" aria-label="Email"><i class="oi oi-filled" data-icon="mail"/></a>
                         </div>
                     </main>
                 </section>
@@ -47,8 +47,7 @@
     </template>
 
     <template id="rockos_about_us" name="Rockos About Us">
-        <t t-call="rockos_website_theme.rockos_info_shell">
-            <t t-set="page_title">About Us</t>
+        <t t-call="rockos_website_theme.rockos_info_shell" page_title.translate="About Us">
             <p>Welcome to Liaise International, where we embody the true spirit of Australia. Born from the creativity and innovation of genuine Aussies, we proudly present the iconic Rocko's line alongside a suite of other brands that have seamlessly integrated into the fabric of Australian culture. As quintessentially Australian as a barbie on Bondi Beach, our products are crafted with authenticity, durability, and a touch of local charm.</p>
             <h2>Our Story</h2>
             <p>Liaise International began with a simple yet powerful vision: to create products that resonate with the heart and soul of Australia. From the bustling city streets to the sun-kissed shores, we aimed to deliver items that cater to every Australian's lifestyle. Our journey started with Rocko's, a brand designed to withstand the rigors of both a tradie's demanding day and a lazy afternoon at the beach.</p>
@@ -85,8 +84,7 @@
     </template>
 
     <template id="rockos_returns_policy" name="Rockos Returns Policy">
-        <t t-call="rockos_website_theme.rockos_info_shell">
-            <t t-set="page_title">Returns Policy</t>
+        <t t-call="rockos_website_theme.rockos_info_shell" page_title.translate="Returns Policy">
             <h2>Return and Exchange Conditions</h2>
             <p>If you’re looking to return or exchange your order, we’re here to help! We offer returns within 30 days of purchase. Please note that you will be responsible for the cost of return shipping. You can return your product for a credit, exchange or refund to the original payment method.</p>
             <p>Before proceeding, please contact our Customer Care team to obtain a Return Authorisation (RA) number. This step is required for all returns and exchanges.</p>
@@ -107,8 +105,7 @@
     </template>
 
     <template id="rockos_shipping_policy" name="Rockos Shipping Policy">
-        <t t-call="rockos_website_theme.rockos_info_shell">
-            <t t-set="page_title">Shipping Policy</t>
+        <t t-call="rockos_website_theme.rockos_info_shell" page_title.translate="Shipping Policy">
             <h2>Shipping Policy</h2>
             <p>At Liaise International, we strive to deliver your orders efficiently and promptly. Please note that we only deliver within Australia.</p>
             <p>Orders are processed within 1 to 3 business days (excluding weekends and holidays) after your order confirmation email is sent. Please note that payment must be received before we can dispatch your order.</p>
@@ -135,8 +132,7 @@
     </template>
 
     <template id="rockos_privacy_policy" name="Rockos Privacy Policy">
-        <t t-call="rockos_website_theme.rockos_info_shell">
-            <t t-set="page_title">Privacy Policy</t>
+        <t t-call="rockos_website_theme.rockos_info_shell" page_title.translate="Privacy Policy">
             <p>This privacy policy outlines how Liaise International uses and protects any information you provide when using our website.</p>
             <h2>Commitment to Your Privacy</h2>
             <p>Liaise International is dedicated to ensuring your privacy is protected. Any information you provide that can identify you will only be used in accordance with this privacy statement.</p>
@@ -167,8 +163,7 @@
     </template>
 
     <template id="rockos_security_policy" name="Rockos Security Policy">
-        <t t-call="rockos_website_theme.rockos_info_shell">
-            <t t-set="page_title">Security Policy</t>
+        <t t-call="rockos_website_theme.rockos_info_shell" page_title.translate="Security Policy">
             <p>At Liaise International, we are committed to protecting your personal information. We implement a variety of security measures to ensure that your data remains safe and secure.</p>
             <h2>Information Storage</h2>
             <ul><li><strong>Electronic Storage:</strong> Personal information is securely stored on our computer systems.</li><li><strong>Hard-Copy Storage:</strong> We also maintain physical copies of personal information in secure locations.</li></ul>
@@ -182,8 +177,8 @@
     </template>
 
     <template id="rockos_expression_interest" name="Rockos Expression of Interest">
-        <t t-call="rockos_website_theme.rockos_info_shell">
-            <t t-set="page_title">Expression of interest</t>
+        <t t-call="rockos_website_theme.rockos_info_shell"
+            page_title.translate="Expression of interest">
             <h2>Expression of Interest</h2>
             <p>Thank you for your interest in Liaise International. We are excited to hear from potential partners, customers, and collaborators who share our passion for high-quality, durable products that embody the spirit of Australia. By filling out this Expression of Interest form, you are taking the first step towards joining our vibrant community and exploring the opportunities to work with us.</p>
             <p>Please provide as much detail as possible to help us understand your needs and how we can best serve you. Once we receive your submission, our team will review your information and get in touch with you to discuss the next steps. We look forward to the possibility of working together and building a successful partnership.</p>
@@ -201,15 +196,25 @@
     </template>
 
     <template id="rockos_footwear_sizing" name="Rockos Footwear Sizing Chart">
-        <t t-call="rockos_website_theme.rockos_info_shell">
-            <t t-set="page_title">Footwear Sizing Chart</t>
-            <t t-call="rockos_website_theme.rockos_size_table"><t t-set="table_title">Rocko’s Double Pluggers</t><t t-set="rows" t-value="[(1,21,4,9),(2,22,4,9.5),(3,23,4,9.5),(4,24,4,10),(5,24.5,4.5,10),(6,25,4.5,10),(7,25.5,4.5,10),(8,26,4.5,10),(9,27,4.5,10.5),(10,28,5,11),(11,29,5,11.5),(12,30,5,11.5),(13,30.5,5,11.5),(14,31,5.5,12),(15,33,6,12.5)]"/></t>
-            <t t-call="rockos_website_theme.rockos_size_table"><t t-set="table_title">Rocko’s Nobby Thongs</t><t t-set="rows" t-value="[(5,23.5,4,9),(6,25,4.5,9.5),(7,25.5,4.5,10),(8,26,5,10.5),(9,27.5,5,11),(10,28,5,11),(11,29,5,11),(12,29.5,5,12),(13,30.5,5,12),(14,31,5.5,12),(15,33,6,12.5)]"/></t>
-            <t t-call="rockos_website_theme.rockos_size_table"><t t-set="table_title">Rocko’s Treads</t><t t-set="rows" t-value="[(7,25.75,4.5,11),(8,26,4.5,10.5),(9,27.5,5,11),(10,28,4.5,11),(11,28.5,5,11),(12,29.5,4.5,11.2),(13,30.1,5.5,11.5),(14,31,5,12)]"/></t>
-            <t t-call="rockos_website_theme.rockos_size_table"><t t-set="table_title">Rockettes Thongs</t><t t-set="rows" t-value="[(7,28,4,12.5),(8,28.5,4.5,13),(9,29,4.5,13),(10,30,5,13),(11,30.5,5,13.5),(12,31.5,5,13.5),(13,32,5.5,13.5),(14,33,5.5,13.5)]"/></t>
+        <t t-call="rockos_website_theme.rockos_info_shell"
+            page_title.translate="Footwear Sizing Chart">
+            <t t-call="rockos_website_theme.rockos_size_table"
+                table_title.translate="Rocko’s Double Pluggers"
+                rows="[(1,21,4,9),(2,22,4,9.5),(3,23,4,9.5),(4,24,4,10),(5,24.5,4.5,10),(6,25,4.5,10),(7,25.5,4.5,10),(8,26,4.5,10),(9,27,4.5,10.5),(10,28,5,11),(11,29,5,11.5),(12,30,5,11.5),(13,30.5,5,11.5),(14,31,5.5,12),(15,33,6,12.5)]"/>
+            <t t-call="rockos_website_theme.rockos_size_table"
+                table_title.translate="Rocko’s Nobby Thongs"
+                rows="[(5,23.5,4,9),(6,25,4.5,9.5),(7,25.5,4.5,10),(8,26,5,10.5),(9,27.5,5,11),(10,28,5,11),(11,29,5,11),(12,29.5,5,12),(13,30.5,5,12),(14,31,5.5,12),(15,33,6,12.5)]"/>
+            <t t-call="rockos_website_theme.rockos_size_table"
+                table_title.translate="Rocko’s Treads"
+                rows="[(7,25.75,4.5,11),(8,26,4.5,10.5),(9,27.5,5,11),(10,28,4.5,11),(11,28.5,5,11),(12,29.5,4.5,11.2),(13,30.1,5.5,11.5),(14,31,5,12)]"/>
+            <t t-call="rockos_website_theme.rockos_size_table"
+                table_title.translate="Rockettes Thongs"
+                rows="[(7,28,4,12.5),(8,28.5,4.5,13),(9,29,4.5,13),(10,30,5,13),(11,30.5,5,13.5),(12,31.5,5,13.5),(13,32,5.5,13.5),(14,33,5.5,13.5)]"/>
             <h2>Rocko's Pebbles Clogs</h2>
             <table class="rockos-size-table"><thead><tr><th/><th>Length of Thong (cm)</th><th>Width of the thong (widest part) (cm)</th></tr></thead><tbody><tr t-foreach="[(24,15.75,7.2),(25,16.5,7.3),(26,17,7.3),(27,17.5,7.5),(28,18.5,8)]" t-as="row"><th>Size <t t-out="row[0]"/></th><td t-out="row[1]"/><td t-out="row[2]"/></tr></tbody></table>
-            <t t-call="rockos_website_theme.rockos_size_table"><t t-set="table_title">Rocko's Pebbles Thongs</t><t t-set="rows" t-value="[(22,14.5,2.3,6.5),(23,15.5,2.5,7),(24,17,2.8,7.5),(25,18.5,3.2,7.5),(26,19.5,3.4,8)]"/></t>
+            <t t-call="rockos_website_theme.rockos_size_table"
+                table_title.translate="Rocko's Pebbles Thongs"
+                rows="[(22,14.5,2.3,6.5),(23,15.5,2.5,7),(24,17,2.8,7.5),(25,18.5,3.2,7.5),(26,19.5,3.4,8)]"/>
         </t>
     </template>
 
@@ -222,8 +227,8 @@
     </template>
 
     <template id="rockos_amrf" name="Rockos AMRF">
-        <t t-call="rockos_website_theme.rockos_info_shell">
-            <t t-set="page_title">Australian Melanoma Research Foundation</t>
+        <t t-call="rockos_website_theme.rockos_info_shell"
+            page_title.translate="Australian Melanoma Research Foundation">
             <img class="rockos-amrf-image" src="/rockos_website_theme/static/src/img/AMRF.jpg" alt="Australian Melanoma Research Foundation"/>
             <h2>Australian Melanoma Research Foundation</h2>
             <h3>Liaise International (Rockos) Proudly Supports the Australian Melanoma Research Foundation!</h3>
@@ -239,8 +244,8 @@
     </template>
 
     <template id="rockos_terms" name="Rockos Terms and Conditions">
-        <t t-call="rockos_website_theme.rockos_info_shell">
-            <t t-set="page_title">Terms and Conditions</t>
+        <t t-call="rockos_website_theme.rockos_info_shell"
+            page_title.translate="Terms and Conditions">
             <p>Welcome to our website. If you continue to browse and use this website, you are agreeing to comply with and be bound by the following terms and conditions of use, which together with our <a href="/privacy-policy">privacy policy</a> govern Liaise International’s relationship with you in relation to this website. If you disagree with any part of these terms and conditions, please do not use our website.</p>
             <p>The term ‘Liaise International’ or ‘us’ or ‘we’ refers to Liaise International Pty Ltd (ABN 70 115 521 821), the owner of this website and the Rocko’s brand. The term ‘you’ refers to the user or viewer of our website.</p>
             <h2>Payments and delivery</h2>
@@ -262,8 +267,8 @@
     </template>
 
     <template id="rockos_faq" name="Rockos FAQ">
-        <t t-call="rockos_website_theme.rockos_info_shell">
-            <t t-set="page_title">Frequently Asked Questions</t>
+        <t t-call="rockos_website_theme.rockos_info_shell"
+            page_title.translate="Frequently Asked Questions">
             <h2>Orders and payment</h2>
             <h3>Why does my bank statement say “ECOM SUPERSTORE PTY LTD”?</h3>
             <p>Payments for the Rocko’s online store are processed by ECOM Superstore Pty Ltd, so the merchant name on your card or bank statement is “ECOM SUPERSTORE PTY LTD”. Your purchase is still with Rocko’s, and our returns policy applies as normal.</p>

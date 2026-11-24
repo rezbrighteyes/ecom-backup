@@ -1,0 +1,10 @@
+id,name,model_id,group_id/id,operation,domain
+rule_website_stockist_public,Stockist: public sees published only,website.stockist,base.group_public,r,"[('is_published', '=', True)]"
+rule_website_stockist_public_1,Stockist: public sees published only,website.stockist,base.group_portal,r,"[('is_published', '=', True)]"
+rule_website_stockist_internal,Stockist: internal users see all,website.stockist,base.group_user,r,
+rule_website_stockist_internal_1,Stockist: internal users see all,website.stockist,website.group_website_designer,crud,
+access_stockist_google_sync,website.stockist.google.sync,website.stockist.google.sync,website.group_website_designer,crud,
+access_website_stockist_content_public,website.stockist.content.public,website.stockist.content,base.group_public,r,
+access_website_stockist_content_portal,website.stockist.content.portal,website.stockist.content,base.group_portal,r,
+access_website_stockist_content_user,website.stockist.content.user,website.stockist.content,base.group_user,r,
+access_website_stockist_content_designer,website.stockist.content.designer,website.stockist.content,website.group_website_designer,crud,

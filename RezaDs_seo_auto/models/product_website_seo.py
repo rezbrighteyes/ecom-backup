@@ -57,10 +57,10 @@ class ProductWebsiteSeo(models.Model):
         help="Not yet rendered. Listing order is per-website in intent; nothing reads this "
              "value yet.")
 
-    _sql_constraints = [
-        ('product_website_uniq', 'unique (product_tmpl_id, website_id)',
-         'A product can have only one override row per website.'),
-    ]
+    _product_website_uniq = models.Constraint(
+        'unique (product_tmpl_id, website_id)',
+        "A product can have only one override row per website.",
+    )
 
     @api.constrains('product_tmpl_id', 'website_id')
     def _check_website_carries_product(self):

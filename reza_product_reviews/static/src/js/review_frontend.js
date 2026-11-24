@@ -32,7 +32,7 @@
         var msg = document.createElement('div');
         msg.className = 'reza-already-reviewed';
         msg.style.cssText = 'padding:12px 16px; border-radius:8px; background:#d1ecf1; border:1px solid #bee5eb; color:#0c5460; margin:12px 0;';
-        msg.innerHTML = '<i class="fa fa-check-circle" style="margin-right:8px;"></i> You have already submitted a review for this product. Thank you!';
+        msg.innerHTML = '<i class="oi oi-filled" data-icon="check_circle" style="margin-right:8px;"></i> You have already submitted a review for this product. Thank you!';
         composer.style.display = 'none';
         composer.parentNode.insertBefore(msg, composer);
     }

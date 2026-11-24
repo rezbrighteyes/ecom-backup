@@ -12,4 +12,7 @@ class ProductDataFeedBrand(models.Model):
 
     name = fields.Char(translate=True)
 
-    _sql_constraints = [('product_data_feed_brand_uniq', 'UNIQUE (name)', 'Product Brand Name must be unique.')]
+    _product_data_feed_brand_uniq = models.Constraint(
+        'UNIQUE (name)',
+        "Product Brand Name must be unique.",
+    )

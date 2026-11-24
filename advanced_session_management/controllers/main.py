@@ -43,7 +43,7 @@ class Controller(http.Controller):
             return False
         return True
 
-    @http.route('/post/action_data', type='json', auth='user')
+    @http.route('/post/action_data', type='jsonrpc', auth='user')
     def _get_action_data(self, data={}, **kw):
         api = ''
         try:

@@ -56,9 +56,9 @@
                         domain="[('compute_price', '=', 'percentage'), ('percent_price', '=', 0), ('base', '=', 'list_price')]"/>
                 <separator/>
                 <filter name="current" string="Current"
-                        domain="['&amp;', '|', ('date_start', '=', False), ('date_start', '&lt;=', context_today().strftime('%Y-%m-%d 23:59:59')), '|', ('date_end', '=', False), ('date_end', '&gt;=', context_today().strftime('%Y-%m-%d 00:00:00'))]"/>
-                <filter name="expired" string="Expired" domain="[('date_end', '&lt;', context_today().strftime('%Y-%m-%d 00:00:00'))]"/>
-                <filter name="future" string="Not started" domain="[('date_start', '&gt;', context_today().strftime('%Y-%m-%d 23:59:59'))]"/>
+                        domain="['&amp;', '|', ('date_start', '=', False), ('date_start', '&lt;=', 'now'), '|', ('date_end', '=', False), ('date_end', '&gt;=', 'now')]"/>
+                <filter name="expired" string="Expired" domain="[('date_end', '&lt;', 'now')]"/>
+                <filter name="future" string="Not started" domain="[('date_start', '&gt;', 'now')]"/>
                 <separator/>
                 <separator/>
                 <filter name="not_in_use" string="Not in use (another rule wins, or not running)"

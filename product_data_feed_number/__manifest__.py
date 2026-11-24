@@ -7,7 +7,7 @@
 
 {
     'name': 'Number Fields for Product Data Feeds',
-    'version': '18.0.1.0.0',
+    'version': '20.0.1.0.0',
     'category': 'Extra Tools',
     'author': 'Garazd Creation',
     'website': 'https://garazd.biz/shop',

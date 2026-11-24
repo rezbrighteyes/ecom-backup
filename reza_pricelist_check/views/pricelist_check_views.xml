@@ -39,7 +39,7 @@
                 <field name="rule_id" string="Rule Used" optional="hide"/>
                 <field name="rule_applied_on" optional="hide"/>
                 <field name="base_rule_id" optional="hide"/>
-                <button name="action_open_rule" type="object" icon="fa-external-link"
+                <button name="action_open_rule" type="object" icon="open_in_new"
                         title="Open the rule" invisible="not rule_id"/>
             </list>
         </field>

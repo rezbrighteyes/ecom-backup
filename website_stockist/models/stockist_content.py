@@ -63,11 +63,10 @@ class WebsiteStockistContent(models.Model):
              "it only where a store deserves something specific on this site.",
     )
 
-    _sql_constraints = [
-        ("stockist_website_uniq",
-         "unique(stockist_id, website_id)",
-         "A stockist can only have one content row per website."),
-    ]
+    _stockist_website_uniq = models.Constraint(
+        'unique(stockist_id, website_id)',
+        "A stockist can only have one content row per website.",
+    )
 
     @api.depends("website_id", "brand_name")
     def _compute_display_name(self):

@@ -1,4 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_seo_wizard,seo.regenerate.wizard,model_seo_regenerate_wizard,base.group_user,1,1,1,0
-access_product_website_seo_user,product.website.seo user,model_product_website_seo,base.group_user,1,0,0,0
-access_product_website_seo_manager,product.website.seo manager,model_product_website_seo,website.group_website_designer,1,1,1,1

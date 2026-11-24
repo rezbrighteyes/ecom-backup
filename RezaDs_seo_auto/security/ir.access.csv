@@ -1,0 +1,4 @@
+id,name,model_id,group_id/id,operation,domain
+access_seo_wizard,seo.regenerate.wizard,seo.regenerate.wizard,base.group_user,cru,
+access_product_website_seo_user,product.website.seo user,product.website.seo,base.group_user,r,
+access_product_website_seo_manager,product.website.seo manager,product.website.seo,website.group_website_designer,crud,

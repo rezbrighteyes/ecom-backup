@@ -44,7 +44,7 @@ class TestCancelReturns(TransactionCase):
             "external_api": True,
             "order_line": [(0, 0, {
                 "product_id": self.product.id, "name": self.product.display_name,
-                "product_qty": qty, "product_uom": self.product.uom_id.id,
+                "product_qty": qty, "uom_id": self.product.uom_id.id,
                 "price_unit": 3.36, "date_planned": "2026-09-02 00:00:00",
                 "discount": 0.0,
             })],
@@ -148,9 +148,9 @@ class TestCancelReturns(TransactionCase):
         po = self._po(qty=1.0)
         plain = self.env["res.users"].create({
             "name": "TEST no purchase rights", "login": "test-no-purchase@example.invalid",
-            # Odoo 18 calls this `groups_id`; `group_ids` is the 19 name and
+            # Odoo 18 calls this `group_ids`; `group_ids` is the 19 name and
             # raises ValueError: Invalid field 'group_ids' on model 'res.users'.
-            "groups_id": [(6, 0, [self.env.ref("base.group_user").id])],
+            "group_ids": [(6, 0, [self.env.ref("base.group_user").id])],
         })
         with self.assertRaises(AccessError):
             po.with_user(plain).action_reza_return_to_edbert()

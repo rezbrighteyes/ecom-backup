@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_reza_check_prices" type="object" class="oe_stat_button"
-                        icon="fa-tags" groups="product.group_product_pricelist"
+                        icon="sell" groups="product.group_product_pricelist"
                         invisible="parent_id">
                     <div class="o_stat_info">
                         <span class="o_stat_text">Check Prices</span>

@@ -1,0 +1,3 @@
+id,name,model_id,group_id/id,operation,domain
+access_product_google_category_user_read,access_product_google_category_user_read,product.google.category,base.group_user,cr,
+access_product_google_category_admin,access_product_google_category_admin,product.google.category,base.group_system,crud,

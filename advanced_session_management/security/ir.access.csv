@@ -1,0 +1,4 @@
+id,name,model_id,group_id/id,operation,domain
+rule_activity_admin_ah,All Activity,activity.log,advanced_session_management.group_login_log_admin_ah,rd,
+rule_login_log_admin_ah,All session,login.log,advanced_session_management.group_login_log_admin_ah,crud,
+access_edit_value,access.edit.value,edit.value,advanced_session_management.group_login_log_admin_ah,rd,

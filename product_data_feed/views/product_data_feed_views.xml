@@ -38,14 +38,14 @@
                             string="Items"
                             type="object"
                             class="oe_stat_button"
-                            icon="fa-cubes"
+                            icon="inventory_2"
                         />
                         <button
                             name="%(action_column_list)d"
                             string=""
                             type="action"
                             class="oe_stat_button"
-                            icon="fa-list"
+                            icon="format_list_bulleted"
                         >
                             <field name="column_count" string="Columns" widget="statinfo"/>
                         </button>
@@ -100,7 +100,7 @@
                                             title="Refresh token"
                                             type="object"
                                             class="btn-secondary oe_inline"
-                                            icon="fa-refresh"
+                                            icon="refresh"
                                             confirm="Do you want to change the access token?"
                                             invisible="not use_token"
                                         />

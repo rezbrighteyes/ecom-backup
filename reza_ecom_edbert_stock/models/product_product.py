@@ -30,7 +30,7 @@ class ProductProduct(models.Model):
 
     reza_edbert_free_qty = fields.Float(
         string="Edbert Free Qty",
-        digits="Product Unit of Measure",
+        digits="Product Unit",
         readonly=True,
         default=0.0,
         copy=False,

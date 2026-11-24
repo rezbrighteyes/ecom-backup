@@ -188,13 +188,10 @@ class WebsiteStockist(models.Model):
     full_address = fields.Char(compute="_compute_full_address", store=True)
     google_maps_url = fields.Char(compute="_compute_google_maps_url")
 
-    _sql_constraints = [
-        (
-            "store_code_uniq",
-            "unique(store_code)",
-            "Two stockists cannot share a store code.",
-        ),
-    ]
+    _store_code_uniq = models.Constraint(
+        'unique(store_code)',
+        "Two stockists cannot share a store code.",
+    )
 
     # ------------------------------------------------------------------
     # ORM overrides

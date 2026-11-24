@@ -1,0 +1,2 @@
+id,name,model_id,group_id/id,operation,domain
+access_base_import_helper_user_read,access_base_import_helper_user_read,base_import.helper,base.group_user,crud,

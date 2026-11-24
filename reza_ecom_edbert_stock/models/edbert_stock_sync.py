@@ -104,7 +104,7 @@ class RezaEdbertStockSync(models.AbstractModel):
         zero on a fresh install. The location check would then refuse every
         run, and the figures would never appear.
         """
-        raw = self._param().get_param(key)
+        raw = self._param().get_str(key)
         if raw is None or raw is False or not str(raw).strip():
             return default
         try:
@@ -119,7 +119,7 @@ class RezaEdbertStockSync(models.AbstractModel):
             return default
 
     def _last_sync(self):
-        raw = self._param().get_param(self.PARAM_LAST_SYNC)
+        raw = self._param().get_str(self.PARAM_LAST_SYNC)
         if not raw:
             return False
         try:
@@ -441,8 +441,8 @@ class RezaEdbertStockSync(models.AbstractModel):
         planned = self._plan(local, free_by_id, identifiers)
         changed = self._apply(Product, planned)
 
-        self._param().set_param(self.PARAM_LAST_SYNC, read_at)
-        self._param().set_param(self.PARAM_LAST_RESOLVED, len(identifiers))
+        self._param().set_str(self.PARAM_LAST_SYNC, read_at)
+        self._param().set_str(self.PARAM_LAST_RESOLVED, len(identifiers))
 
         _logger.info(
             "Edbert stock sync: location %s, %s products with stock, "

@@ -38,7 +38,7 @@ at the next server restart.
     """,
     "author": "Reza",
     "category": "Inventory/Delivery",
-    "version": "18.0.1.0.0",
+    "version": "20.0.1.0.0",
     "license": "OPL-1",
     "depends": ["delivery"],
     "data": [],

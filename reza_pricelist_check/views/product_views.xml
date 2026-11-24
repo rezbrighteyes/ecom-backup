@@ -39,7 +39,7 @@
                        decoration-muted="conflict == 'overlap'"/>
                 <field name="conflict_text" optional="hide"/>
                 <field name="rule_id" string="Rule Used" optional="hide"/>
-                <button name="action_open_rule" type="object" icon="fa-external-link"
+                <button name="action_open_rule" type="object" icon="open_in_new"
                         title="Open the rule" invisible="not rule_id"/>
             </list>
         </field>
@@ -52,7 +52,7 @@
         <field name="arch" type="xml">
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_reza_price_lists" type="object" class="oe_stat_button"
-                        icon="fa-tags" groups="product.group_product_pricelist"
+                        icon="sell" groups="product.group_product_pricelist"
                         invisible="not id">
                     <div class="o_stat_info">
                         <span class="o_stat_text">Price Lists</span>

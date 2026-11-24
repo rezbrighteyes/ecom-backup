@@ -52,17 +52,17 @@
                     <span class="ss-pay-title small fw-semibold text-uppercase">
                         Pay it in 4 / Installment Overtime?
                     </span>
-                    <i class="fa fa-chevron-down small text-muted"/>
+                    <i class="oi small text-muted" data-icon="expand_more"/>
                 </div>
                 <div class="d-flex flex-wrap gap-4">
                     <span class="ss-pay-badge small fw-bold text-uppercase">
-                        <i class="fa fa-check-circle me-1"/> AFTERPAY
+                        <i class="oi oi-filled me-1" data-icon="check_circle"/> AFTERPAY
                     </span>
                     <span class="ss-pay-badge small fw-bold text-uppercase">
-                        <i class="fa fa-check-circle me-1"/> PAYPAL
+                        <i class="oi oi-filled me-1" data-icon="check_circle"/> PAYPAL
                     </span>
                     <span class="ss-pay-badge small fw-bold text-uppercase">
-                        <i class="fa fa-check-circle me-1"/> ZIP
+                        <i class="oi oi-filled me-1" data-icon="check_circle"/> ZIP
                     </span>
                 </div>
             </div>

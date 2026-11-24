@@ -297,7 +297,7 @@ class ProductDataFeedColumn(models.Model):
                 if column.field_id.ttype in ['date', 'datetime']:
                     res = column._format_date_value(value)
                 elif isinstance(value, (int, float)):
-                    lang_code = column.feed_id.lang or self._context.get('lang')
+                    lang_code = column.feed_id.lang or self.env.context.get('lang')
                     lang = column.language_id or self.env['res.lang'].search([('code', '=', lang_code)])
                     res = lang.format(column.format, value, grouping=column.format_numbers)
                     # without grouping=True the local number format doesn't work

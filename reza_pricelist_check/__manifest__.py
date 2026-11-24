@@ -31,19 +31,18 @@ without the brand caps, allowed brands and promotions that ecom does not have.
 
 Read only, except the Exclude from Discount / Allow Discount Again buttons.
 """,
-    "version": "18.0.1.0.0",
+    "version": "20.0.1.0.0",
     "category": "Sales",
     "author": "Reza",
     "license": "LGPL-3",
     "depends": ["product", "sale", "website_sale"],
     "data": [
-        "security/ir.model.access.csv",
-        "security/security.xml",
         "views/pricelist_check_views.xml",
         "views/pricelist_item_views.xml",
         "views/pricelist_views.xml",
         "views/res_partner_views.xml",
         "views/product_views.xml",
+        'security/ir.access.csv',
     ],
     "installable": True,
     "application": False,
