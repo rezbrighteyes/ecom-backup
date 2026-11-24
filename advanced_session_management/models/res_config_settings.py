@@ -107,9 +107,11 @@ class res_config_settings(models.TransientModel):
 class ir_config_parameter(models.Model):
     _inherit = "ir.config_parameter"
 
+    @api.private
     def delete_record_ao(self):
         self.search([("key", "=", "disable_log")], limit=1).unlink()
 
+    @api.private
     @api.model
     def apply_advanced_session_management_cron_settings(self):
         session_timeout = self.env.ref(

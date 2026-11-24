@@ -45,6 +45,9 @@ class Controller(http.Controller):
 
     @http.route('/post/action_data', type='jsonrpc', auth='user')
     def _get_action_data(self, data={}, **kw):
+        # auth='user' admits portal customers too; only staff activity is logged.
+        if not request.env.user._is_internal():
+            return False
         api = ''
         try:
             # original_url = data

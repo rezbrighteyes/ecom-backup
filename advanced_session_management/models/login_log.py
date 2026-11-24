@@ -34,6 +34,7 @@ class login_log(models.Model):
     is_active = fields.Boolean('Is Active', compute='_get_is_active')
     timeout_date = fields.Datetime('Last Activity')
 
+    @api.private
     def session_timeout_ah(self):
         config_parameter_obj = self.env['ir.config_parameter'].sudo()
         active_timeout = config_parameter_obj.get_str('advanced_session_management.session_timeout_active')
@@ -170,6 +171,7 @@ class login_log(models.Model):
             
         return super(login_log, self).unlink()
     
+    @api.private
     def remove_old_log(self):
         config_parameter_obj = self.env['ir.config_parameter']
         value = config_parameter_obj.search([('key','=','advanced_session_management.remove_sesions')],limit=1)

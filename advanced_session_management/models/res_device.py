@@ -134,6 +134,7 @@ class ResDeviceLog(models.Model):
             else:
                 record.is_active = False
 
+    @api.private
     def session_timeout_ah(self):
         config_parameter_obj = self.env["ir.config_parameter"].sudo()
         active_timeout = config_parameter_obj.get_str(
@@ -198,6 +199,7 @@ class ResDeviceLog(models.Model):
             ("session_identifier", "in", identifiers), ("revoked", "=", False),
         ]).write({"revoked": True})
 
+    @api.private
     def remove_old_log(self):
         config_parameter_obj = self.env["ir.config_parameter"].sudo()
         value = config_parameter_obj.search(
