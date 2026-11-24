@@ -9,7 +9,7 @@ This module enhances Odoo’s eCommerce product browsing experience. It extends 
     'author': "Dimension3 Technology",
     'website': "https://d-3system.com.au",
     'category': 'Website/Website',
-    'version': '20.0.18.7',
+    'version': '20.0.18.8',
     'depends': ['base', 'product', 'website_sale', 'website_sale_stock'],
     'data': [
         'views/templates.xml',
