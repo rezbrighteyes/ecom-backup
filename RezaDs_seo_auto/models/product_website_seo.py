@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class ProductWebsiteSeo(models.Model):
@@ -73,6 +74,6 @@ class ProductWebsiteSeo(models.Model):
         for record in self:
             carried = record.product_tmpl_id.website_ids
             if carried and record.website_id not in carried:
-                raise models.ValidationError(
+                raise ValidationError(
                     "%s is not published on %s, so an override for that site would never be "
                     "used." % (record.product_tmpl_id.display_name, record.website_id.name))
