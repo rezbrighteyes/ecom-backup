@@ -12,9 +12,9 @@
 
     <template id="product_collection_label"
               name="SS: Collection Label"
-              inherit_id="website_sale.product"
+              inherit_id="website_sale.product_title"
               priority="20">
-        <xpath expr="//h1[@itemprop='name']" position="before">
+        <xpath expr="//h1[@t-field='product.name']" position="before">
             <t t-if="product.public_categ_ids">
                 <p class="ss-collection-label text-uppercase fw-semibold mb-1">
                     <t t-out="product.public_categ_ids[0].name"/>
@@ -35,7 +35,7 @@
                    t-value="round((1 - combination_info['price'] / combination_info['list_price']) * 100)"/>
                 <t t-if="ss_pct > 0">
                     <span class="badge ss-off-badge ms-2 align-self-center px-2 py-1">
-                        <t t-out="'%d%% OFF' % ss_pct"/>
+                        <t t-out="'%d' % ss_pct"/>% OFF
                     </span>
                 </t>
             </t>
@@ -44,7 +44,7 @@
 
     <template id="product_payment_methods"
               name="SS: Payment Methods"
-              inherit_id="website_sale.product"
+              inherit_id="website_sale.cta_wrapper"
               priority="20">
         <xpath expr="//div[@id='o_wsale_cta_wrapper']" position="after">
             <div class="ss-payment border-top border-bottom py-3 my-2">
@@ -79,7 +79,7 @@
 
     <template id="product_hide_inline_description"
               name="SS: Hide Inline Description"
-              inherit_id="website_sale.product"
+              inherit_id="website_sale.product_title"
               priority="20">
         <xpath expr="//div[@t-field='product.description_ecommerce']" position="replace">
         </xpath>
@@ -204,8 +204,8 @@
                                                      loading="lazy"/>
                                             </div>
                                             <div class="ss-crosssell-body">
-                                                <div class="ss-crosssell-name" t-esc="item.name"/>
-                                                <div class="ss-crosssell-price">$<t t-esc="'%.2f' % item.list_price"/></div>
+                                                <div class="ss-crosssell-name" t-out="item.name"/>
+                                                <div class="ss-crosssell-price">$<t t-out="'%.2f' % item.list_price"/></div>
                                             </div>
                                         </a>
                                         <a t-att-href="item.website_url" class="ss-crosssell-btn">Add to bag</a>
@@ -237,10 +237,10 @@
             <t t-if="website and website.name == 'Sunglass Superstore'">
                 <t t-if="product_images">
                     <div class="ss-hero-image mb-2 position-relative">
-                        <t t-set="ribbon" t-value="product_variant.sudo().variant_ribbon_id or product.sudo().website_ribbon_id"/>
-                        <span t-if="ribbon" t-attf-class="o_ribbon #{ribbon._get_position_class()} z-1"
-                              t-attf-style="#{ribbon['text_color'] and ('color: %s; ' % ribbon['text_color'])}#{ribbon['bg_color'] and 'background-color:' + ribbon['bg_color']}"
-                              t-out="ribbon['name'] or ''"/>
+                        <!-- Odoo 20: shop_product_images already computed ribbon,
+                             bg_color and text_color (_get_ribbon, which also applies
+                             auto-assigned ribbons); render it with core's own template. -->
+                        <t t-if="ribbon" t-call="website_sale.product_ribbon"/>
                         <img t-attf-src="/web/image/{{ product_images[0]._name }}/{{ product_images[0].id }}/image_1920"
                              class="w-100 ss-hero-img"
                              t-att-alt="product.name"

@@ -2,7 +2,7 @@
 <odoo>
 
     <template id="ss_stock_urgency"
-              inherit_id="website_sale.product"
+              inherit_id="website_sale.cta_wrapper"
               name="SS: Stock Urgency"
               priority="25">
         <xpath expr="//div[@id='o_wsale_cta_wrapper']" position="after">
@@ -20,7 +20,7 @@
               inherit_id="website_sale.product"
               name="SS: Trust Badges"
               priority="25">
-        <xpath expr="//div[@id='o_product_terms_and_share']" position="before">
+        <xpath expr="//t[@t-call='website_sale.documents']" position="after">
             <div class="sf-trust-row my-3">
                 <t t-set="ship_threshold" t-value="product._sf_get_shipping_threshold()"/>
                 <div class="row g-2">
@@ -63,7 +63,7 @@
               inherit_id="website_sale.product"
               name="SS: Mobile Accordion"
               priority="30">
-        <xpath expr="//div[@id='o_product_terms_and_share']" position="after">
+        <xpath expr="//t[@t-call='website_sale.container_dropzone_below_product_details']" position="before">
             <div id="ss_mobile_accordion_section" class="ss-mobile-accordion d-lg-none mt-3">
                 <t t-set="seo_body_override" t-value="product._seo_body_override()"/>
                 <t t-set="d3_has_description" t-value="seo_body_override or product.description_ecommerce or product.website_description"/>

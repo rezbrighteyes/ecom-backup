@@ -35,7 +35,7 @@ class ProductTemplateSF(models.Model):
 
     def _sf_get_shipping_threshold(self):
         try:
-            website = self.env['website'].get_current_website()
+            website = self.env['website']._seo_current_website()
             return SHIPPING_THRESHOLDS.get(website.name, DEFAULT_SHIPPING_THRESHOLD)
         except Exception:
             return DEFAULT_SHIPPING_THRESHOLD
@@ -86,7 +86,7 @@ class ProductTemplateSF(models.Model):
 
         # Get current website
         try:
-            website = self.env['website'].get_current_website()
+            website = self.env['website']._seo_current_website()
             website_id = website.id
         except Exception:
             website_id = False

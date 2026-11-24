@@ -13,7 +13,7 @@
   -->
   <template id="product_website_body"
             name="Per-website product body copy"
-            inherit_id="website_sale.product">
+            inherit_id="website_sale.product_title">
 
     <xpath expr="//div[@t-field='product.description_ecommerce']" position="before">
       <t t-set="seo_body_override" t-value="product._seo_body_override()"/>

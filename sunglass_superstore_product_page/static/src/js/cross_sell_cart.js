@@ -1,122 +1,156 @@
-(function () {
-    "use strict";
+import { Interaction } from "@web/public/interaction";
+import { registry } from "@web/core/registry";
+import { rpc } from "@web/core/network/rpc";
 
-    function ready(fn) {
-        if (document.readyState !== 'loading') { fn(); }
-        else { document.addEventListener('DOMContentLoaded', fn); }
+/**
+ * "You might also like" sidebar on the product page: the cart button on each
+ * cross-sell adds that variant to the cart without leaving the page, then shows
+ * a small toast.
+ *
+ * Odoo 20 port: this was a DOMContentLoaded IIFE posting to /shop/cart/update_json,
+ * with a GET /shop/cart/update fallback. Both routes are gone on 20; adding is now
+ * the JSON-RPC /shop/cart/add (product_template_id, product_id, quantity), which
+ * returns cart_quantity. The fallback opens the product page instead, because no
+ * GET route that adds to the cart is left.
+ *
+ * reza_smart_storefront ships an identical copy. Both used to bind, so
+ * with both modules installed one click added the item twice; both copies now
+ * register under one shared key and only the first one loaded binds.
+ */
+export class SfCrossSellCart extends Interaction {
+    static selector = "#sf_sidebar";
+    dynamicContent = {
+        ".sf-add-cart": { "t-on-click.prevent.stop": this.locked(this.onAddClick) },
+    };
+
+    setup() {
+        this.hideTimer = null;
+        this.toast = null;
     }
 
-    ready(function () {
-        var sidebar = document.getElementById('sf_sidebar');
-        if (!sidebar) return;
-        var buttons = sidebar.querySelectorAll('.sf-add-cart');
-        if (!buttons.length) return;
-
-        var toast = document.createElement('div');
-        toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.15);padding:16px 20px;z-index:9999;display:none;min-width:280px;max-width:340px;border:1px solid rgba(0,0,0,0.08);';
-
-        var toastHeader = document.createElement('div');
-        toastHeader.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:12px;';
-        var dot = document.createElement('div');
-        dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;';
-        toastHeader.appendChild(dot);
-        var toastTitle = document.createElement('strong');
-        toastTitle.style.fontSize = '14px';
-        toastTitle.textContent = 'Added to cart';
-        toastHeader.appendChild(toastTitle);
-        var toastClose = document.createElement('span');
-        toastClose.style.cssText = 'margin-left:auto;cursor:pointer;color:#999;font-size:18px;line-height:1;';
-        toastClose.textContent = '\u00d7';
-        toastClose.addEventListener('click', function () { toast.style.display = 'none'; });
-        toastHeader.appendChild(toastClose);
-
-        var toastBody = document.createElement('div');
-        toastBody.style.cssText = 'display:flex;align-items:center;gap:10px;';
-        var toastImg = document.createElement('img');
-        toastImg.style.cssText = 'width:48px;height:48px;border-radius:8px;object-fit:cover;';
-        var toastInfo = document.createElement('div');
-        var toastName = document.createElement('div');
-        toastName.style.cssText = 'font-size:13px;font-weight:600;';
-        var toastPrice = document.createElement('div');
-        toastPrice.style.cssText = 'font-size:14px;color:#D4AF37;font-weight:700;';
-        toastInfo.appendChild(toastName);
-        toastInfo.appendChild(toastPrice);
-        toastBody.appendChild(toastImg);
-        toastBody.appendChild(toastInfo);
-
-        var toastLink = document.createElement('a');
-        toastLink.href = '/shop/cart';
-        toastLink.style.cssText = 'display:block;text-align:center;background:#0F1720;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;margin-top:12px;';
-        toastLink.textContent = 'View cart';
-
-        toast.appendChild(toastHeader);
-        toast.appendChild(toastBody);
-        toast.appendChild(toastLink);
-        document.body.appendChild(toast);
-
-        var hideTimer = null;
-        function showToast(variantId, name, price) {
-            toastImg.src = '/web/image/product.product/' + variantId + '/image_128';
-            toastName.textContent = name;
-            toastPrice.textContent = price;
-            toast.style.display = 'block';
-            if (hideTimer) clearTimeout(hideTimer);
-            hideTimer = setTimeout(function () { toast.style.display = 'none'; }, 4000);
+    start() {
+        if (this.el.querySelector(".sf-add-cart")) {
+            this.buildToast();
         }
+    }
 
-        function getCsrf() {
-            var el = document.querySelector('input[name="csrf_token"]');
-            return el ? el.value : '';
+    destroy() {
+        if (this.hideTimer) {
+            clearTimeout(this.hideTimer);
         }
+    }
 
-        buttons.forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                var item = btn.closest('.sf-related-item');
-                var variantId = btn.getAttribute('data-variant-id');
-                var name = item.getAttribute('data-name');
-                var price = item.getAttribute('data-price');
-                btn.style.opacity = '0.5';
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', '/shop/cart/update_json', true);
-                xhr.setRequestHeader('Content-Type', 'application/json');
-                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                xhr.onload = function () {
-                    if (xhr.status === 200) {
-                        try {
-                            var data = JSON.parse(xhr.responseText);
-                            if (data.result) {
-                                btn.style.opacity = '1';
-                                btn.style.background = '#10b981';
-                                btn.style.borderColor = '#10b981';
-                                btn.style.color = '#fff';
-                                var badge = document.querySelector('.my_cart_quantity');
-                                if (badge) {
-                                    badge.textContent = data.result.cart_quantity;
-                                    badge.classList.remove('d-none');
-                                }
-                                showToast(variantId, name, price);
-                                setTimeout(function () {
-                                    btn.style.background = '';
-                                    btn.style.borderColor = '';
-                                    btn.style.color = '';
-                                }, 2000);
-                                return;
-                            }
-                        } catch (err) {}
-                    }
-                    window.location.href = '/shop/cart/update?product_id=' + variantId + '&add_qty=1&csrf_token=' + getCsrf();
-                };
-                xhr.onerror = function () {
-                    window.location.href = '/shop/cart/update?product_id=' + variantId + '&add_qty=1&csrf_token=' + getCsrf();
-                };
-                xhr.send(JSON.stringify({
-                    jsonrpc: '2.0',
-                    method: 'call',
-                    params: {product_id: parseInt(variantId), add_qty: 1}
-                }));
-            });
+    buildToast() {
+        const toast = document.createElement("div");
+        toast.style.cssText = "position:fixed;top:20px;right:20px;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.15);padding:16px 20px;z-index:9999;display:none;min-width:280px;max-width:340px;border:1px solid rgba(0,0,0,0.08);";
+
+        const header = document.createElement("div");
+        header.style.cssText = "display:flex;align-items:center;gap:12px;margin-bottom:12px;";
+        const dot = document.createElement("div");
+        dot.style.cssText = "width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;";
+        header.appendChild(dot);
+        const title = document.createElement("strong");
+        title.style.fontSize = "14px";
+        title.textContent = "Added to cart";
+        header.appendChild(title);
+        const close = document.createElement("span");
+        close.style.cssText = "margin-left:auto;cursor:pointer;color:#999;font-size:18px;line-height:1;";
+        close.textContent = "×";
+        header.appendChild(close);
+
+        const body = document.createElement("div");
+        body.style.cssText = "display:flex;align-items:center;gap:10px;";
+        this.toastImg = document.createElement("img");
+        this.toastImg.style.cssText = "width:48px;height:48px;border-radius:8px;object-fit:cover;";
+        const info = document.createElement("div");
+        this.toastName = document.createElement("div");
+        this.toastName.style.cssText = "font-size:13px;font-weight:600;";
+        this.toastPrice = document.createElement("div");
+        this.toastPrice.style.cssText = "font-size:14px;color:#D4AF37;font-weight:700;";
+        info.appendChild(this.toastName);
+        info.appendChild(this.toastPrice);
+        body.appendChild(this.toastImg);
+        body.appendChild(info);
+
+        const link = document.createElement("a");
+        link.href = "/shop/cart";
+        link.style.cssText = "display:block;text-align:center;background:#0F1720;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;margin-top:12px;";
+        link.textContent = "View cart";
+
+        toast.appendChild(header);
+        toast.appendChild(body);
+        toast.appendChild(link);
+        this.toast = toast;
+        // Removed again when the interaction stops (insert registers the cleanup).
+        this.insert(toast, document.body);
+        this.addListener(close, "click", () => {
+            toast.style.display = "none";
         });
-    });
-})();
+    }
+
+    showToast(variantId, name, price) {
+        if (!this.toast) {
+            return;
+        }
+        this.toastImg.src = "/web/image/product.product/" + variantId + "/image_128";
+        this.toastName.textContent = name;
+        this.toastPrice.textContent = price;
+        this.toast.style.display = "block";
+        if (this.hideTimer) {
+            clearTimeout(this.hideTimer);
+        }
+        this.hideTimer = this.waitForTimeout(() => {
+            this.toast.style.display = "none";
+        }, 4000);
+    }
+
+    async onAddClick(ev) {
+        const btn = ev.currentTarget;
+        const item = btn.closest(".sf-related-item");
+        const variantId = parseInt(btn.dataset.variantId);
+        const templateId = parseInt(btn.dataset.templateId);
+        const fallback = () => {
+            const link = item && item.querySelector("a.sf-related-link");
+            window.location.href = link ? link.href : "/shop";
+        };
+        btn.style.opacity = "0.5";
+        let result;
+        try {
+            result = await this.waitFor(
+                rpc("/shop/cart/add", {
+                    product_template_id: templateId,
+                    product_id: variantId,
+                    quantity: 1,
+                })
+            );
+        } catch {
+            fallback();
+            return;
+        }
+        this.protectSyncAfterAsync(() => {
+            btn.style.opacity = "1";
+            if (!result) {
+                fallback();
+                return;
+            }
+            btn.style.background = "#10b981";
+            btn.style.borderColor = "#10b981";
+            btn.style.color = "#fff";
+            for (const badge of document.querySelectorAll(".my_cart_quantity")) {
+                badge.textContent = result.cart_quantity;
+                badge.classList.remove("d-none");
+            }
+            this.showToast(variantId, item.dataset.name, item.dataset.price);
+            this.waitForTimeout(() => {
+                btn.style.background = "";
+                btn.style.borderColor = "";
+                btn.style.color = "";
+            }, 2000);
+        })();
+    }
+}
+
+const interactions = registry.category("public.interactions");
+if (!interactions.contains("sf_cross_sell_cart")) {
+    interactions.add("sf_cross_sell_cart", SfCrossSellCart);
+}

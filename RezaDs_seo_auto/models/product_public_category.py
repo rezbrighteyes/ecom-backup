@@ -19,7 +19,7 @@ class ProductPublicCategory(models.Model):
 
     def _get_seo_param(self, key, default=''):
         try:
-            return self.env['ir.config_parameter'].sudo().get_param(
+            return self.env['ir.config_parameter'].sudo().get_str(
                 'rezads_seo.%s' % key, default
             )
         except Exception:
@@ -34,7 +34,7 @@ class ProductPublicCategory(models.Model):
         if self.website_id:
             return self.website_id
         try:
-            return self.env['website'].get_current_website()
+            return self.env['website']._seo_current_website()
         except Exception:
             return self.env['website'].browse()
 

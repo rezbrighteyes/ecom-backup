@@ -2,7 +2,7 @@ import json
 import logging
 
 from markupsafe import Markup
-from odoo import fields, models
+from odoo import api, fields, models
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
@@ -34,6 +34,18 @@ class Website(models.Model):
              "product must be able to name the site a visitor is actually on.",
     )
 
+    @api.model
+    def _seo_current_website(self):
+        """The website being served, else the first website.
+
+        Odoo 20 removed ``website.get_current_website()``. ``env.website`` replaces it, but
+        it is read from the ``website_id`` context key, which only a website request (or an
+        explicit ``with_context``) sets, and it has no fallback. On 18 the call fell back to
+        the first website outside a request -- crons, backend creates, tests -- and every
+        caller in these modules was written against that, so the fallback is kept here.
+        """
+        return self.env.website or self.search([], limit=1)
+
     def _get_seo_param(self, key, default=''):
         """This website's own value, falling back to the shared config parameter.
 
@@ -56,7 +68,7 @@ class Website(models.Model):
             if value:
                 return value
         try:
-            return self.env['ir.config_parameter'].sudo().get_param(
+            return self.env['ir.config_parameter'].sudo().get_str(
                 'rezads_seo.%s' % key, default
             )
         except Exception:

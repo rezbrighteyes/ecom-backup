@@ -289,7 +289,7 @@ class ProductTemplate(models.Model):
 
     def _get_seo_param(self, key, default=''):
         try:
-            return self.env['ir.config_parameter'].sudo().get_param(
+            return self.env['ir.config_parameter'].sudo().get_str(
                 'rezads_seo.%s' % key, default
             )
         except Exception:
@@ -400,7 +400,7 @@ class ProductTemplate(models.Model):
         """
         self.ensure_one()
         if website is None:
-            website = self.env['website'].get_current_website()
+            website = self.env['website']._seo_current_website()
         shared = self[field] if field in self._fields else False
         if not website:
             return shared
@@ -436,7 +436,7 @@ class ProductTemplate(models.Model):
         if website is None:
             website = self.env['website']
             if request and getattr(request, 'httprequest', None):
-                website = self.env['website'].get_current_website()
+                website = self.env['website']._seo_current_website()
         if not website:
             return False
         # sudo for the same reason _seo_for_website does it: a shop visitor is
@@ -501,7 +501,7 @@ class ProductTemplate(models.Model):
 
     def _get_domain(self):
         try:
-            website = self.env['website'].get_current_website()
+            website = self.env['website']._seo_current_website()
             domain = website.domain or ''
             if domain and not domain.startswith('http'):
                 domain = 'https://%s' % domain
@@ -511,7 +511,7 @@ class ProductTemplate(models.Model):
 
     def _get_currency_code(self):
         try:
-            website = self.env['website'].get_current_website()
+            website = self.env['website']._seo_current_website()
             if website.currency_id:
                 return website.currency_id.name
         except Exception:
@@ -533,7 +533,24 @@ class ProductTemplate(models.Model):
         """
         self.ensure_one()
         try:
-            info = self._get_combination_info(only_template=True)
+            # Odoo 20 reads the pricelist and fiscal position from ``request`` unless they
+            # are passed, and ``env.website`` is empty outside a website request. On a product
+            # page all three come from the request as before. Elsewhere (crons, tests) pass
+            # them explicitly: a ``pricelist`` context key wins, as it did on 18, else no
+            # pricelist, which yields the catalogue price.
+            kwargs = {}
+            pricelist_id = self.env.context.get('pricelist')
+            if pricelist_id:
+                kwargs['pricelist'] = self.env['product.pricelist'].browse(pricelist_id)
+            elif not request:
+                kwargs['pricelist'] = self.env['product.pricelist']
+            if not request:
+                kwargs['fiscal_position'] = self.env['account.fiscal.position']
+            product = self
+            if not self.env.website:
+                product = self.with_context(
+                    website_id=self.env['website']._seo_current_website().id)
+            info = product._get_combination_info(only_template=True, **kwargs)
             price = info.get('price')
             if price is not None:
                 return float(price)
@@ -589,7 +606,7 @@ class ProductTemplate(models.Model):
         cats = self.public_categ_ids
         website_id = False
         try:
-            website_id = self.env['website'].get_current_website().id
+            website_id = self.env['website']._seo_current_website().id
         except Exception:
             pass
 

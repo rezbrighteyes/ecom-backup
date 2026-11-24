@@ -8,7 +8,6 @@
     "depends": [
         "website_sale",
         "website_sale_stock",
-        "website_sale_wishlist",
         "sh_product_multi_website",
     ],
     "data": [

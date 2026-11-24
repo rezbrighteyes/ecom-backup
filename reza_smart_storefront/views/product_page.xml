@@ -2,7 +2,7 @@
 <odoo>
 
     <template id="stock_urgency" name="Smart Storefront - Stock Urgency"
-              inherit_id="website_sale.product">
+              inherit_id="website_sale.cta_wrapper">
         <xpath expr="//div[@id='o_wsale_cta_wrapper']" position="after">
             <t t-if="website.name != 'Sunglass Superstore'">
                 <t t-set="stock_msg" t-value="product._sf_get_stock_message()"/>
@@ -18,7 +18,8 @@
 
     <template id="trust_badges" name="Smart Storefront - Trust Badges"
               inherit_id="website_sale.product">
-        <xpath expr="//div[@id='o_product_terms_and_share']" position="before">
+        <!-- Odoo 20 dropped o_product_terms_and_share; it sat right after the documents block. -->
+        <xpath expr="//t[@t-call='website_sale.documents']" position="after">
             <t t-if="website.name != 'Sunglass Superstore'">
                 <div class="sf-trust-row my-3">
                     <t t-set="ship_threshold" t-value="product._sf_get_shipping_threshold()"/>
@@ -137,13 +138,13 @@
                                                     <a t-att-href="item.website_url" class="sf-related-link">
                                                         <img t-att-src="'/web/image/product.template/%s/image_128' % item.id" class="sf-related-thumb" t-att-alt="item.name" loading="lazy"/>
                                                         <div class="sf-related-info">
-                                                            <div class="sf-related-name" t-esc="item.name"/>
+                                                            <div class="sf-related-name" t-out="item.name"/>
                                                             <div class="sf-related-price" t-if="item.list_price">
-                                                                $<t t-esc="'%.2f' % item.list_price"/>
+                                                                $<t t-out="'%.2f' % item.list_price"/>
                                                             </div>
                                                         </div>
                                                     </a>
-                                                    <button type="button" class="sf-add-cart" t-att-data-variant-id="first_variant.id" title="Add to cart">
+                                                    <button type="button" class="sf-add-cart" t-att-data-variant-id="first_variant.id" t-att-data-template-id="item.id" title="Add to cart">
                                                         <i class="oi" data-icon="shopping_cart"/>
                                                     </button>
                                                 </div>
@@ -189,26 +190,26 @@
     <template id="reza_sale_badge" name="Smart Storefront - Sale Block"
               inherit_id="website_sale.product">
         <xpath expr="//t[@t-call='website_sale.product_price']" position="replace">
-            <t t-if="request.website.id == 4 and combination_info.get('has_discounted_price') and (combination_info['list_price'] - combination_info['price']) &gt; 0">
+            <t t-if="website.id == 4 and combination_info.get('has_discounted_price') and (combination_info['list_price'] - combination_info['price']) &gt; 0">
                 <t t-set="reza_saving" t-value="combination_info['list_price'] - combination_info['price']"/>
                 <t t-set="reza_pct" t-value="round(reza_saving / combination_info['list_price'] * 100) if combination_info['list_price'] else 0"/>
                 <div class="reza-sale-block mt-2 mb-3">
                     <div class="reza-sale-badge-wrap mb-2">
                         <span class="reza-sale-badge">
-                            <t t-if="reza_saving &gt;= 20.0">SAVE $<t t-esc="'%.0f' % reza_saving"/></t>
-                            <t t-else="">SAVE <t t-esc="reza_pct"/>%</t>
+                            <t t-if="reza_saving &gt;= 20.0">SAVE $<t t-out="'%.0f' % reza_saving"/></t>
+                            <t t-else="">SAVE <t t-out="reza_pct"/>%</t>
                         </span>
                     </div>
                     <div class="reza-price-row">
                         <span class="reza-sale-price"
-                              t-esc="combination_info['price']"
+                              t-out="combination_info['price']"
                               t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
                         <del class="reza-original-price ms-2"
-                             t-esc="combination_info['list_price']"
+                             t-out="combination_info['list_price']"
                              t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
                     </div>
-                    <span itemprop="price" style="display:none;" t-esc="combination_info['price']"/>
-                    <span itemprop="priceCurrency" style="display:none;" t-esc="website.currency_id.name"/>
+                    <span itemprop="price" style="display:none;" t-out="combination_info['price']"/>
+                    <span itemprop="priceCurrency" style="display:none;" t-out="website.currency_id.name"/>
                 </div>
             </t>
             <t t-else="">

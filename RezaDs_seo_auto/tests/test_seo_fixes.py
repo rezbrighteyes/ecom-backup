@@ -16,6 +16,11 @@ class TestOfferPrice(TransactionCase):
     def setUp(self):
         super().setUp()
         self.website = self.env['website'].search([], limit=1)
+        # Every storefront this module serves shows prices tax-included (AU GST), and the
+        # 18 suite ran on a production copy configured that way. On Odoo 20 the offer price
+        # follows website.tax_display, and a fresh base database defaults by fiscal country,
+        # so state the storefront setting the assertions below are written for.
+        self.website.show_line_subtotals_tax_selection = 'tax_included'
         self.product = self.env['product.template'].create({
             'name': 'Balance Bike 14 inch',
             'list_price': 69.99,
@@ -32,8 +37,11 @@ class TestOfferPrice(TransactionCase):
         pricelist = self.env['product.pricelist'].create({
             'name': 'Test 17.5% off',
             'item_ids': [(0, 0, {
-                'compute_price': 'percentage',
-                'percent_price': 17.5,
+                # Odoo 20 renamed the percentage rule: 'percentage' + percent_price
+                # became 'discount' + price_discount, based on the list price.
+                'compute_price': 'discount',
+                'base': 'list_price',
+                'price_discount': 17.5,
                 'applied_on': '3_global',
             })],
         })
@@ -115,10 +123,10 @@ class TestMerchantPolicies(TransactionCase):
     def setUp(self):
         super().setUp()
         self.website = self.env['website'].search([], limit=1)
-        self.env['ir.config_parameter'].sudo().set_param(
+        self.env['ir.config_parameter'].sudo().set_str(
             'rezads_seo.free_shipping_threshold', '150'
         )
-        self.env['ir.config_parameter'].sudo().set_param(
+        self.env['ir.config_parameter'].sudo().set_str(
             'rezads_seo.return_days', '30'
         )
 
@@ -169,7 +177,10 @@ class TestCategoryMeta(TransactionCase):
                 'public_categ_ids': [(6, 0, [self.category.id])],
             })
         description = self.category._build_category_meta_description()
-        self.assertIn('3 drinking products', description)
+        # Commit 80cf766 changed the copy to "Shop the Drinking range at <site> — 3 products"
+        # (category names are often already plural) and left this assertion on the old
+        # wording, so it failed on 18 as well. The count is still what is checked.
+        self.assertIn('— 3 products', description)
         self.assertIn('24.99', description)
         self.assertLessEqual(len(description), 158)
 
@@ -447,14 +458,14 @@ class TestPaginatedTitles(TransactionCase):
 
     def test_website_value_beats_the_global_parameter(self):
         """$69 on one storefront and $150 on another cannot share a config parameter."""
-        self.env['ir.config_parameter'].sudo().set_param(
+        self.env['ir.config_parameter'].sudo().set_str(
             'rezads_seo.free_shipping_threshold', '150')
         self.website.seo_free_shipping_threshold = 69
         self.assertEqual(
             float(self.website._get_seo_param('free_shipping_threshold', '0')), 69)
 
     def test_an_unset_website_value_falls_through_to_the_global(self):
-        self.env['ir.config_parameter'].sudo().set_param(
+        self.env['ir.config_parameter'].sudo().set_str(
             'rezads_seo.free_shipping_threshold', '150')
         self.website.seo_free_shipping_threshold = 0
         self.assertEqual(

@@ -82,7 +82,7 @@
                 <filter name="no_sku" string="No SKU" domain="[('seo_has_sku', '=', False)]"/>
                 <filter name="no_slug" string="No Slug" domain="[('seo_has_slug', '=', False)]"/>
                 <separator/>
-                <group expand="0" string="Group By">
+                <group>
                     <filter name="group_score" string="SEO Score" context="{'group_by': 'seo_score_display'}"/>
                     <filter name="group_categ" string="Category" context="{'group_by': 'categ_id'}"/>
                 </group>

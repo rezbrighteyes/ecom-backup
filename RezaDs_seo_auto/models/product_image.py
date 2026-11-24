@@ -9,7 +9,7 @@ class ProductImage(models.Model):
 
     def _seo_image_alt_enabled(self):
         try:
-            return self.env['ir.config_parameter'].sudo().get_param(
+            return self.env['ir.config_parameter'].sudo().get_str(
                 'rezads_seo.enable_auto_image_alt', 'True'
             ) == 'True'
         except Exception:

@@ -7,7 +7,6 @@
     'license': 'OPL-1',
     'depends': [
         'website_sale',
-        'website_sale_wishlist',
         'stock',
         'd3_website_product_extended',
         'RezaDs_seo_auto',

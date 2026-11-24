@@ -1,7 +1,7 @@
 import logging
-import base64
 
 from odoo import tools
+from odoo.tools import BinaryBytes
 
 
 _logger = logging.getLogger(__name__)
@@ -176,13 +176,13 @@ def _configure_rockos_website(env, website):
             "rockos_website_theme/static/src/img/website_logo.png",
             "rb",
         ) as logo_file:
-            values["logo"] = base64.b64encode(logo_file.read())
+            values["logo"] = BinaryBytes(logo_file.read())
     if not website.rockos_hero_image:
         with tools.file_open(
             "rockos_website_theme/static/src/img/rockos_hero_banner.webp",
             "rb",
         ) as hero_file:
-            values["rockos_hero_image"] = base64.b64encode(hero_file.read())
+            values["rockos_hero_image"] = BinaryBytes(hero_file.read())
     website.write(values)
 
     _seed_rockos_menu(env, website)
@@ -192,7 +192,7 @@ def _configure_rockos_website(env, website):
 def _seed_rockos_product_sections(env, website):
     parameter = env["ir.config_parameter"].sudo()
     seed_key = f"rockos_website_theme.product_sections_seeded.{website.id}"
-    if parameter.get_param(seed_key) == ROCKOS_PRODUCT_SECTION_VERSION:
+    if parameter.get_str(seed_key) == ROCKOS_PRODUCT_SECTION_VERSION:
         return
 
     Variant = env["product.product"].sudo()
@@ -212,13 +212,13 @@ def _seed_rockos_product_sections(env, website):
         "rockos_best_seller_product_ids": [(6, 0, find_products(ROCKOS_BEST_SELLER_CODES).ids)],
         "rockos_new_arrival_product_ids": [(6, 0, find_products(ROCKOS_NEW_ARRIVAL_CODES).ids)],
     })
-    parameter.set_param(seed_key, ROCKOS_PRODUCT_SECTION_VERSION)
+    parameter.set_str(seed_key, ROCKOS_PRODUCT_SECTION_VERSION)
 
 
 def _seed_rockos_menu(env, website):
     parameter = env["ir.config_parameter"].sudo()
     seed_key = f"rockos_website_theme.menu_seeded.{website.id}"
-    if parameter.get_param(seed_key) == ROCKOS_MENU_VERSION:
+    if parameter.get_str(seed_key) == ROCKOS_MENU_VERSION:
         return
 
     root_menu = website.menu_id.sudo()
@@ -244,7 +244,7 @@ def _seed_rockos_menu(env, website):
                 "website_id": website.id,
                 "sequence": child_sequence,
             })
-    parameter.set_param(seed_key, ROCKOS_MENU_VERSION)
+    parameter.set_str(seed_key, ROCKOS_MENU_VERSION)
 
 
 def _setup_rockos_pages(env, website):

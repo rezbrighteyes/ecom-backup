@@ -17,8 +17,8 @@
     </template>
 
     <template id="rockos_product_card" inherit_id="website_sale.products_item" name="Rockos: Product Card">
-        <xpath expr="//form" position="attributes">
-            <attribute name="class" add="rockos-product-card" separator=" "/>
+        <xpath expr="//article" position="attributes">
+            <attribute name="t-attf-class" add="rockos-product-card" separator=" "/>
         </xpath>
     </template>
 </odoo>

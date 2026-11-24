@@ -2,7 +2,7 @@
 <odoo>
     <template id="rockos_product_scope" inherit_id="website_sale.product" name="Rockos: Product Scope">
         <xpath expr="//section[@id='product_detail']" position="attributes">
-            <attribute name="class" add="rockos-product-detail" separator=" "/>
+            <attribute name="t-attf-class" add="rockos-product-detail" separator=" "/>
         </xpath>
     </template>
 </odoo>

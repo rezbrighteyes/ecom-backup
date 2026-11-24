@@ -15,9 +15,10 @@
                    t-as="product"
                    t-att-href="product.website_url"
                    class="rockos-home-product-card">
-                    <t t-set="product_variant" t-value="product.product_variant_id"/>
+                    <!-- Odoo 20: _get_sales_prices lives on product.template, keyed by template id,
+                         and takes the pricelist and fiscal position explicitly (as /shop does). -->
                     <t t-set="product_price_vals"
-                       t-value="product_variant._get_sales_prices(website).get(product_variant.id, {})"/>
+                       t-value="product._get_sales_prices(request.pricelist, request.fiscal_position, website).get(product.id, {})"/>
                     <img t-att-src="'/web/image/product.template/%s/image_512' % product.id"
                          t-att-alt="product.name"/>
                     <strong t-out="product.name"/>
