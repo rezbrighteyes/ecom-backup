@@ -7,7 +7,9 @@ from urllib.parse import urlencode
 from odoo import Command
 from odoo.tests import HttpCase, tagged
 
+from .. import access
 from .common import TOKEN, CatalogueFixture
+from .jwt_tools import AUD, TEAM, SigningKey, claims, encode, jwks
 
 META = "/storefront/v1/catalogue/meta"
 PRODUCTS = "/storefront/v1/catalogue"
@@ -185,6 +187,70 @@ class TestCatalogueHttp(CatalogueFixture, HttpCase):
             self.assertEqual(res.status_code, 400, params)
             self.assertEqual(res.headers.get("Cache-Control"), "no-store")
             self.assertEqual(res.json(), {"error": "bad_paging"})
+
+    # ------------------------------------------------------------ Access JWT
+
+    def _with_access(self):
+        """Turn the second lock on, with keys served by a fake JWKS fetch."""
+        key = SigningKey("sf-http-kid")
+        access.reset_cache()
+        self.addCleanup(access.reset_cache)
+        patcher = patch.object(access, "_fetch_jwks", lambda team: jwks(key))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self._set_access(TEAM, "%d:%s" % (self.website.id, AUD))
+        return key
+
+    def _get_jwt(self, url, jwt_value, token=TOKEN):
+        headers = {access.JWT_HEADER: jwt_value} if jwt_value is not None else {}
+        return self._request(url, token=token, headers=headers)
+
+    def test_access_jwt_required_when_configured(self):
+        key = self._with_access()
+        good = encode(key, claims())
+        for url in (META, PRODUCTS):
+            res = self._get_jwt(url, good)
+            self.assertEqual(res.status_code, 200, (url, res.text[:200]))
+            self._assert_refused(self._get_jwt(url, None), (url, "token without JWT"))
+            self._assert_refused(self._get_jwt(url, good + "x"), (url, "bad JWT"))
+            self._assert_refused(self._get_jwt(url, encode(key, claims(aud=["x"]))),
+                                 (url, "wrong aud"))
+            self._assert_refused(self._get_jwt(url, good, token="wrong" * 8),
+                                 (url, "JWT with a wrong token"))
+            self._assert_refused(self._get_jwt(url, good, token=None),
+                                 (url, "JWT without a token"))
+
+    def test_access_one_parameter_closes_the_endpoint(self):
+        key = self._with_access()
+        good = encode(key, claims())
+        self.assertEqual(self._get_jwt(META, good).status_code, 200, "control")
+        self._set_access(TEAM, None)
+        self._assert_refused(self._get_jwt(META, good), "team domain only")
+        self._assert_refused(self._get(META), "team domain only, no JWT")
+        self._set_access(None, AUD)
+        self._assert_refused(self._get_jwt(META, good), "AUD only")
+
+    def test_access_aud_is_bound_to_the_website(self):
+        """The JWT must carry the AUD configured for the website the Host
+        names, not any configured AUD."""
+        key = self._with_access()
+        other_aud = "sf-aud-other-shop"
+        mine, theirs = encode(key, claims()), encode(key, claims(aud=[other_aud]))
+        self.assertEqual(self._get_jwt(META, mine).status_code, 200, "control")
+        self._set_access(TEAM, "%d:%s,%d:%s" % (self.website.id, AUD,
+                                               self.other_website.id, other_aud))
+        self.assertEqual(self._get_jwt(META, mine).status_code, 200, "control")
+        self._assert_refused(self._get_jwt(META, theirs), "the other shop's JWT")
+        self._set_access(TEAM, "%d:%s" % (self.other_website.id, AUD))
+        self._assert_refused(self._get_jwt(META, mine), "this website is not listed")
+        self._set_access(TEAM, AUD)
+        self._assert_refused(self._get_jwt(META, mine), "a bare AUD closes the endpoint")
+
+    def test_access_unset_is_token_only(self):
+        self._with_access()
+        self._set_access(None, None)
+        res = self._get(META)
+        self.assertEqual(res.status_code, 200, res.text[:200])
 
     # ------------------------------------------------------------ success
 

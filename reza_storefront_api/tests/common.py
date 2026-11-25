@@ -27,6 +27,11 @@ def png(colour=(200, 30, 30)):
     return BinaryBytes(buf.getvalue())  # 18/20: base64.b64encode(...) on 18
 
 
+def blob(raw):
+    """Raw bytes as a Binary field value."""
+    return BinaryBytes(raw)  # 18/20: base64.b64encode(raw) on 18
+
+
 def fake_barcode():
     return "SFT" + uuid.uuid4().hex[:12]
 
@@ -38,10 +43,22 @@ class CatalogueFixture:
         cls.params.set_str("reza_storefront_api.token", value)  # 18/20: set_param on 18
 
     @classmethod
+    def _set_access(cls, team, aud):
+        """Cloudflare Access settings; None deletes the parameter."""
+        for key, value in (("reza_storefront_api.access_team_domain", team),
+                           ("reza_storefront_api.access_aud", aud)):
+            if value is None:
+                cls.params.search([("key", "=", key)]).unlink()
+            else:
+                cls.params.set_str(key, value)  # 18/20: set_param on 18
+
+    @classmethod
     def _setup_catalogue(cls):
         env = cls.env
         cls.params = env["ir.config_parameter"].sudo()
         cls._set_token(TOKEN)
+        # The database may carry Access settings: start from token-only.
+        cls._set_access(None, None)
         company = env.company
         cls.website = env["website"].create({
             "name": "SF Test Site",
@@ -186,7 +203,8 @@ class CatalogueFixture:
 
 # Exact key sets of contract v1. Literals on purpose: the allowlist test must
 # not derive the expected keys from the code it is checking.
-META_KEYS = {"contract", "generated_at", "website", "categories", "brands", "product_count"}
+META_KEYS = {"contract", "generated_at", "website", "categories", "brands", "product_count",
+             "default_sort", "content_version", "refresh_requested_at", "next_content_change_at"}
 WEBSITE_KEYS = {"id", "name", "domain", "currency", "lang", "prices_include_tax",
                 "products_per_page", "logo_url"}
 CATEGORY_KEYS = {"id", "name", "parent_id", "sequence", "url", "meta_title",
@@ -196,7 +214,8 @@ PAGE_KEYS = {"contract", "page", "limit", "product_count", "next_page", "product
 PRODUCT_KEYS = {"id", "name", "url", "write_date", "description_html", "description_sale",
                 "meta_title", "meta_description", "meta_keywords", "category_ids",
                 "brand_id", "ribbon", "images", "attributes", "variants", "price_min",
-                "price_max", "rating"}
+                "price_max", "rating", "sort"}
+SORT_KEYS = {"website_sequence", "create_date", "publish_date", "list_price", "name_rank"}
 RIBBON_KEYS = {"name", "bg", "text"}
 IMAGE_KEYS = {"url", "alt"}
 ATTRIBUTE_KEYS = {"id", "name", "display_type", "show_in_website", "values"}

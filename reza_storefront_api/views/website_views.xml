@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="rz_storefront_website_form" model="ir.ui.view">
+        <field name="name">website.form.storefront</field>
+        <field name="model">website</field>
+        <field name="inherit_id" ref="website.view_website_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Storefront" name="rz_storefront" groups="website.group_website_designer">
+                    <group>
+                        <group>
+                            <button name="action_rz_storefront_refresh" type="object"
+                                    string="Refresh storefront now" class="btn-primary" colspan="2"/>
+                            <field name="rz_storefront_refresh_requested_at"/>
+                        </group>
+                        <group>
+                            <field name="rz_storefront_status" nolabel="1" colspan="2"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

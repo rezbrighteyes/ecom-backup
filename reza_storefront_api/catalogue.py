@@ -22,6 +22,7 @@ import re
 from urllib.parse import urlencode, urlparse, urlsplit
 
 from odoo import SUPERUSER_ID, fields
+from odoo.tools import SQL
 from odoo.fields import Domain  # 18/20: odoo.osv.expression on 18
 
 CONTRACT = 1
@@ -37,6 +38,8 @@ MAX_VARIANTS_PER_PAGE = 2500
 # /meta has no paging in contract v1, so it is bounded the same way: more
 # categories or brands than this is refused rather than served unbounded.
 MAX_META_ROWS = 5000
+# /shop's "Name (A-Z)" order as website_sale _get_search_order spells it.
+NAME_ORDER = "is_published desc, name asc, id desc"
 # Theme holding-page gates: a website method that answers True while the shop
 # is shown to anonymous visitors as a holding page (YEO prelaunch on Odoo 18).
 HOLDING_PAGE_GATES = ("_yeo_gate_on",)
@@ -74,12 +77,19 @@ def token_ok(env, header_value):
     return hmac.compare_digest(expected.encode("utf-8"), header_value.encode("utf-8"))
 
 
-def _authority(host, port):
+_DEFAULT_PORTS = {"http": 80, "https": 443}
+
+
+def _authority(host, port, scheme):
+    """host[:port], with the port left out only when it is the default port
+    of THIS scheme (443 for https, 80 for http), never the other one."""
     try:
         host = host.encode("idna").decode("ascii").lower()
     except (UnicodeError, ValueError):
         return ""
-    if port in (None, 80, 443):
+    if scheme not in _DEFAULT_PORTS:
+        return ""
+    if port is None or port == _DEFAULT_PORTS[scheme]:
         return host
     return "%s:%d" % (host, port)
 
@@ -100,10 +110,10 @@ def _configured_authority(domain):
     if (parts.path not in ("", "/") or parts.query or parts.fragment
             or parts.username or parts.password or not parts.hostname):
         return ""
-    return _authority(parts.hostname, port)
+    return _authority(parts.hostname, port, parts.scheme.lower())
 
 
-def _request_authority(host):
+def _request_authority(host, scheme):
     """The request's Host header as an authority: host[:port] and nothing
     else. A path, query, fragment, userinfo or any other URL syntax is
     refused instead of being parsed away."""
@@ -113,17 +123,17 @@ def _request_authority(host):
     port = int(match.group(2)) if match.group(2) else None
     if port is not None and not 0 < port < 65536:
         return ""
-    return _authority(match.group(1), port)
+    return _authority(match.group(1), port, scheme)
 
 
-def website_for_host(env, host):
+def website_for_host(env, host, scheme="https"):
     """The ONE website whose own domain equals the request Host, else empty.
 
     Odoo's normal resolution falls back to the first website for an unknown
     Host; this API does not. Two websites claiming the same host also give
     an empty result.
     """
-    authority = _request_authority(host)
+    authority = _request_authority(host, scheme)
     Website = env["website"].sudo()
     if not authority:
         return Website
@@ -197,8 +207,58 @@ def _sudo_templates(site, ids):
         website_id=site.id, lang=site.env.lang, active_test=True).browse(ids)
 
 
+def name_ranks(site, domain, ids):
+    """{id: position in /shop's name order} for `ids` only.
+
+    PostgreSQL numbers the whole eligible set in the shop's own name order
+    (its collation, the public user's record rules) and returns only the rows
+    of this page, so the rows sent to Python are bounded by the page size.
+    The database still sorts every eligible product once per page; that work
+    stays in PostgreSQL. Ranks are consistent within one export run as long
+    as no product is renamed or (un)published during it."""
+    if not ids:
+        return {}
+    Templates = _public_templates(site)
+    query = Templates._search(domain, order=NAME_ORDER)
+    order = query.order
+    query.order = None
+    row_id = query.table.id  # 18/20: SQL.identifier(query.table, "id") on 18
+    numbered = query.select(SQL("%s AS id, row_number() OVER (ORDER BY %s) AS position",
+                                row_id, order))
+    site.env.cr.execute(SQL(
+        "SELECT numbered.id, numbered.position FROM (%s) AS numbered WHERE numbered.id = ANY(%s)",
+        numbered, list(ids)))
+    return dict(site.env.cr.fetchall())
+
+
 def _iso(dt):
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ") if dt else None
+
+
+def _iso_exact(dt):
+    """Full precision (microseconds): a sort key must order exactly as the
+    database does, and two products can be created in the same second."""
+    return dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ") if dt else None
+
+
+def _sort_keys(template, price_hidden):
+    """The fields /shop orders by (website_sale _get_search_order:
+    "is_published desc, <sort>, id desc", <sort> from the website's
+    shop_default_sort or ?order=): website_sequence (Featured), create_date
+    (Newest on 18) / publish_date (Newest on 20), name, and list_price, the
+    template's own sales price, NOT the pricelist price. The final tie-breaker
+    is the product id, descending. 18/20: publish_date does not exist on 18.
+
+    list_price is null whenever the shop hides any of this product's prices
+    (hide_price, zero-price policy, a zero public price): the sort key must
+    never reveal a base price the shop does not show."""
+    publish = template["publish_date"] if "publish_date" in template._fields else None
+    return {
+        "website_sequence": template.website_sequence,
+        "create_date": _iso_exact(template.create_date),
+        "publish_date": _iso_exact(publish),
+        "list_price": None if price_hidden else template.list_price,
+    }
 
 
 def _str_or_none(value):
@@ -459,7 +519,16 @@ def meta(site):
             "slug": slugify(b.name or "") or str(b.id),
         } for b in brands],
         "product_count": Templates.search_count(domain),
+        # The shop's default order (website.shop_default_sort), as Odoo spells
+        # it: "<sort field> <asc|desc>"; products carry the keys in "sort".
+        "default_sort": site.shop_default_sort,
+        **_content_meta(site),
     }
+
+
+def _content_meta(site):
+    from . import content  # content imports this module
+    return content.meta_fields(site)
 
 
 def parse_paging(page, limit):
@@ -495,13 +564,21 @@ def products_page(site, page, limit, pricing):
         if variant_count > MAX_VARIANTS_PER_PAGE:
             raise PageTooLarge("variants", MAX_VARIANTS_PER_PAGE)
     has_more = offset + len(ids) < total
+    products = _serialize(site, _sudo_templates(site, ids), pricing)
+    if products:
+        # Name order depends on the database collation (case, accents), which
+        # the storefront cannot reproduce from the name text. The database
+        # ranks it instead, with the shop's own order spec, over the whole set.
+        rank = name_ranks(site, domain, [row["id"] for row in products])
+        for row in products:
+            row["sort"]["name_rank"] = rank[row["id"]]
     return {
         "contract": CONTRACT,
         "page": page,
         "limit": limit,
         "product_count": total,
         "next_page": page + 1 if has_more else None,
-        "products": _serialize(site, _sudo_templates(site, ids), pricing),
+        "products": products,
     }
 
 
@@ -601,6 +678,13 @@ def _serialize(site, templates, pricing):
                 "allow_out_of_stock_order": allow,
                 "url": _variant_url(url, variant, exported_values),
             })
+        # Two variants that differ only in values this export hides share the
+        # same visible selector: a selector URL would open one of them for
+        # both, so each of them gets the product URL instead.
+        selectors = [tuple(sorted(row["value_ids"])) for row in variant_rows]
+        for row, selector in zip(variant_rows, selectors):
+            if selectors.count(selector) > 1:
+                row["url"] = url
         ribbon = ribbons.get(template.id)
         out.append({
             "id": template.id,
@@ -627,5 +711,7 @@ def _serialize(site, templates, pricing):
             "price_min": min(prices) if prices else None,
             "price_max": max(prices) if prices else None,
             "rating": _rating(template),
+            "sort": _sort_keys(
+                template, not variant_rows or any(r["price"] is None for r in variant_rows)),
         })
     return out

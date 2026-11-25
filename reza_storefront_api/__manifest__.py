@@ -12,6 +12,18 @@ reza_storefront_api.token (32+ characters; empty, short or missing closes the
 endpoint), the request carries no session cookie, the Host is exactly one
 website's own domain, and that shop is open to anonymous visitors.
 
+Second, independent lock (access.py): when BOTH reza_storefront_api.access_team_domain
+(<team>.cloudflareaccess.com) and reza_storefront_api.access_aud
+("<website_id>:<AUD tag>", comma separated) are set, every request must also
+carry a valid Cloudflare Access JWT in Cf-Access-Jwt-Assertion (RS256,
+verified against the team's published keys; aud must be one configured for
+the requested website; iss, exp, nbf, iat checked). Exactly one set, a bare
+AUD, or a website not listed: closed. Neither set: token only.
+
+Each product carries "sort" (website_sequence, create_date, publish_date,
+list_price): the keys /shop orders by, ties broken by id descending; /meta
+carries the shop's default_sort.
+
 Records are selected as the website's public user (record rules apply);
 sudo() only reads the contract fields of what was selected. Prices use the
 public partner's pricelist and fiscal position with no session, cart or GeoIP.
@@ -20,9 +32,10 @@ The module adds no model of its own and no public method. Every read is in
 plain module functions (catalogue.py) that only the controller calls. The
 only ORM extension is a private ir.http._pre_dispatch hook that turns
 framework pre-dispatch failures on this route into the same 404.
-data/neutralize.sql deletes the token on an Odoo.sh staging restore.
+data/neutralize.sql deletes the token and the Access settings on an Odoo.sh
+staging restore.
 """,
-    "version": "20.0.1.1.0",
+    "version": "20.0.1.3.0",
     "category": "Website/eCommerce",
     "author": "Reza D Shiraz",
     "license": "OPL-1",
@@ -44,7 +57,11 @@ data/neutralize.sql deletes the token on an Odoo.sh staging restore.
         "RezaDs_seo_auto",
         "product_data_feed_brand",
     ],
-    "data": [],
+    "data": [
+        "security/ir.access.csv",
+        "views/storefront_block_views.xml",
+        "views/website_views.xml",
+    ],
     "installable": True,
     "application": False,
 }

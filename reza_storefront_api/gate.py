@@ -10,8 +10,9 @@ or Odoo's error pages: it gets refusal() and nothing else.
 check() answers (endpoint, website) or None. Everything is refused the same
 way: wrong method, a path other than the two endpoints as the client sent
 them (no language prefix, rewrite or reroute), a body, an unknown or repeated
-query parameter, a session cookie, a bad token, an unknown Host, a website
-whose user is not public, a closed or prelaunch shop.
+query parameter, a session cookie, a bad token, a missing or invalid
+Cloudflare Access JWT (when access.py is configured), an unknown Host, a
+website whose user is not public, a closed or prelaunch shop.
 """
 
 import json
@@ -19,12 +20,13 @@ from urllib.parse import urlsplit
 
 from odoo import SUPERUSER_ID
 
-from . import catalogue
+from . import access, catalogue
 
 TOKEN_HEADER = "X-Storefront-Token"
 ENDPOINTS = {
     "/storefront/v1/catalogue": ("products", frozenset({"page", "limit"})),
     "/storefront/v1/catalogue/meta": ("meta", frozenset()),
+    "/storefront/v1/content": ("content", frozenset()),
 }
 NOT_FOUND = {"error": "not_found"}
 
@@ -66,8 +68,13 @@ def check(request):
     env = request.env(user=SUPERUSER_ID)
     if not catalogue.token_ok(env, hreq.headers.get(TOKEN_HEADER)):
         return None
-    website = catalogue.website_for_host(env, hreq.host)
+    website = catalogue.website_for_host(env, hreq.host, hreq.scheme)
     if not website:
+        return None
+    # Second, independent lock, checked only after the token so a caller
+    # without it can never make this worker fetch Cloudflare's keys. The JWT
+    # must carry the AUD configured for THIS website.
+    if not access.access_ok(env, hreq.headers.get(access.JWT_HEADER), website.id):
         return None
     site = catalogue.public_site(website)
     if site is None or not catalogue.shop_open(site):

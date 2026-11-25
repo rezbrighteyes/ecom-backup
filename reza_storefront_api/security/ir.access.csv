@@ -1,0 +1,3 @@
+id,name,model_id,group_id/id,operation,domain
+access_rz_storefront_block_designer,reza.storefront.block designer,reza.storefront.block,website.group_website_designer,crud,
+access_rz_storefront_block_user,reza.storefront.block internal read,reza.storefront.block,base.group_user,r,

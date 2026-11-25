@@ -14,7 +14,8 @@ from odoo.tests import TransactionCase, tagged
 from .. import catalogue
 from .common import (
     ATTRIBUTE_KEYS, BANDS, BRAND_KEYS, CATEGORY_KEYS, IMAGE_KEYS, META_KEYS, ODOO_MAJOR,
-    PAGE_KEYS, PRODUCT_KEYS, RATING_KEYS, RIBBON_KEYS, TOKEN, VALUE_KEYS, VARIANT_KEYS,
+    PAGE_KEYS, PRODUCT_KEYS, RATING_KEYS, RIBBON_KEYS, SORT_KEYS, TOKEN, VALUE_KEYS,
+    VARIANT_KEYS,
     WEBSITE_KEYS, CatalogueFixture,
 )
 
@@ -74,12 +75,15 @@ class TestCatalogue(CatalogueFixture, TransactionCase):
             self.assertFalse(catalogue.token_ok(self.env, header), repr(header))
 
     def test_neutralize_deletes_the_token(self):
+        self._set_access("sfteam.cloudflareaccess.com", "sf-aud")
         queries = list(get_neutralization_queries(["reza_storefront_api"]))
         self.assertTrue(queries, "data/neutralize.sql is missing")
         for query in queries:
             self.env.cr.execute(query)
         self.params.invalidate_model()
-        self.assertFalse(self.params.search([("key", "=", catalogue.PARAM_TOKEN)]))
+        for key in (catalogue.PARAM_TOKEN, "reza_storefront_api.access_team_domain",
+                    "reza_storefront_api.access_aud"):
+            self.assertFalse(self.params.search([("key", "=", key)]), key)
 
     # ------------------------------------------------------------ website / shop
 
@@ -87,6 +91,12 @@ class TestCatalogue(CatalogueFixture, TransactionCase):
         self.assertEqual(catalogue.website_for_host(self.env, "sf-test.example"), self.website)
         self.assertEqual(catalogue.website_for_host(self.env, "SF-TEST.example"), self.website)
         self.assertEqual(catalogue.website_for_host(self.env, "sf-test.example:443"), self.website)
+        # The default port is the one of the request's scheme, never the other.
+        self.assertEqual(catalogue.website_for_host(self.env, "sf-test.example:80", "http"),
+                         self.website)
+        self.assertFalse(catalogue.website_for_host(self.env, "sf-test.example:80", "https"))
+        self.assertFalse(catalogue.website_for_host(self.env, "sf-test.example:443", "http"))
+        self.assertFalse(catalogue.website_for_host(self.env, "sf-test.example", "ftp"))
         for host in ("", None, "unknown.example", "sf-test.example:8443", "evil.sf-test.example",
                      "sf-test.example/x", "sf-test.example?x", "sf-test.example#x",
                      "user@sf-test.example", "sf-test.example:99999", " sf-test.example x",
@@ -282,6 +292,7 @@ class TestCatalogue(CatalogueFixture, TransactionCase):
         seen = {"ribbon": 0, "image": 0, "attribute": 0, "value": 0, "variant": 0}
         for row in self._all_pages(limit=500)[0]:
             self.assertEqual(set(row), PRODUCT_KEYS, row["id"])
+            self.assertEqual(set(row["sort"]), SORT_KEYS, row["id"])
             if row["ribbon"] is not None:
                 self.assertEqual(set(row["ribbon"]), RIBBON_KEYS)
                 seen["ribbon"] += 1
@@ -348,6 +359,113 @@ class TestCatalogue(CatalogueFixture, TransactionCase):
             tail = variant["url"][len(row["url"]):]
             tokens = tail.replace("=", ",").replace("&", ",").replace("-", ",").split(",")
             self.assertNotIn(hidden_id, tokens, variant["url"])
+
+    def test_variants_sharing_a_visible_selector_get_the_product_url(self):
+        """Two variants that differ only in a hidden value would share one
+        selector URL, which opens one of them for both: both get the product
+        URL. Distinct selectors keep their own URLs."""
+        self.hidden_attr.value_ids = [Command.create({"name": "SF Batch 8"})]
+        black = self.colour.value_ids.filtered(lambda v: v.name == "SF Black")
+        twin = self.make_template("SF Twin Glasses", attribute_line_ids=[
+            Command.create({"attribute_id": self.colour.id,
+                            "value_ids": [Command.set(black.ids)]}),
+            Command.create({"attribute_id": self.hidden_attr.id,
+                            "value_ids": [Command.set(self.hidden_attr.value_ids.ids)]}),
+        ])
+        self.assertEqual(len(twin.product_variant_ids), 2, "fixture: two variants")
+        row = self._row(twin)
+        self.assertEqual([v["value_ids"] for v in row["variants"]], [black.ids, black.ids])
+        for variant in row["variants"]:
+            self.assertEqual(variant["url"], row["url"])
+        pub = self._row(self.pub)
+        urls = [v["url"] for v in pub["variants"]]
+        self.assertEqual(len(set(urls)), len(urls), "distinct selectors keep their URLs")
+        self.assertNotIn(pub["url"], urls)
+
+    def test_name_rank_reads_only_the_page_rows(self):
+        """A page of 1 must not pull every eligible id into Python to rank it."""
+        for i in range(6):
+            self.make_template("SF Rank Glasses %d" % i)
+        site = self._site()
+        domain = catalogue.product_domain(site)
+        order = catalogue._public_templates(site).search(domain, order=catalogue.NAME_ORDER).ids
+        self.assertGreaterEqual(len(order), 5, "fixture: enough products to tell")
+        eligible = set(order)
+        cursor_class = type(site.env.cr)
+        real_execute = cursor_class.execute
+        id_reads = []
+
+        def execute(cr, query, *args, **kwargs):
+            result = real_execute(cr, query, *args, **kwargs)
+            # 18: SQL.code holds the text; 20: str(SQL) is "SQL('<text>', ...)".
+            text = str(getattr(query, "code", query))
+            text = text[5:] if text.startswith(("SQL('", 'SQL("')) else text.lstrip()
+            # A plain id selection of templates (what an ORM search runs).
+            if text.startswith(('SELECT "product_template"."id"', "SELECT numbered.id")):
+                id_reads.append(cr.rowcount)
+            return result
+
+        target = order[len(order) // 2]
+        with patch.object(cursor_class, "execute", execute):
+            ranks = catalogue.name_ranks(site, domain, [target])
+        self.assertEqual(ranks, {target: order.index(target) + 1})
+        self.assertEqual(id_reads, [1], "name_ranks read more than the page's rows")
+        pricing = catalogue.anonymous_pricing(site)
+        id_reads.clear()
+        with patch.object(cursor_class, "execute", execute):
+            page = catalogue.products_page(site, 1, 1, pricing)
+        first = page["products"][0]
+        self.assertEqual(first["sort"]["name_rank"], order.index(first["id"]) + 1)
+        self.assertTrue(id_reads, "fixture: the id reads were seen")
+        self.assertLessEqual(max(id_reads), 1, "a page of 1 read more than 1 template id")
+
+    def test_meta_reports_the_default_sort(self):
+        self.assertEqual(catalogue.meta(self._site())["default_sort"],
+                         self.website.shop_default_sort)
+        self.website.shop_default_sort = "list_price desc"
+        self.assertEqual(catalogue.meta(self._site())["default_sort"], "list_price desc")
+
+    def test_sort_keys_reproduce_the_shop_order(self):
+        """For every order the shop offers, sorting the exported keys the way
+        Odoo does (the key, then id descending) gives Odoo's own /shop order.
+        Ties on sequence, price, name and a same-second create date included."""
+        from odoo.addons.website_sale.controllers.main import WebsiteSale
+        Template = self.env["product.template"]
+        made = Template
+        for name, price, seq in (("SF Sort Delta", 50.0, 10), ("SF Sort alpha", 20.0, 10),
+                                 ("SF Sort Beta", 50.0, 5), ("SF Sort Beta", 80.0, 10)):
+            made |= self.make_template(name, list_price=price, website_sequence=seq)
+        stamps = ("2026-01-02 10:00:00.500000", "2026-01-02 10:00:00.100000",
+                  "2026-01-01 09:00:00", "2026-01-02 10:00:00.500000")
+        dated = ["create_date"] + (["publish_date"] if "publish_date" in Template._fields else [])
+        for template, stamp in zip(made, stamps):
+            for column in dated:
+                self.env.cr.execute(
+                    "UPDATE product_template SET %s = %%s WHERE id = %%s" % column,
+                    (stamp, template.id))
+        self.env.invalidate_all()
+        site = self._site()
+        rows = [r for r in self._all_pages(limit=500)[0] if r["id"] in made.ids]
+        self.assertEqual(sorted(r["id"] for r in rows), sorted(made.ids))
+        # Name order follows the database collation (en_US.UTF-8 puts
+        # "alpha" before "Beta", C does not): the export ranks it.
+        key_of = {"name": lambda r: r["sort"]["name_rank"]}
+        for field in SORT_KEYS - {"name_rank"}:
+            key_of[field] = lambda r, field=field: r["sort"][field]
+        orders = [order for order, _label in self.env["website"]._get_product_sort_mapping()]
+        self.assertIn(self.website.shop_default_sort, orders)
+        for order in orders:
+            spec = WebsiteSale()._get_search_order({"order": order})
+            if order == "name asc":
+                self.assertEqual(spec, catalogue.NAME_ORDER)
+            self.assertEqual(spec, "is_published desc, %s, id desc" % order,
+                             "the shop's order changed: update the export's sort keys")
+            shop = [i for i in site.env["product.template"].search(
+                catalogue.product_domain(site), order=spec).ids if i in made.ids]
+            field, direction = order.split()
+            exported = sorted(rows, key=lambda r: r["id"], reverse=True)
+            exported.sort(key=key_of[field], reverse=direction == "desc")
+            self.assertEqual([r["id"] for r in exported], shop, order)
 
     def test_value_of_archived_variant_is_not_exported(self):
         row = self._row(self.sized)
@@ -464,6 +582,19 @@ class TestCatalogue(CatalogueFixture, TransactionCase):
         self.assertIsNone(row["variants"][0]["price"])
         self.assertIsNone(row["variants"][0]["compare_price"])
         self.assertIsNone(row["price_min"])
+        self.assertIsNone(row["sort"]["list_price"], "a hidden price is not in the sort key")
+        # A real base price the public pricelist turns into a hidden zero.
+        priced = self.make_template("SF Base-Priced Glasses", list_price=40.0)
+        pricelist = catalogue.anonymous_pricing(self._site())["pricelist"]
+        if pricelist:
+            pricelist.sudo().item_ids = [Command.create({
+                "applied_on": "1_product", "product_tmpl_id": priced.id,
+                "compute_price": "fixed", "fixed_price": 0.0})]
+            row = self._row(priced)
+            self.assertIsNone(row["variants"][0]["price"], "fixture: the shop hides it")
+            self.assertIsNone(row["sort"]["list_price"], "the 40.00 base price must not leak")
+        shown = self._row(self.shared)
+        self.assertEqual(shown["sort"]["list_price"], self.shared.list_price, "control")
 
     def test_members_only_pricelist_is_not_used(self):
         """The visitor's own pricelist selection (get_pricelist_available, with
@@ -540,11 +671,24 @@ class TestLogRedaction(TransactionCase):
     """Odoo 20 only: its HTTP server can log raw request headers."""
 
     SECRET = "sf-secret 'quoted' \"dq\" (paren), [br] =eq\\ 0123456789abcdef0123456789"
+    # One marker per credential: the storefront token, the three Cloudflare
+    # Access headers and the CF_Authorization cookie.
+    JWT = "eyJhbGciOiJSUzI1NiJ9.jwtmarker7777.sig"
+    ACCESS_TOKEN = "cfatokmarker8888"
+    CLIENT_SECRET = "clientsecretmarker9999"
+    COOKIE = 'lang=en_US; CF_Authorization="cookiemarker5555.q"; other=keep'
+    MARKERS = ("0123456789abcdef0123456789", "quoted", "jwtmarker7777", "cfatokmarker8888",
+               "clientsecretmarker9999", "cookiemarker5555")
+
+    def _headers(self):
+        return [("Host", "sf-test.example"), ("X-Storefront-Token", self.SECRET),
+                ("Cf-Access-Jwt-Assertion", self.JWT), ("cf-access-token", self.ACCESS_TOKEN),
+                ("CF-Access-Client-Secret", self.CLIENT_SECRET), ("Cookie", self.COOKIE)]
 
     def _request(self):
         import h11
-        return h11.Request(method="GET", target="/storefront/v1/catalogue/meta", headers=[
-            ("Host", "sf-test.example"), ("X-Storefront-Token", self.SECRET)])
+        return h11.Request(method="GET", target="/storefront/v1/catalogue/meta",
+                           headers=self._headers())
 
     def _capture(self, call, keep_filters=True):
         from odoo.http import server_log
@@ -579,8 +723,8 @@ class TestLogRedaction(TransactionCase):
     def _assert_clean(self, records):
         for record in records:
             dump = repr(record.__dict__) + record.getMessage()
-            self.assertNotIn("0123456789abcdef0123456789", dump)
-            self.assertNotIn("quoted", dump)
+            for marker in self.MARKERS:
+                self.assertNotIn(marker, dump)
         self.assertIn("redacted", repr([r.__dict__ for r in records]))
 
     def test_secret_never_reaches_the_log_record(self):
@@ -597,9 +741,10 @@ class TestLogRedaction(TransactionCase):
         path) is redacted in its message, colored message and http_headers."""
         import pprint
         from .. import log_redaction
-        headers = [(b"host", b"x"), (b"x-storefront-token", self.SECRET.encode())]
+        headers = [(k.lower().encode(), v.encode()) for k, v in self._headers()]
+        fields = "\n".join("%s: %s" % pair for pair in self._headers())
         record = logging.LogRecord("odoo.http.server", logging.DEBUG, __file__, 1,
-                                   "req %s", ("X-Storefront-Token: " + self.SECRET,), None)
+                                   "req %s", (fields,), None)
         record.msg = "GET /x\n" + pprint.pformat(headers) + " %s"
         record.colored_message = record.msg
         record.http_headers = headers
@@ -608,11 +753,11 @@ class TestLogRedaction(TransactionCase):
         self.assertTrue(any(isinstance(f, log_redaction.RedactStorefrontToken)
                             for f in logging.getLogger("odoo.http.server").filters))
 
-    def _protocol_error(self):
+    def _protocol_error(self, name="X-Storefront-Token", value=None):
         import h11
         conn = h11.Connection(h11.SERVER)
-        conn.receive_data(b"GET / HTTP/1.1\r\nHost: x\r\nX-Storefront-Token : "
-                          + self.SECRET.encode() + b"\r\n\r\n")
+        conn.receive_data(b"GET / HTTP/1.1\r\nHost: x\r\n" + name.encode() + b" : "
+                          + (value or self.SECRET).encode() + b"\r\n\r\n")
         try:
             conn.next_event()
         except h11.RemoteProtocolError as exc:
@@ -628,8 +773,46 @@ class TestLogRedaction(TransactionCase):
         exc_info. Checked on the final formatted output, filter removed, with
         and without header DEBUG."""
         from odoo.http import server as http_server
-        exc = self._protocol_error()
-        self.assertIn("0123456789abcdef", str(exc), "fixture: h11 quotes the secret")
+        for name, value, marker in (
+                ("X-Storefront-Token", None, "0123456789abcdef"),
+                ("Cf-Access-Jwt-Assertion", self.JWT, "jwtmarker7777"),
+                ("cf-access-token", self.ACCESS_TOKEN, "cfatokmarker8888"),
+                ("CF-Access-Client-Secret", self.CLIENT_SECRET, "clientsecretmarker9999")):
+            exc = self._protocol_error(name, value)
+            self.assertIn(marker, str(exc), "fixture: h11 quotes the secret")
+
+            def log(exc=exc):
+                try:
+                    raise exc
+                except Exception:  # noqa: BLE001
+                    http_server.http_log(logging.INFO, "", req=None, res=None, exc_info=True)
+
+            for headers_debug in (True, False):
+                records = self._capture(log, keep_filters=False)
+                if not headers_debug:
+                    logging.getLogger("odoo.http.server.headers").setLevel(logging.WARNING)
+                text = self._formatted(records)
+                self.assertNotIn(marker, text, name)
+                self.assertIn("RemoteProtocolError", text)
+
+    def test_filter_redacts_a_logged_exception(self):
+        from .. import log_redaction
+        for name, value, marker in (("X-Storefront-Token", None, "0123456789abcdef"),
+                                    ("Cf-Access-Jwt-Assertion", self.JWT, "jwtmarker7777")):
+            exc = self._protocol_error(name, value)
+            record = logging.LogRecord("odoo.http.server", logging.INFO, __file__, 1, "x", None,
+                                       (type(exc), exc, exc.__traceback__))
+            log_redaction.RedactStorefrontToken().filter(record)
+            text = self._formatted([record])
+            self.assertNotIn(marker, text, name)
+            self.assertIn("RemoteProtocolError", text)
+
+    def test_protocol_error_text_is_never_logged(self):
+        """h11 quotes raw request bytes; a header no pattern knows must not
+        reach the log through it either."""
+        from odoo.http import server as http_server
+        exc = self._protocol_error("X-Some-Other-Secret", "zzmarker4444")
+        self.assertIn("zzmarker4444", str(exc), "fixture: h11 quotes it")
 
         def log():
             try:
@@ -637,21 +820,39 @@ class TestLogRedaction(TransactionCase):
             except Exception:  # noqa: BLE001
                 http_server.http_log(logging.INFO, "", req=None, res=None, exc_info=True)
 
-        for headers_debug in (True, False):
-            records = self._capture(log, keep_filters=False)
-            if not headers_debug:
-                logging.getLogger("odoo.http.server.headers").setLevel(logging.WARNING)
-            text = self._formatted(records)
-            self.assertNotIn("0123456789abcdef", text)
-            self.assertIn("RemoteProtocolError", text)
+        text = self._formatted(self._capture(log, keep_filters=False))
+        self.assertNotIn("zzmarker4444", text)
+        self.assertIn("RemoteProtocolError", text)
 
-    def test_filter_redacts_a_logged_exception(self):
+    def test_quoted_access_cookie_is_withheld(self):
         from .. import log_redaction
-        exc = self._protocol_error()
+        quoted = 'a=1; CF_Authorization="qqmarker3333"; b=2'
+        self.assertEqual(log_redaction.redact_headers([(b"cookie", quoted.encode())]),
+                         [(b"cookie", b"[redacted]")])
+        self.assertNotIn("qqmarker3333", log_redaction.redact_text("Cookie: " + quoted))
+
+    def test_exception_naming_a_credential_is_logged_by_type_only(self):
+        """An exception text that names a credential in a shape the text
+        patterns do not know (no colon here) is never printed: only its type."""
+        from odoo.http import server as http_server
+        from .. import log_redaction
+        exc = ValueError("bad header cf-access-jwt-assertion=jwtmarker7777 near byte 9")
+
+        def log():
+            try:
+                raise exc
+            except Exception:  # noqa: BLE001
+                http_server.http_log(logging.INFO, "", req=None, res=None, exc_info=True)
+
+        text = self._formatted(self._capture(log, keep_filters=False))
+        self.assertNotIn("jwtmarker7777", text)
+        self.assertIn("ValueError", text)
         record = logging.LogRecord("odoo.http.server", logging.INFO, __file__, 1, "x", None,
                                    (type(exc), exc, exc.__traceback__))
         log_redaction.RedactStorefrontToken().filter(record)
-        self.assertNotIn("0123456789abcdef", self._formatted([record]))
+        text = self._formatted([record])
+        self.assertNotIn("jwtmarker7777", text)
+        self.assertIn("ValueError", text)
 
     def test_redaction_keeps_the_rest_of_the_line(self):
         import pprint
@@ -666,6 +867,11 @@ class TestLogRedaction(TransactionCase):
         self.assertEqual(log_redaction.redact_text(access), access)
         self.assertEqual(log_redaction.redact_text("X-Storefront-Token: abc def\nHost: keep"),
                          "X-Storefront-Token: [redacted]\nHost: keep")
+        self.assertEqual(
+            log_redaction.redact_text("Cf-Access-Jwt-Assertion: a.b.c\nCookie: x=1; "
+                                      "CF_Authorization=a.b.c; y=2\nHost: keep"),
+            "Cf-Access-Jwt-Assertion: [redacted]\nCookie: x=1; "
+            "CF_Authorization=[redacted]; y=2\nHost: keep")
         self.assertEqual(
             log_redaction.redact_text("bad line: bytearray(b'X-Storefront-Token: abc') status=400"),
             "bad line: bytearray(b'X-Storefront-Token: [redacted]') status=400")
