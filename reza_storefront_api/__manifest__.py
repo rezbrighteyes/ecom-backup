@@ -28,14 +28,23 @@ Records are selected as the website's public user (record rules apply);
 sudo() only reads the contract fields of what was selected. Prices use the
 public partner's pricelist and fiscal position with no session, cart or GeoIP.
 
-The module adds no model of its own and no public method. Every read is in
+The export adds no public method; the only public methods are the
+designer-checked buttons on the website form. Every read is in
 plain module functions (catalogue.py) that only the controller calls. The
 only ORM extension is a private ir.http._pre_dispatch hook that turns
 framework pre-dispatch failures on this route into the same 404.
+Menus (menu.py): with the website's "Use the Odoo menu" switch on,
+GET /storefront/v1/menu (same gate) carries the website's own Odoo menu
+(website.menu) with how the storefront draws each item (rz_kind, badge,
+category) and the featured brand tiles (reza.storefront.featured.brand,
+designers only). Switched off it answers "menu": null and the storefront keeps
+its automatic menu. The menu is folded into content_version only while the
+switch is on, so turning it on or editing the menu triggers a rebuild.
+
 data/neutralize.sql deletes the token and the Access settings on an Odoo.sh
 staging restore.
 """,
-    "version": "20.0.1.3.0",
+    "version": "20.0.1.4.0",
     "category": "Website/eCommerce",
     "author": "Reza D Shiraz",
     "license": "OPL-1",
@@ -61,6 +70,7 @@ staging restore.
         "security/ir.access.csv",
         "views/storefront_block_views.xml",
         "views/website_views.xml",
+        "views/website_menu_views.xml",
     ],
     "installable": True,
     "application": False,

@@ -26,7 +26,7 @@ from urllib.parse import urlsplit
 
 from odoo import fields
 
-from . import catalogue
+from . import catalogue, menu
 from .models import storefront_block
 
 _logger = logging.getLogger(__name__)
@@ -141,7 +141,7 @@ def content_payload(site, now=None):
         "contract": catalogue.CONTRACT,
         "generated_at": catalogue._iso(fields.Datetime.now()),
         "website_id": site.id,
-        "content_version": _version(rows),
+        "content_version": _site_version(site, rows),
         "blocks": rows,
     }
 
@@ -151,11 +151,22 @@ def _version(rows):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:32]
 
 
+def _site_version(site, rows):
+    """The blocks' digest; with the Odoo menu switched on, blocks and menu
+    together, so a menu edit is a content change (the build server rebuilds
+    on it, and the status reads "older than Odoo" until it has). Switched
+    off, the value is exactly the blocks-only digest it was before menus."""
+    menu_section = menu.menu_payload(site)
+    if menu_section is None:
+        return _version(rows)
+    return _version({"blocks": rows, "menu": menu_section})
+
+
 def content_version(site, now=None):
     blocks = live_blocks(site, now)
     sums = checksums(blocks)
     base = _base(site)
-    return _version([_block_payload(block, base, sums) for block in blocks])
+    return _site_version(site, [_block_payload(block, base, sums) for block in blocks])
 
 
 def next_change(site, now=None):

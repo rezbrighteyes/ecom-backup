@@ -23,7 +23,7 @@ import logging
 from odoo import SUPERUSER_ID, http
 from odoo.http import request
 
-from .. import catalogue, content, gate
+from .. import catalogue, content, gate, menu
 from ..models.ir_http import ROUTING_FLAG
 
 _logger = logging.getLogger(__name__)
@@ -53,6 +53,8 @@ class StorefrontCatalogue(http.Controller):
                 return gate.json_response(request, catalogue.meta(site), 200)
             if endpoint == "content":
                 return gate.json_response(request, content.content_payload(site), 200)
+            if endpoint == "menu":
+                return gate.json_response(request, menu.export(site), 200)
             hreq = request.httprequest
             paging = catalogue.parse_paging(hreq.args.get("page"), hreq.args.get("limit"))
             if paging is None:

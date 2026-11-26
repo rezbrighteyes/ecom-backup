@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The storefront columns, opened from the website form ("Edit storefront menu"):
+         the core Menus list is debug-only. Name, link, order and nesting are Odoo's own
+         menu fields, the same ones Website > Site > Menu Editor changes. -->
+    <record id="rz_storefront_menu_list" model="ir.ui.view">
+        <field name="name">website.menu.list.storefront</field>
+        <field name="model">website.menu</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" string="Storefront menu">
+                <field name="sequence" widget="handle"/>
+                <field name="website_id" column_invisible="True"/>
+                <field name="parent_id" string="Under" context="{'display_website': True}"
+                       domain="[('website_id', '=', website_id)]" options="{'no_create': True}"/>
+                <field name="name"/>
+                <field name="url" string="Link"/>
+                <field name="rz_kind"/>
+                <field name="rz_public_categ_id" invisible="rz_kind != 'category_mega'"
+                       required="rz_kind == 'category_mega'" options="{'no_create': True}"/>
+                <field name="rz_badge"/>
+                <field name="rz_badge_style" invisible="not rz_badge"/>
+                <field name="new_window" optional="hide"/>
+                <field name="group_ids" widget="many2many_tags" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="rz_storefront_menu_form" model="ir.ui.view">
+        <field name="name">website.menu.form.storefront</field>
+        <field name="model">website.menu</field>
+        <field name="inherit_id" ref="website.website_menus_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/group" position="after">
+                <group string="Storefront">
+                    <group>
+                        <field name="rz_kind"/>
+                        <field name="rz_public_categ_id" invisible="rz_kind != 'category_mega'"
+                               required="rz_kind == 'category_mega'" options="{'no_create': True}"/>
+                    </group>
+                    <group>
+                        <field name="rz_badge"/>
+                        <field name="rz_badge_style" invisible="not rz_badge"/>
+                    </group>
+                </group>
+            </xpath>
+            <xpath expr="//field[@name='child_id']/list/field[@name='url']" position="after">
+                <field name="rz_badge"/>
+                <field name="rz_badge_style" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

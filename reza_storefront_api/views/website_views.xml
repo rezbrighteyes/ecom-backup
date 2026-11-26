@@ -17,6 +17,21 @@
                             <field name="rz_storefront_status" nolabel="1" colspan="2"/>
                         </group>
                     </group>
+                    <group string="Menu">
+                        <group>
+                            <field name="rz_storefront_use_odoo_menu"/>
+                            <button name="action_rz_storefront_menu" type="object"
+                                    string="Edit storefront menu" class="btn-secondary" colspan="2"/>
+                        </group>
+                    </group>
+                    <label for="rz_storefront_featured_brand_ids"/>
+                    <field name="rz_storefront_featured_brand_ids" context="{'active_test': False}">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="brand_id"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </list>
+                    </field>
                 </page>
             </xpath>
         </field>

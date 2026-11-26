@@ -8,7 +8,7 @@ reaches body parsing, parameter binding, website hooks (geolock, theme gates)
 or Odoo's error pages: it gets refusal() and nothing else.
 
 check() answers (endpoint, website) or None. Everything is refused the same
-way: wrong method, a path other than the two endpoints as the client sent
+way: wrong method, a path other than the endpoints below as the client sent
 them (no language prefix, rewrite or reroute), a body, an unknown or repeated
 query parameter, a session cookie, a bad token, a missing or invalid
 Cloudflare Access JWT (when access.py is configured), an unknown Host, a
@@ -27,6 +27,7 @@ ENDPOINTS = {
     "/storefront/v1/catalogue": ("products", frozenset({"page", "limit"})),
     "/storefront/v1/catalogue/meta": ("meta", frozenset()),
     "/storefront/v1/content": ("content", frozenset()),
+    "/storefront/v1/menu": ("menu", frozenset()),
 }
 NOT_FOUND = {"error": "not_found"}
 
